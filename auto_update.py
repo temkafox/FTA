@@ -19,7 +19,7 @@ from PyQt5.QtWidgets import QApplication, QLabel, QMessageBox, QPushButton, QScr
 from version import __version__
 
 
-GITHUB_REPOSITORY = "temqafox-ux/actpilot"
+GITHUB_REPOSITORY = "temkafox/FTA"
 RELEASE_API = f"https://api.github.com/repos/{GITHUB_REPOSITORY}/releases/latest"
 ASSET_NAME = "ActPilot-PoE1.exe"
 
