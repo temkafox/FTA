@@ -1,0 +1,6 @@
+PyQt5>=5.15,<6
+pynput>=1.7,<2
+
+# Build dependencies
+Pillow>=10,<13
+PyInstaller>=6,<7

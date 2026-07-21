@@ -1,0 +1,21 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+build/
+dist/
+*.exe
+*.ico
+
+# Local user state; never commit paths, progress or imported builds.
+src/legacy/data/settings.json
+src/legacy/data/progress.json
+src/legacy/data/progress_poe1.json
+src/legacy/data/progress_poe2.json
+src/legacy/data/poe1_characters.json
+
+# Editor/OS noise.
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

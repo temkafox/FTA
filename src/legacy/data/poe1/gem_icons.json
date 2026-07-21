@@ -1,0 +1,150 @@
+{
+  "rolling magma": {
+    "file": "92183c562261dad5.png"
+  },
+  "elemental proliferation": {
+    "file": "46f6804baaf600b2.png"
+  },
+  "combustion": {
+    "file": "4bad2b983d923c29.png"
+  },
+  "frostblink": {
+    "file": "86b4bae694ba3f7e.png"
+  },
+  "flame dash": {
+    "file": "cb662aa5a88f8940.png"
+  },
+  "arcane surge": {
+    "file": "dd04a2cf6d24981d.png"
+  },
+  "flame wall": {
+    "file": "9f8fdfac6689535d.png"
+  },
+  "holy flame totem": {
+    "file": "e2afee97185bd819.png"
+  },
+  "wave of conviction": {
+    "file": "8619b7bba66bc99c.png"
+  },
+  "herald of ash": {
+    "file": "7f7167db0b90e5e8.png"
+  },
+  "summon skitterbots": {
+    "file": "e4b0e7055d6c793a.png"
+  },
+  "armageddon brand": {
+    "file": "4af3ce05eba5812d.png"
+  },
+  "cruelty": {
+    "file": "41baba6cce56c863.png"
+  },
+  "desecrate": {
+    "file": "900269ca80785694.png"
+  },
+  "cremation": {
+    "file": "6b622c2f27ea9903.png"
+  },
+  "elemental focus": {
+    "file": "d1d541ecfa5e1cea.png"
+  },
+  "concentrated effect": {
+    "file": "dd723927474dca8f.png"
+  },
+  "determination": {
+    "file": "3abf97bf2c3b9741.png"
+  },
+  "flammability": {
+    "file": "e7fbca10c2cfbe9d.png"
+  },
+  "summon flame golem": {
+    "file": "93fbfd60cbe5c908.png"
+  },
+  "summon lightning golem": {
+    "file": "ced5cddd51282443.png"
+  },
+  "summon stone golem": {
+    "file": "e49097531e2042ba.png"
+  },
+  "ignite proliferation": {
+    "file": "be500c36b47ab6d6.png"
+  },
+  "greater multiple projectiles": {
+    "file": "a2f2ec3b885adc6c.png"
+  },
+  "vaal flameblast": {
+    "file": "6001aa9052bb6dc9.png"
+  },
+  "burning damage": {
+    "file": "acf809c07b8d4c4f.png"
+  },
+  "immolate": {
+    "file": "f095c5b764149e4a.png",
+    "source": "https://www.poewiki.net/images/f/f6/Immolate_Support_inventory_icon.png",
+    "wiki_file": "File:Immolate Support inventory icon.png"
+  },
+  "tempest shield": {
+    "file": "fe3c82a26f8f669a.png",
+    "source": "https://www.poewiki.net/images/7/71/Tempest_Shield_inventory_icon.png",
+    "wiki_file": "File:Tempest Shield inventory icon.png"
+  },
+  "shield charge": {
+    "file": "63ad5cd9d1d271a1.png",
+    "source": "https://www.poewiki.net/images/d/de/Shield_Charge_inventory_icon.png",
+    "wiki_file": "File:Shield Charge inventory icon.png"
+  },
+  "faster attacks": {
+    "file": "3d4ecb75bf809e07.png",
+    "source": "https://www.poewiki.net/images/2/21/Faster_Attacks_Support_inventory_icon.png",
+    "wiki_file": "File:Faster Attacks Support inventory icon.png"
+  },
+  "summon chaos golem": {
+    "file": "307e90b3aeca0fc2.png",
+    "source": "https://www.poewiki.net/images/4/44/Summon_Chaos_Golem_inventory_icon.png",
+    "wiki_file": "File:Summon Chaos Golem inventory icon.png"
+  },
+  "added fire damage": {
+    "file": "093f576895e21bc4.png",
+    "source": "https://www.poewiki.net/images/5/5b/Added_Fire_Damage_Support_inventory_icon.png",
+    "wiki_file": "File:Added Fire Damage Support inventory icon.png"
+  },
+  "swift affliction": {
+    "file": "e23f1e62d66aa61d.png",
+    "source": "https://www.poewiki.net/images/1/16/Swift_Affliction_Support_inventory_icon.png",
+    "wiki_file": "File:Swift Affliction Support inventory icon.png"
+  },
+  "elemental weakness": {
+    "file": "64013d51be2b557e.png",
+    "source": "https://www.poewiki.net/images/7/77/Elemental_Weakness_inventory_icon.png",
+    "wiki_file": "File:Elemental Weakness inventory icon.png"
+  },
+  "arcanist brand": {
+    "file": "315fd0333dd3a549.png",
+    "source": "https://www.poewiki.net/images/f/ff/Arcanist_Brand_inventory_icon.png",
+    "wiki_file": "File:Arcanist Brand inventory icon.png"
+  },
+  "flame surge": {
+    "file": "5a2e475d383aa5d0.png",
+    "source": "https://www.poewiki.net/images/f/fe/Flame_Surge_inventory_icon.png",
+    "wiki_file": "File:Flame Surge inventory icon.png"
+  },
+  "grace": {
+    "file": "fd1cf5e271fd7c5f.png",
+    "source": "https://www.poewiki.net/images/a/a5/Grace_inventory_icon.png",
+    "wiki_file": "File:Grace inventory icon.png"
+  },
+  "absolution": {
+    "file": "ed2d64a7bda2db4c.png",
+    "source": "https://www.poewiki.net/images/c/c6/Absolution_inventory_icon.png",
+    "wiki_file": "File:Absolution inventory icon.png"
+  },
+  "blink arrow": {
+    "file": "b0dea87b962ca569.png",
+    "source": "https://www.poewiki.net/images/4/49/Blink_Arrow_inventory_icon.png",
+    "wiki_file": "File:Blink Arrow inventory icon.png"
+  },
+  "additional accuracy": {
+    "file": "9eb4a116e2cf1b19.png",
+    "source": "https://www.poewiki.net/images/0/05/Additional_Accuracy_Support_inventory_icon.png",
+    "wiki_file": "File:Additional Accuracy Support inventory icon.png"
+  }
+}
