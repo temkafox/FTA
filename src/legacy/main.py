@@ -25,7 +25,7 @@ from actpilot.paths import (
 from actpilot.persistence import load_json, save_json
 from actpilot.style import POE_COLORS, Style, _STYLE_NUMERIC_BASE
 from actpilot.winapi import set_window_click_through
-from regex_dialog import DEFAULT_REGEXES, RegexDialog
+from actpilot.regex_dialog import DEFAULT_REGEXES, RegexDialog
 
 
 # ==================== СТИЛИ ====================

@@ -79,7 +79,7 @@ def build_report() -> dict:
     import main_poe1_enhanced as enhanced
     from poe1_manual_editor_v11 import ManualBuildEditor
     from release_poe1_v69 import CompactHeaderIconOverlay
-    from settings_dialog import ActPilotSettingsDialog
+    from actpilot.settings_dialog import ActPilotSettingsDialog
 
     # Точное повторение проводки app.py:70-73
     editor_bridge.ManualBuildEditor = ManualBuildEditor

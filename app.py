@@ -27,7 +27,7 @@ import release_poe1_v50 as editor_bridge  # noqa: E402
 import release_poe1_v35 as settings_release  # noqa: E402
 from poe1_manual_editor_v11 import ManualBuildEditor  # noqa: E402
 from release_poe1_v69 import CompactHeaderIconOverlay  # noqa: E402
-from settings_dialog import ActPilotSettingsDialog  # noqa: E402
+from actpilot.settings_dialog import ActPilotSettingsDialog  # noqa: E402
 
 
 class UpdateSettingsDialog(ActPilotSettingsDialog):

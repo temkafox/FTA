@@ -1,7 +1,7 @@
 from PyQt5.QtCore import Qt
 
 import main
-from settings_dialog import capture_hotkey
+from actpilot.settings_dialog import capture_hotkey
 
 
 def test_normalize_fkeys():
