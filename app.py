@@ -13,9 +13,9 @@ if apply_pending_update(sys.argv):
 
 
 ROOT = Path(__file__).resolve().parent
-LEGACY_SOURCE = ROOT / "src" / "legacy"
-if str(LEGACY_SOURCE) not in sys.path:
-    sys.path.insert(0, str(LEGACY_SOURCE))
+for _source in (ROOT / "src", ROOT / "src" / "legacy"):
+    if str(_source) not in sys.path:
+        sys.path.insert(0, str(_source))
 
 from PyQt5.QtCore import Qt  # noqa: E402
 from PyQt5.QtGui import QFont  # noqa: E402

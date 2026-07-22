@@ -1,4 +1,10 @@
-import poe1_client_log_v2 as clientlog
+import poe1_client_log_v2 as legacy_facade
+from actpilot import clientlog
+
+
+def test_legacy_facade_reexports_same_objects():
+    assert legacy_facade.parse_level_events is clientlog.parse_level_events
+    assert legacy_facade.LevelEvent is clientlog.LevelEvent
 
 
 def test_parse_level_event_en():

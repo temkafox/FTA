@@ -35,7 +35,7 @@ datas += include_directory(RUNTIME / "data" / "poe1", "data/poe1")
 
 a = Analysis(
     [str(ROOT / "app.py")],
-    pathex=[str(RUNTIME)],
+    pathex=[str(ROOT / "src"), str(RUNTIME)],
     binaries=[],
     datas=datas,
     hiddenimports=[],
