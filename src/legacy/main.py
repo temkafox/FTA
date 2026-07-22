@@ -1,10 +1,13 @@
+import os
+import shutil
 import sys
 import json
 from pathlib import Path
 from PyQt5.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
+    QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QPushButton, QScrollArea, QFrame, QSlider, QDialog, QLineEdit,
     QSizePolicy, QSystemTrayIcon, QMenu, QAction, QCheckBox, QButtonGroup,
+    QMessageBox,
 )
 from PyQt5.QtCore import (
     Qt, QPropertyAnimation, QEasingCurve, pyqtSignal, pyqtProperty, QObject,
@@ -157,9 +160,39 @@ def get_resource_dir():
 
 APP_DIR = get_app_dir()
 APP_NAME = "ActPilot"
-DATA_DIR = APP_DIR / "data"
+
+
+def get_data_dir() -> Path:
+    if getattr(sys, 'frozen', False):
+        base = os.environ.get("APPDATA")
+        root = Path(base) if base else Path.home() / "AppData" / "Roaming"
+        return root / APP_NAME
+    return APP_DIR / "data"
+
+
+DATA_DIR = get_data_dir()
 SETTINGS_FILE = DATA_DIR / "settings.json"
 LEGACY_PROGRESS_FILE = DATA_DIR / "progress.json"
+
+
+def _migrate_exe_adjacent_data():
+    # Обязана выполниться на импорте main: Poe1Overlay читает PROFILE_FILE до ensure_dirs()
+    if not getattr(sys, 'frozen', False):
+        return
+    old_dir = APP_DIR / "data"
+    try:
+        if not old_dir.is_dir():
+            return
+        DATA_DIR.mkdir(parents=True, exist_ok=True)
+        for source in old_dir.glob("*.json"):
+            target = DATA_DIR / source.name
+            if not target.exists():
+                shutil.copy2(source, target)
+    except OSError as exc:
+        print(f"ActPilot: миграция данных пропущена: {exc}", file=sys.stderr)
+
+
+_migrate_exe_adjacent_data()
 
 GAME_POE1 = "poe1"
 GAME_POE2 = "poe2"
@@ -769,9 +802,24 @@ DEFAULT_SETTINGS = {
     "click_through": False,
     "ui_scale": 1.0,
     "show_hotkey_hints": True,
-    "regexes": DEFAULT_REGEXES,
+    "regexes": [entry.copy() for entry in DEFAULT_REGEXES],
     "show_welcome": True,
 }
+
+
+def migrate_settings(settings: dict) -> bool:
+    """Дополняет настройки новыми ключами, не трогая пользовательские значения."""
+    changed = False
+    if int(settings.get("regex_defaults_version", 0)) < 2:
+        settings.setdefault("regexes", [entry.copy() for entry in DEFAULT_REGEXES])
+        settings["regex_defaults_version"] = 2
+        changed = True
+    if int(settings.get("hotkey_defaults_version", 0)) < 2:
+        settings.setdefault("previous_hotkey", normalize_hotkey("Ctrl+F3"))
+        settings.setdefault("regex_hotkey", normalize_hotkey("F6"))
+        settings["hotkey_defaults_version"] = 2
+        changed = True
+    return changed
 
 
 # ==================== УТИЛИТЫ ====================
@@ -783,14 +831,22 @@ def load_json(path: Path, default: dict) -> dict:
         if path.exists():
             with open(path, 'r', encoding='utf-8') as f:
                 return json.load(f)
-    except:
-        pass
+    except OSError as exc:
+        print(f"ActPilot: не удалось прочитать {path.name}: {exc}", file=sys.stderr)
+    except ValueError as exc:
+        print(f"ActPilot: повреждён {path.name}: {exc}", file=sys.stderr)
+        try:
+            path.replace(path.with_suffix(path.suffix + ".corrupt"))
+        except OSError:
+            pass
     return default.copy()
 
 def save_json(path: Path, data: dict):
-    ensure_dirs()
-    with open(path, 'w', encoding='utf-8') as f:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temp = path.with_suffix(path.suffix + ".tmp")
+    with open(temp, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
+    temp.replace(path)
 
 def migrate_legacy_progress():
     if LEGACY_PROGRESS_FILE.exists() and not get_progress_file(GAME_POE1).exists():
@@ -876,12 +932,13 @@ def parse_step_markup(text: str, base_color: str, done: bool = False) -> str:
 # ==================== ГОРЯЧИЕ КЛАВИШИ ====================
 class HotkeyListener(QObject):
     triggered = pyqtSignal()
-    
+    failed = pyqtSignal(str)
+
     def __init__(self, hotkey: str):
         super().__init__()
         self._hotkey = normalize_hotkey(hotkey)
         self._listener = None
-    
+
     def start(self):
         self.stop()
         try:
@@ -889,6 +946,7 @@ class HotkeyListener(QObject):
             self._listener.start()
         except Exception as e:
             print(f"Hotkey error: {e}")
+            self.failed.emit(str(e))
     
     def stop(self):
         if self._listener:
@@ -2455,7 +2513,7 @@ class WelcomePanel(QFrame):
             f"<p style='line-height:155%; color:{Style.TEXT_SECONDARY};'>"
             f"<b style='color:{Style.TEXT_PRIMARY};'>Горячие клавиши</b><br>"
             f"• <b>{step_hk}</b> — следующий шаг<br>"
-            f"• <b>{layout_hk}</b> — подсказка с лейаутом зоны (PoE2)<br>"
+            f"• <b>{layout_hk}</b> — мини-панель билда (PoE1) / лейаут зоны (PoE2)<br>"
             f"Переназначить можно в настройках (⚙).</p>"
             f"<p style='line-height:155%; color:{Style.TEXT_SECONDARY};'>"
             f"<b style='color:{Style.TEXT_PRIMARY};'>Настройки</b><br>"
@@ -2804,18 +2862,7 @@ class Overlay(QWidget):
         ensure_dirs()
         migrate_legacy_progress()
         self.settings = load_json(SETTINGS_FILE, DEFAULT_SETTINGS)
-        if int(self.settings.get("regex_defaults_version", 0)) < 2:
-            self.settings["regexes"] = [entry.copy() for entry in DEFAULT_REGEXES]
-            self.settings["regex_defaults_version"] = 2
-            save_json(SETTINGS_FILE, self.settings)
-        if int(self.settings.get("hotkey_defaults_version", 0)) < 2:
-            self.settings.update({
-                "previous_hotkey": normalize_hotkey("Ctrl+F3"),
-                "hotkey": normalize_hotkey("F3"),
-                "layout_hotkey": normalize_hotkey("F4"),
-                "regex_hotkey": normalize_hotkey("F6"),
-                "hotkey_defaults_version": 2,
-            })
+        if migrate_settings(self.settings):
             save_json(SETTINGS_FILE, self.settings)
         self.settings["hotkey"] = normalize_hotkey(
             self.settings.get("hotkey", DEFAULT_SETTINGS["hotkey"])
@@ -2825,7 +2872,7 @@ class Overlay(QWidget):
         )
         self._ui_scale = float(self.settings.get("ui_scale", DEFAULT_SETTINGS["ui_scale"]))
         Style.set_ui_scale(self._ui_scale)
-        self.game = self.settings.get("game", GAME_POE2)
+        self.game = self.settings.get("game", DEFAULT_SETTINGS["game"])
         self._load_steps_data()
         
         self._collapsed = False
@@ -2861,7 +2908,10 @@ class Overlay(QWidget):
         default = DEFAULT_STEPS_POE2 if self.game == GAME_POE2 else DEFAULT_STEPS
         self.steps_data = load_json(steps_file, default)
         if not steps_file.exists():
-            save_json(steps_file, default)
+            try:
+                save_json(steps_file, default)
+            except OSError:
+                pass
     
     def _switch_game(self, game: str):
         self.game = game
@@ -3227,6 +3277,33 @@ class Overlay(QWidget):
         self.previous_hotkey.triggered.connect(self._on_previous_hotkey)
         self.layout_hotkey.triggered.connect(self._toggle_layout_hint)
         self.regex_hotkey.triggered.connect(self._toggle_regex_dialog)
+        for listener, key in (
+            (self.hotkey, "hotkey"),
+            (self.previous_hotkey, "previous_hotkey"),
+            (self.layout_hotkey, "layout_hotkey"),
+            (self.regex_hotkey, "regex_hotkey"),
+        ):
+            listener.failed.connect(
+                lambda error, key=key: self._notify_hotkey_error(
+                    self.settings.get(key, DEFAULT_SETTINGS.get(key, "")), error
+                )
+            )
+
+    def _notify_hotkey_error(self, hotkey: str, error: str):
+        box = getattr(self, "_hotkey_error_box", None)
+        if box is None:
+            box = QMessageBox(self)
+            box.setIcon(QMessageBox.Warning)
+            box.setWindowTitle("Горячие клавиши")
+            box.setWindowModality(Qt.NonModal)
+            self._hotkey_error_box = box
+        elif box.isVisible():
+            return
+        box.setText(
+            f"Не удалось включить горячую клавишу {display_hotkey(hotkey)}.\n"
+            f"{error}\nИзменить её можно в настройках (⚙)."
+        )
+        box.show()
 
     def _on_previous_hotkey(self):
         self._previous_combo_active = True
@@ -3317,7 +3394,7 @@ class Overlay(QWidget):
         self.hotkey_footer.set_full_text("&nbsp; · &nbsp;".join((
             item(show(self.settings.get("hotkey", DEFAULT_SETTINGS["hotkey"])), "След. шаг"),
             item(show(self.settings.get("previous_hotkey", DEFAULT_SETTINGS["previous_hotkey"])), "Пред. шаг"),
-            item(show(self.settings.get("layout_hotkey", DEFAULT_SETTINGS["layout_hotkey"])), "Камни"),
+            item(show(self.settings.get("layout_hotkey", DEFAULT_SETTINGS["layout_hotkey"])), "Мини-панель"),
             item(show(self.settings.get("regex_hotkey", DEFAULT_SETTINGS["regex_hotkey"])), "Регэкспы"),
         )))
         self.hotkey_footer.setVisible(bool(self.settings.get("show_hotkey_hints", True)))

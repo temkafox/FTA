@@ -154,6 +154,8 @@ class PolishedOverlay(previous.AssetFramedOverlay):
         if build_was_visible:
             self._build_dialog.hide()
         if regex_was_visible:
+            # hide() эмитит hidden -> _restore_after_regex; без сброса state оверлей всплывёт поверх настроек
+            self._regex_restore_state = None
             self._regex_dialog.hide()
         dialog = Poe1SettingsDialog(self.settings, None)
         dialog.move(self.x() + (self.width() - dialog.width()) // 2, self.y() + 40)
@@ -184,7 +186,7 @@ class PolishedOverlay(previous.AssetFramedOverlay):
         new_scale = float(self.settings.get("ui_scale", legacy.DEFAULT_SETTINGS["ui_scale"]))
         self._apply_ui_scale(self._ui_scale, new_scale)
         self._ui_scale = new_scale
-        new_game = self.settings.get("game", legacy.GAME_POE2)
+        new_game = self.settings.get("game", legacy.DEFAULT_SETTINGS["game"])
         if new_game != old_game:
             self._close_layout_dialog()
             self._save_progress()
