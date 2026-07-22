@@ -1,5 +1,3 @@
-import os
-import shutil
 import sys
 import json
 from pathlib import Path
@@ -17,9 +15,14 @@ from PyQt5.QtGui import (
     QColor, QFont, QFontDatabase, QFontMetrics, QPainter, QPen, QBrush,
     QIcon, QPixmap, QImage, QPainterPath, QTransform, QCursor, QLinearGradient,
 )
-from pynput import keyboard
 import time
 
+from actpilot.hotkeys import HotkeyListener, display_hotkey, normalize_hotkey
+from actpilot.paths import (
+    APP_DIR, APP_NAME, DATA_DIR, LEGACY_PROGRESS_FILE, SETTINGS_FILE,
+    get_app_dir, get_data_dir, get_resource_dir,
+)
+from actpilot.persistence import load_json, save_json
 from regex_dialog import DEFAULT_REGEXES, RegexDialog
 
 
@@ -146,53 +149,7 @@ POE_COLORS = {
 
 
 # ==================== ПУТИ ====================
-def get_app_dir():
-    if getattr(sys, 'frozen', False):
-        return Path(sys.executable).parent
-    return Path(__file__).parent
-
-
-def get_resource_dir():
-    if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
-        return Path(sys._MEIPASS)
-    return get_app_dir()
-
-
-APP_DIR = get_app_dir()
-APP_NAME = "ActPilot"
-
-
-def get_data_dir() -> Path:
-    if getattr(sys, 'frozen', False):
-        base = os.environ.get("APPDATA")
-        root = Path(base) if base else Path.home() / "AppData" / "Roaming"
-        return root / APP_NAME
-    return APP_DIR / "data"
-
-
-DATA_DIR = get_data_dir()
-SETTINGS_FILE = DATA_DIR / "settings.json"
-LEGACY_PROGRESS_FILE = DATA_DIR / "progress.json"
-
-
-def _migrate_exe_adjacent_data():
-    # Обязана выполниться на импорте main: Poe1Overlay читает PROFILE_FILE до ensure_dirs()
-    if not getattr(sys, 'frozen', False):
-        return
-    old_dir = APP_DIR / "data"
-    try:
-        if not old_dir.is_dir():
-            return
-        DATA_DIR.mkdir(parents=True, exist_ok=True)
-        for source in old_dir.glob("*.json"):
-            target = DATA_DIR / source.name
-            if not target.exists():
-                shutil.copy2(source, target)
-    except OSError as exc:
-        print(f"ActPilot: миграция данных пропущена: {exc}", file=sys.stderr)
-
-
-_migrate_exe_adjacent_data()
+# APP_DIR/DATA_DIR/SETTINGS_FILE и миграция в %APPDATA% живут в actpilot.paths
 
 GAME_POE1 = "poe1"
 GAME_POE2 = "poe2"
@@ -826,28 +783,6 @@ def migrate_settings(settings: dict) -> bool:
 def ensure_dirs():
     DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-def load_json(path: Path, default: dict) -> dict:
-    try:
-        if path.exists():
-            with open(path, 'r', encoding='utf-8') as f:
-                return json.load(f)
-    except OSError as exc:
-        print(f"ActPilot: не удалось прочитать {path.name}: {exc}", file=sys.stderr)
-    except ValueError as exc:
-        print(f"ActPilot: повреждён {path.name}: {exc}", file=sys.stderr)
-        try:
-            path.replace(path.with_suffix(path.suffix + ".corrupt"))
-        except OSError:
-            pass
-    return default.copy()
-
-def save_json(path: Path, data: dict):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temp = path.with_suffix(path.suffix + ".tmp")
-    with open(temp, 'w', encoding='utf-8') as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
-    temp.replace(path)
-
 def migrate_legacy_progress():
     if LEGACY_PROGRESS_FILE.exists() and not get_progress_file(GAME_POE1).exists():
         try:
@@ -856,39 +791,6 @@ def migrate_legacy_progress():
             save_json(get_progress_file(GAME_POE1), data)
         except Exception:
             pass
-
-def normalize_hotkey(hotkey: str) -> str:
-    """Приводит хотkey к формату pynput GlobalHotKeys, напр. F4 -> <f4>."""
-    s = hotkey.strip().lower().replace(" ", "")
-    if not s:
-        return "<f4>"
-
-    parts = []
-    for part in s.split("+"):
-        if part.startswith("<") and part.endswith(">"):
-            parts.append(part)
-        elif part in ("ctrl", "control", "alt", "shift", "cmd", "win"):
-            parts.append("<ctrl>" if part == "control" else f"<{part}>")
-        elif len(part) >= 2 and part[0] == "f" and part[1:].isdigit():
-            parts.append(f"<{part}>")
-        elif len(part) == 1:
-            parts.append(part)
-        else:
-            parts.append(part)
-    return "+".join(parts)
-
-
-def display_hotkey(hotkey: str) -> str:
-    normalized = normalize_hotkey(hotkey)
-    labels = {"ctrl": "Ctrl", "alt": "Alt", "shift": "Shift", "cmd": "Win", "win": "Win"}
-    parts = []
-    for part in normalized.split("+"):
-        inner = part[1:-1] if part.startswith("<") and part.endswith(">") else part
-        if inner.startswith("f") and inner[1:].isdigit():
-            parts.append(inner.upper())
-        else:
-            parts.append(labels.get(inner, inner.upper() if len(inner) == 1 else inner))
-    return "+".join(parts)
 
 def format_time(seconds: float) -> str:
     mins = int(seconds // 60)
@@ -930,40 +832,7 @@ def parse_step_markup(text: str, base_color: str, done: bool = False) -> str:
 
 
 # ==================== ГОРЯЧИЕ КЛАВИШИ ====================
-class HotkeyListener(QObject):
-    triggered = pyqtSignal()
-    failed = pyqtSignal(str)
-
-    def __init__(self, hotkey: str):
-        super().__init__()
-        self._hotkey = normalize_hotkey(hotkey)
-        self._listener = None
-
-    def start(self):
-        self.stop()
-        try:
-            self._listener = keyboard.GlobalHotKeys({self._hotkey: self._emit})
-            self._listener.start()
-        except Exception as e:
-            print(f"Hotkey error: {e}")
-            self.failed.emit(str(e))
-    
-    def stop(self):
-        if self._listener:
-            try:
-                self._listener.stop()
-                if hasattr(self._listener, "join"):
-                    self._listener.join(0.5)
-            except Exception:
-                pass
-            self._listener = None
-    
-    def _emit(self):
-        self.triggered.emit()
-    
-    def restart(self, hotkey: str):
-        self._hotkey = normalize_hotkey(hotkey)
-        self.start()
+# normalize_hotkey/display_hotkey/HotkeyListener живут в actpilot.hotkeys
 
 
 class HotkeyFooter(QLabel):
