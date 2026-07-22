@@ -14,7 +14,7 @@ from poe1_gem_progression import links_at_level
 from poe1_gem_widgets_v2 import LevelGemChains
 from poe1_level_plan_v2 import stage_at_level
 from poe1_level_plan_v3 import passive_plan_by_level
-from poe1_tree_renderer_v8 import LevelMappedTreeCanvas
+from poe1_tree_fast import ConstructionTreePlaceholder as LevelMappedTreeCanvas
 from release_poe1_v8 import TREE_GRAPH
 
 

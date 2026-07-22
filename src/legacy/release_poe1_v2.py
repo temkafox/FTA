@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import QApplication
 
 import main as legacy
 import release_poe1 as previous
-from poe1_tree_renderer_v2 import CleanPassiveTreeCanvas
+from poe1_tree_fast import ConstructionTreePlaceholder as CleanPassiveTreeCanvas
 
 
 class CleanBuildDialog(previous.ReleaseBuildDialog):

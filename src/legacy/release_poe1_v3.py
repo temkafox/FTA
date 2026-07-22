@@ -12,7 +12,7 @@ import main as legacy
 import release_poe1_v2 as previous
 from poe1_stage_logic import previous_stage
 from poe1_target_widgets import leveling_stage
-from poe1_tree_renderer_v3 import ConnectedPassiveTreeCanvas
+from poe1_tree_fast import ConstructionTreePlaceholder as ConnectedPassiveTreeCanvas
 
 
 class FullStageBuildDialog(previous.CleanBuildDialog):

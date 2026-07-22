@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import QApplication
 
 import main as legacy
 import release_poe1_v35 as previous
-from poe1_tree_renderer_v19 import ExplicitProgressionTreeCanvas
+from poe1_tree_fast import ConstructionTreePlaceholder as ExplicitProgressionTreeCanvas
 
 
 class ExplicitRouteBuildDialog(previous.PolishedBuildDialog):

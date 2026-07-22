@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import QApplication
 import main as legacy
 import release_poe1_v32 as standard_renderer
 import release_poe1_v38 as previous
-from poe1_manual_plan import manual_passive_plan
+from actpilot.build_model import manual_passive_plan
 
 
 class ExactManualBuildDialog(previous.EditableBuildDialog):

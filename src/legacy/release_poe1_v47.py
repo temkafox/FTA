@@ -14,9 +14,6 @@ import release_poe1_v46 as previous
 from poe1_manual_editor_v6 import ManualBuildEditor
 
 
-editor_release.ManualBuildEditor = ManualBuildEditor
-
-
 class FixedInteractionBuildDialog(previous.FastBuildDialog):
     def __init__(self, overlay):
         super().__init__(overlay)

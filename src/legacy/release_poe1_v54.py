@@ -11,10 +11,6 @@ from poe1_mini_tree_v3 import MiniPassiveRoute
 from release_poe1_v53 import MiniTreeOverlay as BaseMiniTreeOverlay
 
 
-# The base overlay creates this class by resolving the module global at runtime.
-mini_release.MiniPassiveRoute = MiniPassiveRoute
-
-
 class MiniTreeOverlay(BaseMiniTreeOverlay):
     def __init__(self):
         self._mini_hidden_by_user = False

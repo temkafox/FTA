@@ -15,7 +15,7 @@ from poe1_gem_progression import links_at_level
 from poe1_gem_widgets_v7 import AcquisitionGemChains
 from poe1_level_plan_v2 import stage_at_level
 from poe1_level_plan_v12 import mastery_separated_plan
-from poe1_tree_renderer_v18 import SeparateMasteryTreeCanvas
+from poe1_tree_fast import ConstructionTreePlaceholder as SeparateMasteryTreeCanvas
 from release_poe1_v8 import TREE_GRAPH
 
 

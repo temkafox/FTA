@@ -12,7 +12,7 @@ import release_poe1_v50 as previous
 from poe1_builds import clamp_level
 from poe1_client_log_v2 import class_matches
 from poe1_client_monitor_v3 import ClientLevelMonitor
-from poe1_mini_tree import MiniPassiveRoute
+from poe1_mini_tree_v9 import MiniPassiveRoute
 
 
 class MiniTreeOverlay(staged_release.previous.FixedInteractionOverlay):

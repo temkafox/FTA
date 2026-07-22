@@ -10,9 +10,6 @@ from poe1_mini_tree_v4 import MiniPassiveRoute
 from release_poe1_v54 import MiniTreeOverlay as BaseMiniTreeOverlay
 
 
-mini_release.MiniPassiveRoute = MiniPassiveRoute
-
-
 class MiniTreeOverlay(BaseMiniTreeOverlay):
     def __init__(self):
         super().__init__()

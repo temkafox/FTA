@@ -7,9 +7,6 @@ from poe1_mini_tree_v7 import MiniPassiveRoute
 from release_poe1_v57 import MiniTreeOverlay as BaseMiniTreeOverlay
 
 
-mini_release.MiniPassiveRoute = MiniPassiveRoute
-
-
 class MiniTreeOverlay(BaseMiniTreeOverlay):
     pass
 

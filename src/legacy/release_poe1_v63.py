@@ -10,14 +10,6 @@ from poe1_mini_gems_v2 import MiniGemLinks
 from release_poe1_v62 import GemOverviewOverlay as BaseOverlay
 
 
-# release_poe1_v51 historically restores this bridge value every time the
-# editor opens. Patch both references so opening can no longer roll back v11.
-editor_bridge.ManualBuildEditor = ManualBuildEditor
-editor_bridge.editor_release.ManualBuildEditor = ManualBuildEditor
-editor_release.ManualBuildEditor = ManualBuildEditor
-mini_gem_release.MiniGemLinks = MiniGemLinks
-
-
 class FixedGemOverviewOverlay(BaseOverlay):
     def _open_build_progress(self):
         editor_bridge.ManualBuildEditor = ManualBuildEditor

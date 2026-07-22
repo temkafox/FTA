@@ -14,9 +14,6 @@ import release_poe1_v48 as previous
 from poe1_manual_editor_v8 import ManualBuildEditor
 
 
-editor_release.ManualBuildEditor = ManualBuildEditor
-
-
 def main():
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
     QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)

@@ -65,11 +65,6 @@ def main() -> int:
         QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal { background:transparent; }
     """)
 
-    # The compatibility runtime still has two editor import bridges. Keep both
-    # pointed at the one current editor until the internal modules are flattened.
-    editor_bridge.ManualBuildEditor = ManualBuildEditor
-    editor_bridge.editor_release.ManualBuildEditor = ManualBuildEditor
-    editor_release.ManualBuildEditor = ManualBuildEditor
     settings_release.Poe1SettingsDialog = UpdateSettingsDialog
 
     window = CompactHeaderIconOverlay()

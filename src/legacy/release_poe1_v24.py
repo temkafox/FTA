@@ -11,6 +11,7 @@ from PyQt5.QtWidgets import QApplication
 import main as legacy
 import release_poe1_v23 as previous
 from poe1_gem_widgets_v5 import CopyableGemChains
+from poe1_tree_fast import ConstructionTreePlaceholder as IntegratedAscendancyTreeCanvas
 
 
 class IntegratedTreeBuildDialog(previous.ConnectedAscendancyBuildDialog):

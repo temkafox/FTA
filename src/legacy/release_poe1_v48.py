@@ -16,10 +16,6 @@ from poe1_manual_editor_v7 import ManualBuildEditor
 from poe1_manual_plan_v2 import manual_passive_plan
 
 
-editor_release.ManualBuildEditor = ManualBuildEditor
-manual_renderer.manual_passive_plan = manual_passive_plan
-
-
 def main():
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
     QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)

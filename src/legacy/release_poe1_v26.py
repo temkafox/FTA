@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import QApplication
 
 import main as legacy
 import release_poe1_v25 as previous
-from poe1_tree_renderer_v14 import RestoredAscendancyTreeCanvas
+from poe1_tree_fast import ConstructionTreePlaceholder as RestoredAscendancyTreeCanvas
 
 
 class RestoredAscendancyBuildDialog(previous.NativeAscendancyBuildDialog):

@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import QApplication
 
 import main as legacy
 import release_poe1_v4 as previous
-from poe1_tree_renderer_v5 import OrbitalPassiveTreeCanvas
+from poe1_tree_fast import ConstructionTreePlaceholder as OrbitalPassiveTreeCanvas
 
 
 class OrbitalBuildDialog(previous.MasteryBuildDialog):

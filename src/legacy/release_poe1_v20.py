@@ -14,7 +14,7 @@ from poe1_gem_progression import links_at_level
 from poe1_gem_widgets_v3 import ArtworkGemChains
 from poe1_level_plan_v2 import stage_at_level
 from poe1_level_plan_v9 import corrected_semantic_plan
-from poe1_tree_renderer_v11 import CleanPassiveTreeCanvas
+from poe1_tree_fast import ConstructionTreePlaceholder as CleanPassiveTreeCanvas
 from release_poe1_v8 import TREE_GRAPH
 
 

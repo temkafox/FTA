@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import QApplication, QLabel
 import main as legacy
 import release_poe1_v14 as previous
 from poe1_level_plan_v5 import pob_kills_all_bandits, quest_aware_passive_plan
-from poe1_tree_renderer_v10 import QuestAwareTreeCanvas
+from poe1_tree_fast import ConstructionTreePlaceholder as QuestAwareTreeCanvas
 from release_poe1_v8 import TREE_GRAPH
 
 

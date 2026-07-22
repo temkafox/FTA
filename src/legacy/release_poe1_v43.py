@@ -16,10 +16,6 @@ from poe1_client_monitor_v2 import ClientLevelMonitor
 from poe1_builds import clamp_level
 
 
-# The original dialog resolves this name in main_poe1_enhanced.__init__.
-enhanced.ClientLevelMonitor = ClientLevelMonitor
-
-
 class ReliableClientBuildDialog(previous.ClearGemEditorBuildDialog):
     def _on_level_seen(self, character_name, character_class, level):
         profile = self.overlay.active_profile()

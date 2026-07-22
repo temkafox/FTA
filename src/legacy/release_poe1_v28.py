@@ -13,11 +13,6 @@ import release_poe1_v27 as previous
 from poe1_level_plan_v11 import ordinary_nearest_plan
 
 
-# The inherited rendering method resolves this dependency in its defining
-# module. Replace it once for this release without duplicating the whole UI.
-previous.nearest_connected_plan = ordinary_nearest_plan
-
-
 class StrictNearestBuildDialog(previous.LocalizedOverlayBuildDialog):
     pass
 

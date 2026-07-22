@@ -10,10 +10,6 @@ from poe1_mini_tree_v8 import MiniPassiveRoute
 from release_poe1_v63 import FixedGemOverviewOverlay as BaseOverlay
 
 
-mini_tree_release.MiniPassiveRoute = MiniPassiveRoute
-mini_gem_release.MiniGemLinks = MiniGemLinks
-
-
 class PobMiniPreviewOverlay(BaseOverlay):
     def _profile_signature(self):
         base = super()._profile_signature()

@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import QApplication
 import main as legacy
 import release_poe1_v3 as previous
 from poe1_target_widgets import leveling_stage
-from poe1_tree_renderer_v4 import MasteryAwareTreeCanvas
+from poe1_tree_fast import ConstructionTreePlaceholder as MasteryAwareTreeCanvas
 
 
 class MasteryBuildDialog(previous.FullStageBuildDialog):

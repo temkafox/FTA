@@ -12,10 +12,7 @@ import main as legacy
 import release_poe1_v41 as editor_release
 import release_poe1_v48 as staged_release
 import release_poe1_v49 as previous
-from poe1_manual_editor_v9 import ManualBuildEditor
-
-
-editor_release.ManualBuildEditor = ManualBuildEditor
+from poe1_manual_editor_v11 import ManualBuildEditor
 
 
 def main():

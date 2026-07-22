@@ -82,9 +82,6 @@ def build_report() -> dict:
     from actpilot.settings_dialog import ActPilotSettingsDialog
 
     # Точное повторение проводки app.py:70-73
-    editor_bridge.ManualBuildEditor = ManualBuildEditor
-    editor_bridge.editor_release.ManualBuildEditor = ManualBuildEditor
-    editor_release.ManualBuildEditor = ManualBuildEditor
     settings_release.Poe1SettingsDialog = ActPilotSettingsDialog
 
     window = CompactHeaderIconOverlay()

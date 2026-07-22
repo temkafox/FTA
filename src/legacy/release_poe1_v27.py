@@ -11,8 +11,8 @@ from PyQt5.QtWidgets import QApplication
 import main as legacy
 import release_poe1_v26 as previous
 from poe1_gem_widgets_v6 import RussianOverlayGemChains
-from poe1_level_plan_v10 import nearest_connected_plan
-from poe1_tree_renderer_v15 import RussianDescriptionTreeCanvas
+from poe1_level_plan_v11 import ordinary_nearest_plan as nearest_connected_plan
+from poe1_tree_fast import ConstructionTreePlaceholder as RussianDescriptionTreeCanvas
 from release_poe1_v8 import TREE_GRAPH
 
 

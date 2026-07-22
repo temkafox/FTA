@@ -10,8 +10,8 @@ from PyQt5.QtWidgets import QApplication
 
 import main as legacy
 import release_poe1_v40 as previous
-from poe1_manual_editor_v5 import ManualBuildEditor
-from poe1_tree_renderer_v20 import ZoomSafeTreeCanvas
+from poe1_manual_editor_v11 import ManualBuildEditor
+from actpilot.tree import CachedZoomSafeTreeCanvas as ZoomSafeTreeCanvas
 
 
 class ClearGemEditorBuildDialog(previous.StableEditorBuildDialog):

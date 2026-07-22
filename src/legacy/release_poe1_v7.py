@@ -19,7 +19,8 @@ from PyQt5.QtWidgets import (
 import main as legacy
 import main_poe1 as base
 import release_poe1_v6 as previous
-from poe1_combined_widgets import CompactGemChains, FocusedLevelingTreeCanvas
+from poe1_combined_widgets import CompactGemChains
+from poe1_tree_fast import ConstructionTreePlaceholder as FocusedLevelingTreeCanvas
 from poe1_target_widgets import leveling_stage
 
 

@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import QApplication, QPushButton
 import main as legacy
 import main_poe1 as base
 import release_poe1_v24 as previous
-from poe1_tree_renderer_v13 import NativeAscendancyTreeCanvas
+from poe1_tree_fast import ConstructionTreePlaceholder as NativeAscendancyTreeCanvas
 
 
 class NativeAscendancyBuildDialog(previous.IntegratedTreeBuildDialog):

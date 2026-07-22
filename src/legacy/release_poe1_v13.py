@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import QApplication
 
 import main as legacy
 import release_poe1_v12 as previous
-from poe1_tree_renderer_v9 import ImmediateFocusTreeCanvas
+from poe1_tree_fast import ConstructionTreePlaceholder as ImmediateFocusTreeCanvas
 
 
 class ImmediateFocusBuildDialog(previous.FinalLevelMappedBuildDialog):

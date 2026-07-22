@@ -9,9 +9,5 @@ from poe1_mini_gems_v5 import MiniGemLinks
 from release_poe1_v66 import CompleteMiniTreeOverlay as BaseOverlay
 
 
-full_gem_release.PoedbGemChains = FallbackPoedbGemChains
-mini_gem_release.MiniGemLinks = MiniGemLinks
-
-
 class KindCorrectGemOverlay(BaseOverlay):
     pass

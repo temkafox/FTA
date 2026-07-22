@@ -14,8 +14,8 @@ from PyQt5.QtWidgets import (
 
 import main as legacy
 import release_poe1_v34 as previous
-from poe1_gem_widgets_v8 import PoedbGemChains
-from poe1_widgets import find_client_log
+from actpilot.gems.widgets import FallbackPoedbGemChains as PoedbGemChains
+from actpilot.clientmonitor import find_client_log
 
 
 def build_tree_icon(size=22):

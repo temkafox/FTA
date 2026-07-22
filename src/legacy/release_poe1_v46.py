@@ -18,39 +18,6 @@ from poe1_client_monitor_v3 import ClientLevelMonitor, find_client_log
 from poe1_tree_fast import CachedZoomSafeTreeCanvas, ConstructionTreePlaceholder
 
 
-def _replace_legacy_tree_constructors():
-    replacements = {
-        "main_poe1_enhanced": ("PassiveTreeCanvas",),
-        "release_poe1_v2": ("CleanPassiveTreeCanvas",),
-        "release_poe1_v3": ("ConnectedPassiveTreeCanvas",),
-        "release_poe1_v4": ("MasteryAwareTreeCanvas",),
-        "release_poe1_v5": ("OrbitalPassiveTreeCanvas",),
-        "release_poe1_v6": ("LevelingRouteTreeCanvas",),
-        "release_poe1_v7": ("FocusedLevelingTreeCanvas",),
-        "release_poe1_v8": ("ProgressionTreeCanvas",),
-        "release_poe1_v11": ("LevelMappedTreeCanvas",),
-        "release_poe1_v13": ("ImmediateFocusTreeCanvas",),
-        "release_poe1_v15": ("QuestAwareTreeCanvas",),
-        "release_poe1_v20": ("CleanPassiveTreeCanvas",),
-        "release_poe1_v24": ("IntegratedAscendancyTreeCanvas",),
-        "release_poe1_v25": ("NativeAscendancyTreeCanvas",),
-        "release_poe1_v26": ("RestoredAscendancyTreeCanvas",),
-        "release_poe1_v27": ("RussianDescriptionTreeCanvas",),
-        "release_poe1_v32": ("SeparateMasteryTreeCanvas",),
-        "release_poe1_v36": ("ExplicitProgressionTreeCanvas",),
-    }
-    for module_name, names in replacements.items():
-        module = importlib.import_module(module_name)
-        for name in names:
-            setattr(module, name, ConstructionTreePlaceholder)
-    zoom_release.ZoomSafeTreeCanvas = CachedZoomSafeTreeCanvas
-
-
-_replace_legacy_tree_constructors()
-enhanced.ClientLevelMonitor = ClientLevelMonitor
-polished.find_client_log = find_client_log
-
-
 class FastBuildDialog(reliable.ReliableClientBuildDialog):
     def __init__(self, overlay):
         self._fast_construction_complete = False

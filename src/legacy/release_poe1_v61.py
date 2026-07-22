@@ -9,9 +9,6 @@ from poe1_manual_editor_v10 import ManualBuildEditor
 from release_poe1_v60 import MiniTreeAndGemsOverlay as BaseOverlay
 
 
-editor_release.ManualBuildEditor = ManualBuildEditor
-
-
 class StagedGemOverlay(BaseOverlay):
     def __init__(self):
         self._mini_suspended = False
