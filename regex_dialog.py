@@ -1,5 +1,6 @@
 """Editable, copy-friendly Path of Exile regex library."""
 
+from PyQt5 import sip
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (
@@ -67,7 +68,7 @@ class RegexDialog(QDialog):
         scroll.setWidget(self.body)
         outer.addWidget(scroll, 1)
 
-        for entry in entries or DEFAULT_REGEXES:
+        for entry in entries if entries is not None else DEFAULT_REGEXES:
             self.add_row(entry.get("name", ""), entry.get("pattern", ""), notify=False)
 
         add = QPushButton("+  Добавить регэксп")
@@ -133,7 +134,7 @@ class RegexDialog(QDialog):
 
     @staticmethod
     def _reset_copy_button(button):
-        if button is None:
+        if button is None or sip.isdeleted(button):
             return
         button.setText("Копировать")
         button.setProperty("copied", False)

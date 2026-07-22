@@ -2,13 +2,37 @@
 
 from pathlib import Path
 
-from PyQt5.QtCore import QSize, Qt
-from PyQt5.QtGui import QFont, QIcon, QKeySequence
+from PyQt5 import sip
+from PyQt5.QtCore import QSize, Qt, QTimer
+from PyQt5.QtGui import QFont, QIcon
 from PyQt5.QtWidgets import (
     QApplication, QButtonGroup, QDialog, QFileDialog, QFrame, QHBoxLayout,
-    QLabel, QLineEdit, QPushButton, QRadioButton, QScrollArea, QSlider,
-    QVBoxLayout, QWidget,
+    QLabel, QLineEdit, QMessageBox, QPushButton, QRadioButton, QScrollArea,
+    QSlider, QVBoxLayout, QWidget,
 )
+
+from auto_update import UPDATE_DIALOG_STYLE as MESSAGE_STYLE
+
+
+def capture_hotkey(key, modifiers):
+    """None — клавишу нельзя отдать глобальному хоткею: Win не знает pynput, буква без Ctrl/Alt перестанет доходить до игры."""
+    if modifiers & Qt.MetaModifier:
+        return None
+    parts = []
+    if modifiers & Qt.ControlModifier:
+        parts.append("Ctrl")
+    if modifiers & Qt.AltModifier:
+        parts.append("Alt")
+    if modifiers & Qt.ShiftModifier:
+        parts.append("Shift")
+    if Qt.Key_F1 <= key <= Qt.Key_F24:
+        parts.append(f"F{key - Qt.Key_F1 + 1}")
+        return "+".join(parts)
+    is_alnum = Qt.Key_A <= key <= Qt.Key_Z or Qt.Key_0 <= key <= Qt.Key_9
+    if is_alnum and modifiers & (Qt.ControlModifier | Qt.AltModifier):
+        parts.append(chr(key))
+        return "+".join(parts)
+    return None
 
 
 class WheelSafeSlider(QSlider):
@@ -42,21 +66,21 @@ class HotkeyButton(QPushButton):
             return
         if event.key() in (Qt.Key_Control, Qt.Key_Shift, Qt.Key_Alt, Qt.Key_Meta):
             return
-        parts = []
-        modifiers = event.modifiers()
-        if modifiers & Qt.ControlModifier:
-            parts.append("Ctrl")
-        if modifiers & Qt.AltModifier:
-            parts.append("Alt")
-        if modifiers & Qt.ShiftModifier:
-            parts.append("Shift")
-        if modifiers & Qt.MetaModifier:
-            parts.append("Win")
-        key = QKeySequence(event.key()).toString(QKeySequence.NativeText)
-        if not key:
+        combo = capture_hotkey(event.key(), event.modifiers())
+        if combo is None:
+            self._flash_unsupported()
             return
-        parts.append(key.upper() if key.lower().startswith("f") else key)
-        self._finish("+".join(parts))
+        self._finish(combo)
+
+    def _flash_unsupported(self):
+        self.setText("Недоступная клавиша")
+
+        def restore():
+            if sip.isdeleted(self) or not self.property("capturing"):
+                return
+            self.setText("Нажмите клавишу…")
+
+        QTimer.singleShot(900, restore)
 
     def focusOutEvent(self, event):
         if self.property("capturing"):
@@ -200,7 +224,7 @@ class ActPilotSettingsDialog(QDialog):
             settings.get("previous_hotkey", legacy.DEFAULT_SETTINGS["previous_hotkey"])))
         self.hotkey_input = self._hotkey(section, "Следующий шаг", legacy.display_hotkey(
             settings.get("hotkey", legacy.DEFAULT_SETTINGS["hotkey"])))
-        self.layout_hotkey_input = self._hotkey(section, "Показать камни и дерево", legacy.display_hotkey(
+        self.layout_hotkey_input = self._hotkey(section, "Мини-панель (камни и дерево)", legacy.display_hotkey(
             settings.get("layout_hotkey", legacy.DEFAULT_SETTINGS["layout_hotkey"])))
         self.regex_hotkey_input = self._hotkey(section, "Открыть регэкспы", legacy.display_hotkey(
             settings.get("regex_hotkey", legacy.DEFAULT_SETTINGS["regex_hotkey"])))
@@ -224,7 +248,7 @@ class ActPilotSettingsDialog(QDialog):
         cancel.clicked.connect(self.reject)
         save = QPushButton("Сохранить")
         save.setObjectName("saveButton")
-        save.clicked.connect(self.accept)
+        save.clicked.connect(self._on_save)
         for button in (cancel, save):
             button.setFixedHeight(46)
             actions.addWidget(button)
@@ -287,9 +311,44 @@ class ActPilotSettingsDialog(QDialog):
         if path:
             self.client_path_input.setText(path)
 
-    def _reset(self):
-        self._should_reset = True
+    def _on_save(self):
+        assignments = (
+            ("Предыдущий шаг", self.previous_hotkey_input),
+            ("Следующий шаг", self.hotkey_input),
+            ("Мини-панель (камни и дерево)", self.layout_hotkey_input),
+            ("Открыть регэкспы", self.regex_hotkey_input),
+        )
+        seen = {}
+        for label, button in assignments:
+            normalized = self.legacy.normalize_hotkey(button.value)
+            if normalized in seen:
+                self._should_reset = False
+                box = QMessageBox(self)
+                box.setWindowTitle("Настройки")
+                box.setIcon(QMessageBox.Warning)
+                box.setText(
+                    f"Клавиша «{self.legacy.display_hotkey(button.value)}» назначена сразу "
+                    f"на «{seen[normalized]}» и «{label}».\nНазначьте разные клавиши."
+                )
+                box.setStyleSheet(MESSAGE_STYLE)
+                box.exec_()
+                return
+            seen[normalized] = label
         self.accept()
+
+    def _reset(self):
+        box = QMessageBox(self)
+        box.setWindowTitle("Сброс прогресса")
+        box.setIcon(QMessageBox.Warning)
+        box.setText("Сбросить прогресс прохождения?\nОтметки шагов и таймер будут очищены.")
+        reset_button = box.addButton("Сбросить", QMessageBox.AcceptRole)
+        box.addButton("Отмена", QMessageBox.RejectRole)
+        box.setStyleSheet(MESSAGE_STYLE)
+        box.exec_()
+        if box.clickedButton() is not reset_button:
+            return
+        self._should_reset = True
+        self._on_save()
 
     def get_settings(self):
         legacy = self.legacy
