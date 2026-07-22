@@ -11,7 +11,7 @@ APP_NAME = "ActPilot"
 def get_app_dir() -> Path:
     if getattr(sys, 'frozen', False):
         return Path(sys.executable).parent
-    return Path(__file__).resolve().parent.parent / "legacy"
+    return Path(__file__).resolve().parent
 
 
 def get_resource_dir() -> Path:

@@ -119,3 +119,31 @@ class ClientLevelMonitor(QObject):
 
 
 ClientLevelMonitorV2 = ClientLevelMonitor
+
+
+class ClientLevelMonitor(ClientLevelMonitorV2):
+    def __init__(self, parent=None, path=None):
+        self.event_is_initial = False
+        super().__init__(parent, path)
+
+    def _prime(self):
+        stat = self.path.stat()
+        start = max(0, stat.st_size - TAIL_BYTES)
+        with self.path.open("rb") as stream:
+            stream.seek(start)
+            raw = stream.read()
+            self._position = stream.tell()
+        self._identity = self._file_identity(stat)
+        self._pending = ""
+        events = parse_level_events(
+            current_session_tail(raw.decode("utf-8-sig", errors="replace"))
+        )
+        if events:
+            self.event_is_initial = True
+            try:
+                self._emit(events[-1])
+            finally:
+                self.event_is_initial = False
+
+
+ClientLevelMonitorV3 = ClientLevelMonitor

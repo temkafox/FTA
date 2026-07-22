@@ -98,7 +98,7 @@ def links_at_level(links, character_level):
     return scaled_links
 
 
-# В legacy ROOT считался от __file__ модуля в src/legacy; get_resource_dir() даёт тот же каталог
+# Прежде ROOT считался от __file__ модуля; get_resource_dir() даёт тот же каталог
 ROOT = get_resource_dir() / "data" / "poe1"
 ICON_DIR = ROOT / "gem_icons"
 

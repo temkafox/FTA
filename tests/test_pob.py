@@ -3,13 +3,7 @@ import zlib
 
 import pytest
 
-import poe1_builds as legacy_facade
 from actpilot import builds
-
-
-def test_legacy_facade_reexports_same_objects():
-    assert legacy_facade.parse_pob is builds.parse_pob
-    assert legacy_facade.Poe1ProfileStore is builds.Poe1ProfileStore
 
 
 MINIMAL_XML = (

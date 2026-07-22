@@ -8,11 +8,11 @@ dist/
 *.ico
 
 # Local user state; never commit paths, progress or imported builds.
-src/legacy/data/settings.json
-src/legacy/data/progress.json
-src/legacy/data/progress_poe1.json
-src/legacy/data/progress_poe2.json
-src/legacy/data/poe1_characters.json
+src/actpilot/data/settings.json
+src/actpilot/data/progress.json
+src/actpilot/data/progress_poe1.json
+src/actpilot/data/progress_poe2.json
+src/actpilot/data/poe1_characters.json
 
 # Editor/OS noise.
 .idea/

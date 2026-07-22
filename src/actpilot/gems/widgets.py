@@ -17,8 +17,8 @@ from PyQt5.QtWidgets import (
 from actpilot.data_cache import game_data
 from actpilot.gems.data import acquisition_html, badges_for, gem_art_path
 from actpilot.paths import get_resource_dir
-from poe1_ru_text import gem_description
-from poe1_widgets import GEM_COLORS, infer_gem_color
+from actpilot.ru_text import gem_description
+from actpilot.base_widgets import GEM_COLORS, infer_gem_color
 
 
 # Тот же кешированный объект, что и poe1_target_widgets.GEM_CATALOG (lru_cache в data_cache)
@@ -195,7 +195,7 @@ class CompactGemChains(QScrollArea):
         self.layout.addStretch()
 
 
-# В legacy ROOT считался от __file__ модуля в src/legacy; get_resource_dir() даёт тот же каталог
+# Прежде ROOT считался от __file__ модуля; get_resource_dir() даёт тот же каталог
 ROOT = get_resource_dir() / "data" / "poe1"
 ICON_DIR = ROOT / "gem_icons"
 ICON_INDEX = game_data("gem_icons.json")
@@ -690,3 +690,58 @@ class FallbackPoedbGemIcon(PoedbGemIcon):
 
 class FallbackPoedbGemChains(PoedbGemChains):
     icon_class = FallbackPoedbGemIcon
+
+
+class LevelGemIcon(CompactGemIcon):
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        level = self.gem.get("level")
+        if level in (None, ""):
+            return
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        badge = QRectF(27, 27, 15, 15)
+        painter.setPen(QPen(QColor("#d7b864"), 1))
+        painter.setBrush(QColor("#050709"))
+        painter.drawEllipse(badge)
+        painter.setPen(QColor("#f2e5b4"))
+        painter.setFont(QFont("Segoe UI", 7, QFont.Bold))
+        painter.drawText(badge, Qt.AlignCenter, str(level))
+
+
+class LevelGemChains(CompactGemChains):
+    def set_links(self, title, links):
+        while self.layout.count():
+            item = self.layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+        heading = QLabel(title)
+        heading.setAlignment(Qt.AlignCenter)
+        heading.setFont(QFont("Segoe UI", 11, QFont.DemiBold))
+        heading.setStyleSheet(
+            "color:#dadada; padding-bottom:8px; border-bottom:2px solid #258de5;"
+        )
+        self.layout.addWidget(heading)
+        for link in links:
+            row_widget = QWidget()
+            row_widget.setStyleSheet("background:transparent;")
+            row = QHBoxLayout(row_widget)
+            row.setContentsMargins(0, 0, 0, 0)
+            row.setSpacing(1)
+            infinity = QLabel("∞")
+            infinity.setFixedWidth(35)
+            infinity.setAlignment(Qt.AlignCenter)
+            infinity.setFont(QFont("Georgia", 25, QFont.Bold))
+            infinity.setStyleSheet("color:#e0a34b;")
+            row.addWidget(infinity)
+            for index, gem in enumerate(link.get("gems", [])):
+                if index:
+                    connector = QLabel("—")
+                    connector.setFixedWidth(14)
+                    connector.setAlignment(Qt.AlignCenter)
+                    connector.setStyleSheet("color:#d89c44; font-size:17px;")
+                    row.addWidget(connector)
+                row.addWidget(LevelGemIcon(gem))
+            row.addStretch()
+            self.layout.addWidget(row_widget)
+        self.layout.addStretch()

@@ -1,9 +1,9 @@
-import main
+from actpilot.shared import migrate_settings
 
 
 def test_adds_new_keys_to_old_settings():
     settings = {"hotkey": "<f8>", "layout_hotkey": "<f9>"}
-    assert main.migrate_settings(settings)
+    assert migrate_settings(settings)
     assert settings["previous_hotkey"] == "<ctrl>+<f3>"
     assert settings["regex_hotkey"] == "<f6>"
     assert settings["regexes"]
@@ -13,7 +13,7 @@ def test_adds_new_keys_to_old_settings():
 
 def test_preserves_user_hotkeys():
     settings = {"hotkey": "<f8>", "layout_hotkey": "<f9>", "previous_hotkey": "<ctrl>+p"}
-    main.migrate_settings(settings)
+    migrate_settings(settings)
     assert settings["hotkey"] == "<f8>"
     assert settings["layout_hotkey"] == "<f9>"
     assert settings["previous_hotkey"] == "<ctrl>+p"
@@ -22,21 +22,21 @@ def test_preserves_user_hotkeys():
 def test_preserves_user_regexes():
     entries = [{"name": "мой", "pattern": "x-x"}]
     settings = {"regexes": entries}
-    main.migrate_settings(settings)
+    migrate_settings(settings)
     assert settings["regexes"] is entries
 
 
 def test_idempotent():
     settings = {}
-    assert main.migrate_settings(settings)
+    assert migrate_settings(settings)
     snapshot = dict(settings)
-    assert not main.migrate_settings(settings)
+    assert not migrate_settings(settings)
     assert settings == snapshot
 
 
 def test_defaults_are_not_shared_reference():
     first, second = {}, {}
-    main.migrate_settings(first)
-    main.migrate_settings(second)
+    migrate_settings(first)
+    migrate_settings(second)
     first["regexes"][0]["name"] = "изменено"
     assert second["regexes"][0]["name"] != "изменено"

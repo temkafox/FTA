@@ -31,7 +31,7 @@ def test_tree_graph_cached_and_correct(tmp_path):
 
 
 def test_tree_graph_matches_legacy_build_adjacency(tmp_path):
-    from poe1_progression import build_adjacency
+    from actpilot.progression import build_adjacency
 
     f = tmp_path / "tree.json"
     f.write_text(

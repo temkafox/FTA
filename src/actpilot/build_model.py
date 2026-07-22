@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 
 from actpilot.paths import get_resource_dir
-from poe1_level_plan_v5 import passive_point_events
+from actpilot.level_plans import passive_point_events
 
 
 ROOT = get_resource_dir()

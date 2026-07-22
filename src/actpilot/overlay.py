@@ -16,7 +16,7 @@ from PyQt5.QtWidgets import (
     QPushButton, QVBoxLayout, QWidget,
 )
 
-import main as legacy
+import actpilot.shared as legacy
 
 from actpilot.hotkeys import HotkeyListener, display_hotkey, normalize_hotkey
 from actpilot.paths import APP_NAME, SETTINGS_FILE
@@ -34,14 +34,14 @@ from actpilot.widgets import (
     load_background_pixmap, make_icon_button, scaled_ui_pixmap,
     set_widget_transparent,
 )
-from main import SettingsDialog, ensure_dirs, migrate_legacy_progress, migrate_settings
+from actpilot.shared import SettingsDialog, ensure_dirs, migrate_legacy_progress, migrate_settings
 from actpilot.settings_dialog import UpdateSettingsDialog
 
-from poe1_builds import Poe1ProfileStore, clamp_level, new_profile
-from poe1_client_log_v2 import class_matches
-from poe1_client_monitor_v3 import ClientLevelMonitor
-from poe1_mini_tree_v9 import MiniPassiveRoute
-from poe1_manual_editor_v11 import ManualBuildEditor
+from actpilot.builds import Poe1ProfileStore, clamp_level, new_profile
+from actpilot.clientlog import class_matches
+from actpilot.clientmonitor import ClientLevelMonitor
+from actpilot.minipanels import MiniPassiveRoute
+from actpilot.editor import ManualBuildEditor
 from actpilot.minipanels import MiniGemLinksV5 as MiniGemLinks
 
 # Живой рантайм-патч app.py (settings_release.Poe1SettingsDialog = UpdateSettingsDialog)
@@ -2319,29 +2319,14 @@ from actpilot.build_dialog import (
     StrictProgressionBuildDialog,
     TargetBuildProgressDialog,
 )
-class _DeferredModule:
-    # v41/v50 грузятся естественной цепочкой позже overlay; связываем их лениво,
-    # чтобы загрузка overlay не тянула v50->v48->v39->v37->v36 (диалоговый цикл
-    # оживает при импорте overlay из середины башни). Патчи ManualBuildEditor из
-    # _open_build_progress выполняются в рантайме, когда модули уже целы.
-    __slots__ = ("_name",)
-
-    def __init__(self, name):
-        object.__setattr__(self, "_name", name)
-
-    def _mod(self):
-        import importlib
-        return importlib.import_module(object.__getattribute__(self, "_name"))
-
-    def __getattr__(self, attr):
-        return getattr(self._mod(), attr)
-
-    def __setattr__(self, attr, value):
-        setattr(self._mod(), attr, value)
+class _EditorPatchTarget:
+    # Инертная цель рантайм-патчей ManualBuildEditor: башня release_poe1_v41/v50, читавшая их, удалена
+    ManualBuildEditor = ManualBuildEditor
 
 
-editor_release = _DeferredModule("release_poe1_v41")
-editor_bridge = _DeferredModule("release_poe1_v50")
+editor_release = _EditorPatchTarget()
+editor_bridge = _EditorPatchTarget()
+editor_bridge.editor_release = editor_release
 previous = editor_bridge
 
 legacy.Overlay = Overlay

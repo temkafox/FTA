@@ -13,30 +13,26 @@ if apply_pending_update(sys.argv):
 
 
 ROOT = Path(__file__).resolve().parent
-for _source in (ROOT / "src", ROOT / "src" / "legacy"):
-    if str(_source) not in sys.path:
-        sys.path.insert(0, str(_source))
+_source = ROOT / "src"
+if str(_source) not in sys.path:
+    sys.path.insert(0, str(_source))
 
 from PyQt5.QtCore import Qt  # noqa: E402
 from PyQt5.QtGui import QFont  # noqa: E402
 from PyQt5.QtWidgets import QApplication  # noqa: E402
 
-import main as legacy  # noqa: E402
-import release_poe1_v41 as editor_release  # noqa: E402
-import release_poe1_v50 as editor_bridge  # noqa: E402
-import release_poe1_v35 as settings_release  # noqa: E402
-from poe1_manual_editor_v11 import ManualBuildEditor  # noqa: E402
-from release_poe1_v69 import CompactHeaderIconOverlay  # noqa: E402
-from actpilot.settings_dialog import UpdateSettingsDialog  # noqa: E402
+from actpilot.paths import APP_NAME  # noqa: E402
+from actpilot.widgets import ensure_cormorant_loaded  # noqa: E402
+from actpilot.overlay import CompactHeaderIconOverlay  # noqa: E402
 
 
 def main() -> int:
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
     QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
     app = QApplication(sys.argv)
-    app.setApplicationName(legacy.APP_NAME)
-    app.setApplicationDisplayName(f"{legacy.APP_NAME} — PoE 1")
-    legacy.ensure_cormorant_loaded()
+    app.setApplicationName(APP_NAME)
+    app.setApplicationDisplayName(f"{APP_NAME} — PoE 1")
+    ensure_cormorant_loaded()
     app.setFont(QFont("Segoe UI", 10))
     app.setStyleSheet("""
         QScrollBar:vertical {

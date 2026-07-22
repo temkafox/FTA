@@ -5,7 +5,7 @@ from PIL import Image
 
 
 ROOT = Path(SPECPATH)
-RUNTIME = ROOT / "src" / "legacy"
+RUNTIME = ROOT / "src" / "actpilot"
 BUILD_DIR = ROOT / "build"
 BUILD_DIR.mkdir(exist_ok=True)
 

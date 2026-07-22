@@ -18,7 +18,9 @@ from PyQt5.QtWidgets import (
     QPushButton, QScrollArea, QSlider, QSplitter, QTabWidget, QVBoxLayout, QWidget,
 )
 
-import main as legacy
+import actpilot.shared as legacy
+
+from actpilot.editor import ManualBuildEditor
 
 from actpilot.build_model import manual_passive_plan
 from actpilot.builds import PobImportError, clamp_level, parse_pob, stage_for_level
@@ -33,25 +35,25 @@ from actpilot.tree import (
     CachedZoomSafeTreeCanvas as ZoomSafeTreeCanvas, CompleteTooltipTreeCanvas,
     DetailedPassiveTreeCanvas,
 )
-from poe1_ascendancy_widget import AscendancyProgressWidget
-from poe1_ascendancy_widget_v2 import ConnectedAscendancyProgressWidget
-from poe1_client_monitor_v3 import ClientLevelMonitor, find_client_log
-from poe1_gem_widgets_v2 import LevelGemChains
-from poe1_level_plan import passive_plan
-from poe1_level_plan_v2 import stage_at_level
-from poe1_level_plan_v3 import passive_plan_by_level
-from poe1_level_plan_v4 import strict_passive_plan
-from poe1_level_plan_v5 import pob_kills_all_bandits, quest_aware_passive_plan
-from poe1_level_plan_v6 import book_only_passive_plan
-from poe1_level_plan_v7 import visible_book_passive_plan
-from poe1_level_plan_v8 import semantic_book_passive_plan
-from poe1_level_plan_v9 import corrected_semantic_plan
-from poe1_level_plan_v11 import ordinary_nearest_plan as nearest_connected_plan
-from poe1_level_plan_v12 import mastery_separated_plan
-from poe1_progression import nodes_at_level
-from poe1_stage_logic import previous_stage
-from poe1_target_widgets import DescribedGemLinksView, leveling_stage, ROOT as _SKILLTREE_ROOT
-from poe1_tree_fast import (
+from actpilot.ascendancy_widget import AscendancyProgressWidget
+from actpilot.ascendancy_widget import ConnectedAscendancyProgressWidget
+from actpilot.clientmonitor import ClientLevelMonitor, find_client_log
+from actpilot.gems.widgets import LevelGemChains
+from actpilot.level_plans import passive_plan
+from actpilot.level_plans_v2 import stage_at_level
+from actpilot.level_plans import passive_plan_by_level
+from actpilot.level_plans import strict_passive_plan
+from actpilot.level_plans import pob_kills_all_bandits, quest_aware_passive_plan
+from actpilot.level_plans import book_only_passive_plan
+from actpilot.level_plans import visible_book_passive_plan
+from actpilot.level_plans import semantic_book_passive_plan
+from actpilot.level_plans import corrected_semantic_plan
+from actpilot.level_plans import ordinary_nearest_plan as nearest_connected_plan
+from actpilot.level_plans import mastery_separated_plan
+from actpilot.progression import nodes_at_level
+from actpilot.stage_logic import previous_stage
+from actpilot.gem_cards import DescribedGemLinksView, leveling_stage, ROOT as _SKILLTREE_ROOT
+from actpilot.tree_placeholder import (
     ConstructionTreePlaceholder as CleanPassiveTreeCanvas,
     ConstructionTreePlaceholder as ConnectedPassiveTreeCanvas,
     ConstructionTreePlaceholder as ExplicitProgressionTreeCanvas,
@@ -70,7 +72,7 @@ from poe1_tree_fast import (
     ConstructionTreePlaceholder as RussianDescriptionTreeCanvas,
     ConstructionTreePlaceholder as SeparateMasteryTreeCanvas,
 )
-from poe1_widgets import GemLinksView
+from actpilot.base_widgets import GemLinksView
 
 
 TREE_GRAPH = tree_graph(_SKILLTREE_ROOT / "skilltree.json")
@@ -2751,8 +2753,8 @@ class FixedInteractionBuildDialog(FastBuildDialog):
 
 
 
-import main_poe1 as base
-from main_poe1 import PobImportDialog, button_style
-import release_poe1_v27 as fallback_renderer
-import main_poe1_target_v2 as per_level
-import main_poe1_target_v3 as v3
+import actpilot.profiles as base
+from actpilot.profiles import PobImportDialog, button_style
+import actpilot.build_dialog as fallback_renderer
+import actpilot.tree_graphs as per_level
+import actpilot.tree_graphs as v3

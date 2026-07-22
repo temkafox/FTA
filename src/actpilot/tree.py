@@ -16,7 +16,7 @@ from PyQt5.QtWidgets import (
 )
 
 from actpilot.paths import get_resource_dir
-from poe1_ascendancy_plan import ascendancy_plan
+from actpilot.ascendancy_plan import ascendancy_plan
 
 
 ROOT = get_resource_dir() / "data" / "poe1"
@@ -1335,7 +1335,7 @@ class RestoredAscendancyTreeCanvas(NativeAscendancyTreeCanvas):
 
 
 # Импорт после определения OpaqueMasteryTooltip: poe1_tooltips_ru тянет его обратно из этого модуля
-from poe1_tooltips_ru import RussianPassiveTooltip
+from actpilot.tooltips_ru import RussianPassiveTooltip
 
 
 class RussianDescriptionTreeCanvas(RestoredAscendancyTreeCanvas):
@@ -1348,7 +1348,7 @@ class RussianDescriptionTreeCanvas(RestoredAscendancyTreeCanvas):
         self.node_tooltip = RussianPassiveTooltip()
 
 
-from poe1_tooltips_ru_v3 import OfficialRussianPassiveTooltip
+from actpilot.tooltips_ru_v3 import OfficialRussianPassiveTooltip
 
 
 class OfficialRussianTreeCanvas(RussianDescriptionTreeCanvas):

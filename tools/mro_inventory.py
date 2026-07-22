@@ -1,4 +1,4 @@
-"""Runtime-инвентаризация эффективного поведения legacy-башни.
+"""Runtime-инвентаризация эффективного поведения пакета actpilot.
 
 Запуск: .venv/bin/python tools/mro_inventory.py [--out FILE]
 Сравнение с базой: .venv/bin/python tools/mro_inventory.py --check
@@ -17,12 +17,12 @@ os.environ.setdefault("PYNPUT_BACKEND_KEYBOARD", "dummy")
 os.environ.setdefault("PYNPUT_BACKEND_MOUSE", "dummy")
 
 ROOT = Path(__file__).resolve().parent.parent
-for entry in (str(ROOT), str(ROOT / "src"), str(ROOT / "src" / "legacy")):
+for entry in (str(ROOT), str(ROOT / "src")):
     if entry not in sys.path:
         sys.path.insert(0, entry)
 
 BASELINE = ROOT / "tools" / "baseline" / "mro_inventory.json"
-OWN_MODULE_HINTS = ("main", "poe1", "release_poe1", "actpilot", "settings_dialog", "regex_dialog")
+OWN_MODULE_HINTS = ("actpilot",)
 
 
 def is_own_module(module_name: str) -> bool:
@@ -68,58 +68,27 @@ def build_report() -> dict:
 
     app = QApplication([])
 
-    import main as legacy
+    from actpilot.widgets import ensure_cormorant_loaded
 
-    legacy.ensure_cormorant_loaded()
+    ensure_cormorant_loaded()
 
-    import release_poe1_v41 as editor_release
-    import release_poe1_v50 as editor_bridge
-    import release_poe1_v35 as settings_release
-    import release_poe1_v51 as mini_release
-    import main_poe1_enhanced as enhanced
-    from poe1_manual_editor_v11 import ManualBuildEditor
-    from release_poe1_v69 import CompactHeaderIconOverlay
+    from actpilot.overlay import CompactHeaderIconOverlay
     from actpilot.settings_dialog import ActPilotSettingsDialog
-
-    window = CompactHeaderIconOverlay()
-    window.show()
-    app.processEvents()
-
-    build_dialog_cls = None
-    try:
-        # Открытие билд-окна выполняет call-time патчи (release_poe1_v51 и далее)
-        window._open_build_progress()
-        app.processEvents()
-        dialog = getattr(window, "_build_dialog", None)
-        if dialog is not None:
-            build_dialog_cls = type(dialog)
-            dialog.hide()
-    except Exception as exc:
-        print(f"mro_inventory: build dialog failed: {exc}", file=sys.stderr)
+    from actpilot.editor import ManualBuildEditor
+    from actpilot.minipanels import MiniPassiveRoute
+    from actpilot.clientmonitor import ClientLevelMonitor
+    from actpilot.build_dialog import FixedInteractionBuildDialog
 
     roots = {
-        "overlay": type(window),
+        "overlay": CompactHeaderIconOverlay,
         "settings_dialog": ActPilotSettingsDialog,
-        "editor": editor_release.ManualBuildEditor,
-        "mini_route": mini_release.MiniPassiveRoute,
-        "client_monitor": enhanced.ClientLevelMonitor,
-    }
-    if build_dialog_cls is not None:
-        roots["build_dialog"] = build_dialog_cls
-
-    patched = {
-        "release_poe1_v41.ManualBuildEditor": f"{editor_release.ManualBuildEditor.__module__}.{editor_release.ManualBuildEditor.__name__}",
-        "release_poe1_v50.ManualBuildEditor": f"{editor_bridge.ManualBuildEditor.__module__}.{editor_bridge.ManualBuildEditor.__name__}",
-        "release_poe1_v51.MiniPassiveRoute": f"{mini_release.MiniPassiveRoute.__module__}.{mini_release.MiniPassiveRoute.__name__}",
-        "main_poe1_enhanced.ClientLevelMonitor": f"{enhanced.ClientLevelMonitor.__module__}.{enhanced.ClientLevelMonitor.__name__}",
+        "editor": ManualBuildEditor,
+        "mini_route": MiniPassiveRoute,
+        "client_monitor": ClientLevelMonitor,
+        "build_dialog": FixedInteractionBuildDialog,
     }
 
-    report = {
-        "roots": {name: class_inventory(cls) for name, cls in roots.items()},
-        "patched_module_attrs": patched,
-    }
-    window.close()
-    return report
+    return {"roots": {name: class_inventory(cls) for name, cls in roots.items()}}
 
 
 def compare(baseline: dict, current: dict) -> list[str]:
@@ -140,11 +109,6 @@ def compare(baseline: dict, current: dict) -> list[str]:
                     f"{root}.{name}: исходник изменился "
                     f"({base_attrs[name]['defined_in']} -> {cur_attrs[name]['defined_in']})"
                 )
-    for key, value in baseline["patched_module_attrs"].items():
-        if current["patched_module_attrs"].get(key) != value:
-            problems.append(
-                f"patch {key}: {value} -> {current['patched_module_attrs'].get(key)}"
-            )
     return problems
 
 

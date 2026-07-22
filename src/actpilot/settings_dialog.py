@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import (
 
 from auto_update import UPDATE_DIALOG_STYLE as MESSAGE_STYLE, add_update_controls
 
-import main as legacy
+import actpilot.shared as legacy
 
 
 def capture_hotkey(key, modifiers):
