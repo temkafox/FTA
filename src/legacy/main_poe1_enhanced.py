@@ -12,8 +12,9 @@ from PyQt5.QtWidgets import (
 
 import main as legacy
 import main_poe1 as base
+from actpilot.tree import PassiveTreeCanvas
 from poe1_builds import clamp_level, stage_for_level
-from poe1_widgets import ClientLevelMonitor, GemLinksView, PassiveTreeCanvas
+from poe1_widgets import ClientLevelMonitor, GemLinksView
 
 
 class EnhancedBuildProgressDialog(base.BuildProgressDialog):

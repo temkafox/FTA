@@ -1,22 +1,18 @@
-"""Enhanced PoE 1 build widgets: passive tree, gem links and Client.txt monitor."""
+"""Гем-виджеты и Client.txt-монитор; PassiveTreeCanvas переехал в actpilot.tree."""
 
 from __future__ import annotations
 
-import json
-import math
 import os
 import re
 from pathlib import Path
 
-from PyQt5.QtCore import QPoint, QPointF, QRectF, Qt, QTimer, pyqtSignal, QObject
-from PyQt5.QtGui import QColor, QFont, QPainter, QPainterPath, QPen, QPolygonF
+from PyQt5.QtCore import QPointF, Qt, QTimer, pyqtSignal, QObject
+from PyQt5.QtGui import QColor, QFont, QPainter, QPen, QPolygonF
 from PyQt5.QtWidgets import (
-    QFrame, QHBoxLayout, QLabel, QScrollArea, QSizePolicy, QToolTip,
-    QVBoxLayout, QWidget,
+    QFrame, QHBoxLayout, QLabel, QScrollArea, QVBoxLayout, QWidget,
 )
 
 
-TREE_FILE = Path(__file__).parent / "data" / "poe1" / "skilltree.json"
 LEVEL_PATTERN = re.compile(
     r":\s*(?P<name>[^\r\n:]+?)\s*\((?P<class>[^)]+)\)\s+is now level\s+(?P<level>\d{1,3})",
     re.IGNORECASE,
@@ -238,158 +234,3 @@ class GemLinksView(QScrollArea):
             vertical.addLayout(row)
             self.layout.addWidget(block)
         self.layout.addStretch()
-
-
-class PassiveTreeCanvas(QWidget):
-    def __init__(self, tree_file: Path = TREE_FILE, parent=None):
-        super().__init__(parent)
-        self.setMinimumSize(520, 390)
-        self.setMouseTracking(True)
-        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.nodes = {}
-        self.positions = {}
-        self.edges = []
-        self.selected = set()
-        self.added = set()
-        self.center = QPointF(0, 0)
-        self.scale = 0.035
-        self._drag_start = None
-        self._load(tree_file)
-
-    def _load(self, path: Path):
-        try:
-            data = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, ValueError):
-            return
-        self.nodes = data.get("nodes", {})
-        groups = data.get("groups", {})
-        radii = data.get("constants", {}).get("orbitRadii", [])
-        counts = data.get("constants", {}).get("skillsPerOrbit", [])
-        for node_id, node in self.nodes.items():
-            group = groups.get(str(node.get("group")), {})
-            orbit = int(node.get("orbit", 0))
-            index = int(node.get("orbitIndex", 0))
-            radius = radii[orbit] if orbit < len(radii) else 0
-            count = counts[orbit] if orbit < len(counts) else 1
-            angle = 2 * math.pi * index / max(1, count)
-            x = float(group.get("x", 0)) + radius * math.sin(angle)
-            y = float(group.get("y", 0)) - radius * math.cos(angle)
-            self.positions[str(node_id)] = QPointF(x, y)
-        seen = set()
-        for node_id, node in self.nodes.items():
-            for other in node.get("out", []):
-                edge = tuple(sorted((str(node_id), str(other))))
-                if edge not in seen and edge[0] in self.positions and edge[1] in self.positions:
-                    seen.add(edge)
-                    self.edges.append(edge)
-
-    def set_stage(self, nodes: list[int], previous_nodes: list[int] | None = None):
-        self.selected = {str(node) for node in nodes if str(node) in self.positions}
-        previous = {str(node) for node in (previous_nodes or [])}
-        self.added = self.selected - previous
-        self.fit_selected()
-        self.update()
-
-    def fit_selected(self):
-        points = [self.positions[node] for node in self.selected if node in self.positions]
-        if not points:
-            return self.fit_all()
-        min_x, max_x = min(p.x() for p in points), max(p.x() for p in points)
-        min_y, max_y = min(p.y() for p in points), max(p.y() for p in points)
-        self.center = QPointF((min_x + max_x) / 2, (min_y + max_y) / 2)
-        width, height = max(1200, max_x - min_x), max(1200, max_y - min_y)
-        self.scale = min(max(0.018, (self.width() - 80) / width), max(0.018, (self.height() - 80) / height), 0.22)
-
-    def fit_all(self):
-        if not self.positions:
-            return
-        xs = [p.x() for p in self.positions.values()]
-        ys = [p.y() for p in self.positions.values()]
-        self.center = QPointF((min(xs) + max(xs)) / 2, (min(ys) + max(ys)) / 2)
-        self.scale = min((self.width() - 30) / (max(xs) - min(xs)), (self.height() - 30) / (max(ys) - min(ys)))
-        self.update()
-
-    def _screen(self, point: QPointF) -> QPointF:
-        return QPointF(
-            (point.x() - self.center.x()) * self.scale + self.width() / 2,
-            (point.y() - self.center.y()) * self.scale + self.height() / 2,
-        )
-
-    def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
-        painter.fillRect(self.rect(), QColor("#111116"))
-        if not self.positions:
-            painter.setPen(QColor("#aaaaaa"))
-            painter.drawText(self.rect(), Qt.AlignCenter, "Данные дерева PoE 1 не найдены")
-            return
-        painter.setPen(QPen(QColor(75, 75, 84, 120), 1))
-        for first, second in self.edges:
-            a, b = self._screen(self.positions[first]), self._screen(self.positions[second])
-            if self.rect().adjusted(-20, -20, 20, 20).contains(a.toPoint()) or self.rect().contains(b.toPoint()):
-                painter.drawLine(a, b)
-        painter.setPen(QPen(QColor("#9d7735"), 2))
-        for first, second in self.edges:
-            if first in self.selected and second in self.selected:
-                painter.drawLine(self._screen(self.positions[first]), self._screen(self.positions[second]))
-        radius = max(1.3, min(3.2, 1.5 + self.scale * 8))
-        painter.setPen(Qt.NoPen)
-        painter.setBrush(QColor(82, 82, 92, 180))
-        for node_id, point in self.positions.items():
-            screen = self._screen(point)
-            if self.rect().contains(screen.toPoint()):
-                painter.drawEllipse(screen, radius, radius)
-        for node_id in self.selected:
-            screen = self._screen(self.positions[node_id])
-            painter.setPen(QPen(QColor("#f3d18a"), 1.5))
-            painter.setBrush(QColor("#9d6827"))
-            painter.drawEllipse(screen, 5.5, 5.5)
-        for node_id in self.added:
-            screen = self._screen(self.positions[node_id])
-            painter.setPen(QPen(QColor("#d7ffcf"), 1.5))
-            painter.setBrush(QColor("#42c95e"))
-            painter.drawEllipse(screen, 6.5, 6.5)
-
-    def wheelEvent(self, event):
-        old_scale = self.scale
-        factor = 1.18 if event.angleDelta().y() > 0 else 1 / 1.18
-        self.scale = max(0.008, min(0.65, self.scale * factor))
-        cursor = event.pos()
-        world_x = self.center.x() + (cursor.x() - self.width() / 2) / old_scale
-        world_y = self.center.y() + (cursor.y() - self.height() / 2) / old_scale
-        self.center = QPointF(
-            world_x - (cursor.x() - self.width() / 2) / self.scale,
-            world_y - (cursor.y() - self.height() / 2) / self.scale,
-        )
-        self.update()
-
-    def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            self._drag_start = event.pos()
-            self.setCursor(Qt.ClosedHandCursor)
-
-    def mouseMoveEvent(self, event):
-        if self._drag_start is not None:
-            delta = event.pos() - self._drag_start
-            self._drag_start = event.pos()
-            self.center -= QPointF(delta.x() / self.scale, delta.y() / self.scale)
-            self.update()
-            return
-        nearest = None
-        nearest_distance = 11.0
-        for node_id in self.selected:
-            point = self._screen(self.positions[node_id])
-            distance = math.hypot(point.x() - event.x(), point.y() - event.y())
-            if distance < nearest_distance:
-                nearest, nearest_distance = node_id, distance
-        if nearest:
-            node = self.nodes.get(nearest, {})
-            QToolTip.showText(event.globalPos(), node.get("name", f"Узел {nearest}"), self)
-
-    def mouseReleaseEvent(self, event):
-        self._drag_start = None
-        self.unsetCursor()
-
-    def mouseDoubleClickEvent(self, event):
-        self.fit_selected()
-        self.update()
