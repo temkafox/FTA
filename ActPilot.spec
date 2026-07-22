@@ -5,7 +5,7 @@ from PIL import Image
 
 
 ROOT = Path(SPECPATH)
-RUNTIME = ROOT / "src" / "legacy"
+RUNTIME = ROOT / "src" / "actpilot"
 BUILD_DIR = ROOT / "build"
 BUILD_DIR.mkdir(exist_ok=True)
 
@@ -35,7 +35,7 @@ datas += include_directory(RUNTIME / "data" / "poe1", "data/poe1")
 
 a = Analysis(
     [str(ROOT / "app.py")],
-    pathex=[str(RUNTIME)],
+    pathex=[str(ROOT / "src"), str(RUNTIME)],
     binaries=[],
     datas=datas,
     hiddenimports=[],

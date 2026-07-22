@@ -1,0 +1,1058 @@
+{
+ "roots": {
+  "build_dialog": {
+   "attributes": {
+    "__init__": {
+     "defined_in": "actpilot.build_dialog.FixedInteractionBuildDialog",
+     "hash": "92800720ca15251a"
+    },
+    "_apply_actpilot_window_style": {
+     "defined_in": "actpilot.build_dialog.CompactBuildDialog",
+     "hash": "dc8c4814d13a5a0b"
+    },
+    "_apply_asset_frame_layout": {
+     "defined_in": "actpilot.build_dialog.AssetFramedBuildDialog",
+     "hash": "01e7c5c64a0ee468"
+    },
+    "_apply_asset_style": {
+     "defined_in": "actpilot.build_dialog.AssetFramedBuildDialog",
+     "hash": "d7f5f031b6b42312"
+    },
+    "_apply_overlay_style": {
+     "defined_in": "actpilot.build_dialog.LocalizedOverlayBuildDialog",
+     "hash": "0db024cbde143b97"
+    },
+    "_change_level": {
+     "defined_in": "actpilot.build_dialog.BuildProgressDialog",
+     "hash": "83d6520d0a43064c"
+    },
+    "_commit_slider_level": {
+     "defined_in": "actpilot.build_dialog.CompactBuildDialog",
+     "hash": "b69d96b59cf8755a"
+    },
+    "_compact_layout": {
+     "defined_in": "actpilot.build_dialog.CompactBuildDialog",
+     "hash": "fba88ccf8c9ea758"
+    },
+    "_configure_client_monitor": {
+     "defined_in": "actpilot.build_dialog.PolishedBuildDialog",
+     "hash": "5f4a68e87b0baf69"
+    },
+    "_fit_all": {
+     "defined_in": "actpilot.build_dialog.EnhancedBuildProgressDialog",
+     "hash": "57ce6bb020955253"
+    },
+    "_fit_selected": {
+     "defined_in": "actpilot.build_dialog.EnhancedBuildProgressDialog",
+     "hash": "55f54425be9cae05"
+    },
+    "_fit_upcoming": {
+     "defined_in": "actpilot.build_dialog.CombinedBuildDialog",
+     "hash": "bc05f56deded261c"
+    },
+    "_import_pob": {
+     "defined_in": "actpilot.build_dialog.BuildProgressDialog",
+     "hash": "21e35a36dceccd73"
+    },
+    "_install_asset_header": {
+     "defined_in": "actpilot.build_dialog.AssetFramedBuildDialog",
+     "hash": "f12b514371848922"
+    },
+    "_new_profile": {
+     "defined_in": "actpilot.build_dialog.BuildProgressDialog",
+     "hash": "f215a5107a29beda"
+    },
+    "_on_level_seen": {
+     "defined_in": "actpilot.build_dialog.ReliableClientBuildDialog",
+     "hash": "a857f504364b3ccc"
+    },
+    "_open_manual_editor": {
+     "defined_in": "actpilot.build_dialog.ClearGemEditorBuildDialog",
+     "hash": "02249e552b30fb37"
+    },
+    "_profile_changed": {
+     "defined_in": "actpilot.build_dialog.EnhancedBuildProgressDialog",
+     "hash": "93032f06d650663d"
+    },
+    "_refresh_step_context": {
+     "defined_in": "actpilot.build_dialog.EnhancedBuildProgressDialog",
+     "hash": "e6043a76d0ab7e28"
+    },
+    "_remove_tree_chrome": {
+     "defined_in": "actpilot.build_dialog.CompactBuildDialog",
+     "hash": "84fa9b5419d225af"
+    },
+    "_rename_profile": {
+     "defined_in": "actpilot.build_dialog.BuildProgressDialog",
+     "hash": "65f341f862c50b65"
+    },
+    "_render_gems": {
+     "defined_in": "actpilot.build_dialog.MasteryAndQuestBuildDialog",
+     "hash": "03772f4e05d8ab54"
+    },
+    "_render_tree": {
+     "defined_in": "actpilot.build_dialog.ExactManualBuildDialog",
+     "hash": "718fd1f71bcd9248"
+    },
+    "_scroll": {
+     "defined_in": "actpilot.build_dialog.BuildProgressDialog",
+     "hash": "2fb30abb86f2ad94"
+    },
+    "_slider_level_changed": {
+     "defined_in": "actpilot.build_dialog.CompactBuildDialog",
+     "hash": "aa075a78faca76f1"
+    },
+    "closeEvent": {
+     "defined_in": "actpilot.build_dialog.FastBuildDialog",
+     "hash": "f78e18b4b2f8e5e7"
+    },
+    "paintEvent": {
+     "defined_in": "actpilot.build_dialog.AssetFramedBuildDialog",
+     "hash": "5ee590eea9a09357"
+    },
+    "refresh_level": {
+     "defined_in": "actpilot.build_dialog.FastBuildDialog",
+     "hash": "b85aa8c433d37856"
+    },
+    "reload": {
+     "defined_in": "actpilot.build_dialog.FixedInteractionBuildDialog",
+     "hash": "b4933fc8a67a60ae"
+    },
+    "resizeEvent": {
+     "defined_in": "actpilot.build_dialog.AssetFramedBuildDialog",
+     "hash": "0fbd59d11e47d3d5"
+    },
+    "showEvent": {
+     "defined_in": "actpilot.build_dialog.FixedInteractionBuildDialog",
+     "hash": "6b00f56b512c1de9"
+    },
+    "sync_window_opacity": {
+     "defined_in": "actpilot.build_dialog.FixedInteractionBuildDialog",
+     "hash": "ceea8c323eb9bfe8"
+    }
+   },
+   "mro": [
+    "actpilot.build_dialog.FixedInteractionBuildDialog",
+    "actpilot.build_dialog.FastBuildDialog",
+    "actpilot.build_dialog.ReliableClientBuildDialog",
+    "actpilot.build_dialog.ClearGemEditorBuildDialog",
+    "actpilot.build_dialog.StableEditorBuildDialog",
+    "actpilot.build_dialog.ExactManualBuildDialog",
+    "actpilot.build_dialog.EditableBuildDialog",
+    "actpilot.build_dialog.ExplicitRouteBuildDialog",
+    "actpilot.build_dialog.PolishedBuildDialog",
+    "actpilot.build_dialog.AssetFramedBuildDialog",
+    "actpilot.build_dialog.CompactBuildDialog",
+    "actpilot.build_dialog.MasteryAndQuestBuildDialog",
+    "actpilot.build_dialog.StrictNearestBuildDialog",
+    "actpilot.build_dialog.LocalizedOverlayBuildDialog",
+    "actpilot.build_dialog.RestoredAscendancyBuildDialog",
+    "actpilot.build_dialog.NativeAscendancyBuildDialog",
+    "actpilot.build_dialog.IntegratedTreeBuildDialog",
+    "actpilot.build_dialog.ConnectedAscendancyBuildDialog",
+    "actpilot.build_dialog.AscendancyBuildDialog",
+    "actpilot.build_dialog.SocketedGemBuildDialog",
+    "actpilot.build_dialog.CleanArtworkBuildDialog",
+    "actpilot.build_dialog.CorrectedSemanticBuildDialog",
+    "actpilot.build_dialog.SemanticPassiveBuildDialog",
+    "actpilot.build_dialog.ContinuousPassiveBuildDialog",
+    "actpilot.build_dialog.BookOnlyBuildDialog",
+    "actpilot.build_dialog.QuestAwareBuildDialog",
+    "actpilot.build_dialog.StrictProgressionBuildDialog",
+    "actpilot.build_dialog.ImmediateFocusBuildDialog",
+    "actpilot.build_dialog.FinalLevelMappedBuildDialog",
+    "actpilot.build_dialog.LevelMappedBuildDialog",
+    "actpilot.build_dialog.ScaledGemBuildDialog",
+    "actpilot.build_dialog.FixedProgressionBuildDialog",
+    "actpilot.build_dialog.ProgressionBuildDialog",
+    "actpilot.build_dialog.CombinedBuildDialog",
+    "actpilot.build_dialog.RouteBuildDialog",
+    "actpilot.build_dialog.OrbitalBuildDialog",
+    "actpilot.build_dialog.MasteryBuildDialog",
+    "actpilot.build_dialog.FullStageBuildDialog",
+    "actpilot.build_dialog.CleanBuildDialog",
+    "actpilot.build_dialog.ReleaseBuildDialog",
+    "actpilot.build_dialog.FinalBuildDialog",
+    "actpilot.build_dialog.CorrectedBuildDialog",
+    "actpilot.build_dialog.PerLevelBuildDialog",
+    "actpilot.build_dialog.TargetBuildProgressDialog",
+    "actpilot.build_dialog.EnhancedBuildProgressDialog",
+    "actpilot.build_dialog.BuildProgressDialog"
+   ]
+  },
+  "client_monitor": {
+   "attributes": {
+    "__init__": {
+     "defined_in": "actpilot.clientmonitor.ClientLevelMonitor",
+     "hash": "b5d94034a3cab989"
+    },
+    "_emit": {
+     "defined_in": "actpilot.clientmonitor.ClientLevelMonitor",
+     "hash": "b68b54eb69e198b6"
+    },
+    "_file_identity": {
+     "defined_in": "actpilot.clientmonitor.ClientLevelMonitor",
+     "hash": "8b701087f5e519de"
+    },
+    "_prime": {
+     "defined_in": "actpilot.clientmonitor.ClientLevelMonitor",
+     "hash": "347b81530c868d44"
+    },
+    "level_seen": {
+     "defined_in": "actpilot.clientmonitor.ClientLevelMonitor",
+     "hash": null
+    },
+    "poll": {
+     "defined_in": "actpilot.clientmonitor.ClientLevelMonitor",
+     "hash": "ab05fe71793d845f"
+    },
+    "start": {
+     "defined_in": "actpilot.clientmonitor.ClientLevelMonitor",
+     "hash": "e5d7c172f095c705"
+    },
+    "status_changed": {
+     "defined_in": "actpilot.clientmonitor.ClientLevelMonitor",
+     "hash": null
+    }
+   },
+   "mro": [
+    "actpilot.clientmonitor.ClientLevelMonitor",
+    "actpilot.clientmonitor.ClientLevelMonitor"
+   ]
+  },
+  "editor": {
+   "attributes": {
+    "__init__": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "6df82e93e64bab76"
+    },
+    "_add_gem": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "4e2c5f59849f359c"
+    },
+    "_ascendancy_changed": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "d68e1ef1e6190316"
+    },
+    "_available": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "9745323c4f9aa179"
+    },
+    "_choose_ascendancy": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "14803731c92239e1"
+    },
+    "_choose_class": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "c1a3ee4dc53af95d"
+    },
+    "_choose_gem_stage": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "c6d033995d4414e6"
+    },
+    "_choose_passive_stage": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "148ddb9dca952a42"
+    },
+    "_choose_target_level": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "3e13651d31a29088"
+    },
+    "_class_changed": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "d3f250d3b19ec974"
+    },
+    "_current_gem_stage_index": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "92b4d011d2d8a011"
+    },
+    "_current_link": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "1cb5228fc0517a06"
+    },
+    "_current_stage": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "7dd73eec484c31e7"
+    },
+    "_delete_gem_stage": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "836630117c2245ce"
+    },
+    "_delete_link": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "8802cd36b3b10557"
+    },
+    "_delete_passive_stage": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "8b353f757a8fb212"
+    },
+    "_delete_stage": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "0f2fe9e0899ec29b"
+    },
+    "_effective_stage_index": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "43f78ed79a81eda2"
+    },
+    "_ensure_editable_stage": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "d1516c421f75546e"
+    },
+    "_exact_stage_index": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "ea57234a06af39fe"
+    },
+    "_fill_ascendancies": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "44dc7dd8303f9071"
+    },
+    "_fit_tree": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "5a323ea5b0fac47b"
+    },
+    "_flash": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "7c23c7b204eb21a0"
+    },
+    "_focus_stage_start": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "2660d138c02b72f3"
+    },
+    "_force_editor_input": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "ac3c8abeba0061f0"
+    },
+    "_gem_level_changed": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "89370221190c204d"
+    },
+    "_gem_overview_changed": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "09d476bd6fc505bf"
+    },
+    "_gem_page": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "21c79c5306c7c53a"
+    },
+    "_gem_stage_label": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "92c94adbcb92d957"
+    },
+    "_infer_support": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "c7ea9b16a8694520"
+    },
+    "_install_combo_popup_fix": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "1b0a8b3af9db74dc"
+    },
+    "_install_gem_stage_controls": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "622216eb8c54d0b5"
+    },
+    "_install_gem_stage_overview": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "f1e5ab38e0cafd56"
+    },
+    "_install_passive_stage_controls": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "407da9a03dd4df99"
+    },
+    "_install_reliable_selectors": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "6073f150df97dda3"
+    },
+    "_level_changed": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "18552359e7eb0f57"
+    },
+    "_link_changed": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "5edb572ec89c18c2"
+    },
+    "_link_title": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "417d33ea0fef6e44"
+    },
+    "_load_passive_stage": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "5d7b7bb42626aea5"
+    },
+    "_load_state_to_controls": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "8a39313defa0bbcb"
+    },
+    "_neighbors": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "f23bec6962b416f3"
+    },
+    "_new_gem_stage": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "0c228642291e41c2"
+    },
+    "_new_link": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "be990947085af336"
+    },
+    "_new_passive_stage": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "98f18b28e3e08f93"
+    },
+    "_new_stage": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "5ae1e93eea2e1fd7"
+    },
+    "_node_clicked": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "aa399292831467ae"
+    },
+    "_passive_page": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "e10e9062582ad2cc"
+    },
+    "_passive_stage_changed": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "71cddd33b8f5fa84"
+    },
+    "_populate_passive_stages": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "e0db71b955f5d129"
+    },
+    "_range_title": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "3f924e76f7e5526f"
+    },
+    "_rebuild_gem_stage_overview": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "9006eeefd6acc0ed"
+    },
+    "_refresh_stages": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "c6b8b408e85a15fa"
+    },
+    "_refresh_tree": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "69aedb5da9fef7ff"
+    },
+    "_remove_gem": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "487594c202eebe0f"
+    },
+    "_replace_in_layout": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "992cbd4f2a47578c"
+    },
+    "_revert_level_gems": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "2c15d46a7d7a3832"
+    },
+    "_save": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "ec53b88ee1aafcfa"
+    },
+    "_select_gem_stage": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "f6ff870524dd6733"
+    },
+    "_selected_ascendancy": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "b48aa6f7c3a5e138"
+    },
+    "_selected_regular": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "392c03bf8e58e6b2"
+    },
+    "_selector_button": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "bef6539390e5640b"
+    },
+    "_show_gems_for_level": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "c19bd3208ed38493"
+    },
+    "_sorted_gem_stages": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "c44f5e814606abb6"
+    },
+    "_stage_changed": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "a033d56229776422"
+    },
+    "_stage_label": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "76180c4a812e0d3d"
+    },
+    "_stage_level_changed": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "f5151717ee8254ed"
+    },
+    "_style": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "fce56a92bdb909bb"
+    },
+    "_sync_gem_stage_button": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "ebcd2cbb27370c98"
+    },
+    "_sync_passive_stage": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "e9ab1e64c1abdf8c"
+    },
+    "_sync_selector_texts": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "2036e5bd31c6a69c"
+    },
+    "_toggle_ascendancy_node": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "faa4056116e95a34"
+    },
+    "_toggle_mastery": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "97f059b56ee1c9da"
+    },
+    "_toggle_passive": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "438238474af087a8"
+    },
+    "_undo_node": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "1ee85468b68250ff"
+    },
+    "showEvent": {
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "8bd2167fb8f4475e"
+    }
+   },
+   "mro": [
+    "actpilot.editor.ManualBuildEditor",
+    "actpilot.editor.ManualBuildEditor",
+    "actpilot.editor.ManualBuildEditor",
+    "actpilot.editor.ManualBuildEditor",
+    "actpilot.editor.ManualBuildEditor",
+    "actpilot.editor.ManualBuildEditor",
+    "actpilot.editor.ManualBuildEditor",
+    "actpilot.editor.ManualBuildEditor",
+    "actpilot.editor.ManualBuildEditor",
+    "actpilot.editor.ManualBuildEditor",
+    "actpilot.editor.ManualBuildEditor"
+   ]
+  },
+  "mini_route": {
+   "attributes": {
+    "VIEW_H": {
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
+     "hash": null
+    },
+    "VIEW_W": {
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
+     "hash": null
+    },
+    "WORLD_X": {
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
+     "hash": null
+    },
+    "WORLD_Y": {
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
+     "hash": null
+    },
+    "__init__": {
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
+     "hash": "4b345d30a1aee39e"
+    },
+    "_build_tree_layout": {
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
+     "hash": "3ccb3ca70341c65e"
+    },
+    "_connected": {
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
+     "hash": "e559662e48a4b9e9"
+    },
+    "_draw_local_node": {
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
+     "hash": "6f3b8b3f9c58ee04"
+    },
+    "_draw_node": {
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
+     "hash": "84abc0814563867a"
+    },
+    "_fill_rectangular_crop": {
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
+     "hash": "9077a4b68deac070"
+    },
+    "_graph": {
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
+     "hash": null
+    },
+    "_node": {
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
+     "hash": "d4d537cb53424dc5"
+    },
+    "_node_size": {
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
+     "hash": "b87b7cbe978d7ad8"
+    },
+    "_pick_nodes": {
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
+     "hash": "bc7d557e1e3ff19b"
+    },
+    "_screen_positions": {
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
+     "hash": "9fd28a25e1304876"
+    },
+    "_set_local_plan": {
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
+     "hash": "a9498e0b9ee574d6"
+    },
+    "_tree_graph": {
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
+     "hash": "ba82f53b252172cf"
+    },
+    "_world_position": {
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
+     "hash": "bd7e0d0183f695da"
+    },
+    "activated": {
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
+     "hash": null
+    },
+    "leaveEvent": {
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
+     "hash": "6f29c6c1816bb99a"
+    },
+    "mouseMoveEvent": {
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
+     "hash": "8e5b4fc1ecd0d673"
+    },
+    "mouseReleaseEvent": {
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
+     "hash": "0f6746cf3926f7fc"
+    },
+    "paintEvent": {
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
+     "hash": "1d688ae975336a6e"
+    },
+    "set_build_level": {
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
+     "hash": "607453cf8b92f2e0"
+    }
+   },
+   "mro": [
+    "actpilot.minipanels.MiniPassiveRoute",
+    "actpilot.minipanels.MiniPassiveRoute",
+    "actpilot.minipanels.MiniPassiveRoute",
+    "actpilot.minipanels.MiniPassiveRoute",
+    "actpilot.minipanels.MiniPassiveRoute",
+    "actpilot.minipanels.MiniPassiveRoute",
+    "actpilot.minipanels.MiniPassiveRoute",
+    "actpilot.minipanels.MiniPassiveRoute",
+    "actpilot.minipanels.MiniPassiveRoute"
+   ]
+  },
+  "overlay": {
+   "attributes": {
+    "__init__": {
+     "defined_in": "actpilot.overlay.CompactHeaderOverlay",
+     "hash": "a056ec96f338cdbc"
+    },
+    "_apply_click_through_mode": {
+     "defined_in": "actpilot.overlay.Overlay",
+     "hash": "428e0f0587f02477"
+    },
+    "_apply_panel_margins": {
+     "defined_in": "actpilot.overlay.Overlay",
+     "hash": "c74a63c3e7418739"
+    },
+    "_apply_transparent_layers": {
+     "defined_in": "actpilot.overlay.Overlay",
+     "hash": "f516dafb35fd65cc"
+    },
+    "_apply_ui_scale": {
+     "defined_in": "actpilot.overlay.Overlay",
+     "hash": "fb93146901f66d3b"
+    },
+    "_apply_welcome_visibility": {
+     "defined_in": "actpilot.overlay.MiniTreeOverlay_v51",
+     "hash": "14487d964f0ec61e"
+    },
+    "_close_layout_dialog": {
+     "defined_in": "actpilot.overlay.Overlay",
+     "hash": "4110115e2eae63ee"
+    },
+    "_collapsed_height": {
+     "defined_in": "actpilot.overlay.Overlay",
+     "hash": "afedf282e5dd3d42"
+    },
+    "_configure_mini_monitor": {
+     "defined_in": "actpilot.overlay.MiniTreeOverlay_v51",
+     "hash": "b8993dcc7585bc96"
+    },
+    "_do_resize": {
+     "defined_in": "actpilot.overlay.Overlay",
+     "hash": "b8741cd49787ff79"
+    },
+    "_drag_zone_height": {
+     "defined_in": "actpilot.overlay.Overlay",
+     "hash": "923b3059179e10d5"
+    },
+    "_get_edge": {
+     "defined_in": "actpilot.overlay.Overlay",
+     "hash": "110f371b5330b4f5"
+    },
+    "_hit_test_interactive": {
+     "defined_in": "actpilot.overlay.Overlay",
+     "hash": "58cf806d732351bb"
+    },
+    "_interactive_widgets": {
+     "defined_in": "actpilot.overlay.MiniTreeOverlay_v51",
+     "hash": "ec7fdf0bb3b88c44"
+    },
+    "_load_profile_campaign": {
+     "defined_in": "actpilot.overlay.Poe1Overlay",
+     "hash": "dfd8a1bd0903926e"
+    },
+    "_load_progress": {
+     "defined_in": "actpilot.overlay.Poe1Overlay",
+     "hash": "0866544fccc5b7b3"
+    },
+    "_load_steps_data": {
+     "defined_in": "actpilot.overlay.Overlay",
+     "hash": "235bf9a1a386d189"
+    },
+    "_notify_hotkey_error": {
+     "defined_in": "actpilot.overlay.Overlay",
+     "hash": "9733a303878f256a"
+    },
+    "_on_active_step_changed": {
+     "defined_in": "actpilot.overlay.Overlay",
+     "hash": "2e9082c167976097"
+    },
+    "_on_corner_resize_end": {
+     "defined_in": "actpilot.overlay.Overlay",
+     "hash": "0d65ff171eb466be"
+    },
+    "_on_first_step": {
+     "defined_in": "actpilot.overlay.Overlay",
+     "hash": "4035c710dadb0b51"
+    },
+    "_on_mini_level_seen": {
+     "defined_in": "actpilot.overlay.MiniTreeOverlay_v51",
+     "hash": "0388d6360472aec1"
+    },
+    "_on_next_hotkey": {
+     "defined_in": "actpilot.overlay.Overlay",
+     "hash": "9bf578115021c5e7"
+    },
+    "_on_previous_hotkey": {
+     "defined_in": "actpilot.overlay.Overlay",
+     "hash": "f865ae1c672a8bf0"
+    },
+    "_on_welcome_dismissed": {
+     "defined_in": "actpilot.overlay.Overlay",
+     "hash": "439e58e416a226d6"
+    },
+    "_open_build_progress": {
+     "defined_in": "actpilot.overlay.FixedGemOverviewOverlay",
+     "hash": "74aa9767bb8dcd13"
+    },
+    "_position_layout_dialog": {
+     "defined_in": "actpilot.overlay.Overlay",
+     "hash": "d98711e916de39f5"
+    },
+    "_position_mini_gem_panel": {
+     "defined_in": "actpilot.overlay.MiniTreeAndGemsOverlay",
+     "hash": "7c886649d61a6663"
+    },
+    "_position_mini_panel": {
+     "defined_in": "actpilot.overlay.MiniTreeAndGemsOverlay",
+     "hash": "04e60a27b2a7cb82"
+    },
+    "_profile_signature": {
+     "defined_in": "actpilot.overlay.PobMiniPreviewOverlay",
+     "hash": "4ad9d09a46ac885c"
+    },
+    "_refresh_header": {
+     "defined_in": "actpilot.overlay.CompactHeaderOverlay",
+     "hash": "b35d23b9f810bfa6"
+    },
+    "_refresh_hotkey_footer": {
+     "defined_in": "actpilot.overlay.Overlay",
+     "hash": "68943f67df6efaed"
+    },
+    "_refresh_icon_button": {
+     "defined_in": "actpilot.overlay.Overlay",
+     "hash": "09ab94f37f02d7ff"
+    },
+    "_refresh_layout_hint": {
+     "defined_in": "actpilot.overlay.Overlay",
+     "hash": "f665f672f008cf3c"
+    },
+    "_refresh_mini_gems": {
+     "defined_in": "actpilot.overlay.MiniTreeAndGemsOverlay",
+     "hash": "d7668750cfb20147"
+    },
+    "_refresh_mini_tree": {
+     "defined_in": "actpilot.overlay.MiniTreeAndGemsOverlay",
+     "hash": "4e164f57bf41b74f"
+    },
+    "_reposition_resize_handles": {
+     "defined_in": "actpilot.overlay.Overlay",
+     "hash": "242c5ae2f21a809d"
+    },
+    "_resize_mini_panel": {
+     "defined_in": "actpilot.overlay.MiniTreeOverlay_v56",
+     "hash": "be1d76fcc9ef9c8c"
+    },
+    "_restore_after_regex": {
+     "defined_in": "actpilot.overlay.Overlay",
+     "hash": "5ab8a33550451638"
+    },
+    "_restore_mini_huds": {
+     "defined_in": "actpilot.overlay.StagedGemOverlay",
+     "hash": "1fa310eadf4ec2d8"
+    },
+    "_save_progress": {
+     "defined_in": "actpilot.overlay.Poe1Overlay",
+     "hash": "87a97c5adb52781c"
+    },
+    "_save_regexes": {
+     "defined_in": "actpilot.overlay.Overlay",
+     "hash": "15c6d68a7a2fd81f"
+    },
+    "_settings": {
+     "defined_in": "actpilot.overlay.MiniTreeOverlay_v51",
+     "hash": "0253d01321ae700f"
+    },
+    "_setup_hotkey": {
+     "defined_in": "actpilot.overlay.Overlay",
+     "hash": "9ef42df6bbdf2a51"
+    },
+    "_setup_ui": {
+     "defined_in": "actpilot.overlay.PolishedOverlay",
+     "hash": "31d22d206a5008ba"
+    },
+    "_start_hotkey": {
+     "defined_in": "actpilot.overlay.MiniTreeOverlay_v54",
+     "hash": "63ad4870c2389877"
+    },
+    "_style_build_button": {
+     "defined_in": "actpilot.overlay.CompactHeaderIconOverlay",
+     "hash": "397c169783d0eb94"
+    },
+    "_switch_game": {
+     "defined_in": "actpilot.overlay.MiniTreeOverlay_v51",
+     "hash": "fa93b71e97897241"
+    },
+    "_sync_click_through_state": {
+     "defined_in": "actpilot.overlay.Overlay",
+     "hash": "3f7011885a01c585"
+    },
+    "_sync_mini_gem_visibility": {
+     "defined_in": "actpilot.overlay.PobMiniPreviewOverlay",
+     "hash": "7d585f1fd0e8930f"
+    },
+    "_sync_mini_panel_visibility": {
+     "defined_in": "actpilot.overlay.StagedGemOverlay",
+     "hash": "89bb40265bfd75a9"
+    },
+    "_toggle": {
+     "defined_in": "actpilot.overlay.Overlay",
+     "hash": "3bd28acb960a6616"
+    },
+    "_toggle_layout_hint": {
+     "defined_in": "actpilot.overlay.Overlay",
+     "hash": "f0295aadd721f8fa"
+    },
+    "_toggle_mini_tree": {
+     "defined_in": "actpilot.overlay.MiniTreeOverlay_v54",
+     "hash": "ee77989965531812"
+    },
+    "_toggle_regex_dialog": {
+     "defined_in": "actpilot.overlay.Overlay",
+     "hash": "52e8f0960cbe8f31"
+    },
+    "_update_opacity": {
+     "defined_in": "actpilot.overlay.MiniTreeAndGemsOverlay",
+     "hash": "ac7a70bc9d685192"
+    },
+    "_update_progress_bar": {
+     "defined_in": "actpilot.overlay.Overlay",
+     "hash": "6c08b2519f93035e"
+    },
+    "active_profile": {
+     "defined_in": "actpilot.overlay.Poe1Overlay",
+     "hash": "5808f749b510236a"
+    },
+    "closeEvent": {
+     "defined_in": "actpilot.overlay.MiniTreeAndGemsOverlay",
+     "hash": "a98275edf7c6a3ff"
+    },
+    "create_profile": {
+     "defined_in": "actpilot.overlay.MiniTreeOverlay_v51",
+     "hash": "448b39ca271f0e98"
+    },
+    "eventFilter": {
+     "defined_in": "actpilot.overlay.StagedGemOverlay",
+     "hash": "63053b19cc8e9689"
+    },
+    "hideEvent": {
+     "defined_in": "actpilot.overlay.MiniTreeAndGemsOverlay",
+     "hash": "29c4f5dea74bde14"
+    },
+    "mouseMoveEvent": {
+     "defined_in": "actpilot.overlay.Overlay",
+     "hash": "93aff9764daa19bd"
+    },
+    "mousePressEvent": {
+     "defined_in": "actpilot.overlay.Overlay",
+     "hash": "dbcdfa0e7039d395"
+    },
+    "mouseReleaseEvent": {
+     "defined_in": "actpilot.overlay.Overlay",
+     "hash": "7577731ea086dc44"
+    },
+    "moveEvent": {
+     "defined_in": "actpilot.overlay.MiniTreeOverlay_v54",
+     "hash": "5a6c60805d5a7bc4"
+    },
+    "paintEvent": {
+     "defined_in": "actpilot.overlay.Overlay",
+     "hash": "fff27d12d82ac7b8"
+    },
+    "resizeEvent": {
+     "defined_in": "actpilot.overlay.MiniTreeOverlay_v54",
+     "hash": "756525ff7b9d4782"
+    },
+    "save_profiles": {
+     "defined_in": "actpilot.overlay.Poe1Overlay",
+     "hash": "1041021d69ec023c"
+    },
+    "showEvent": {
+     "defined_in": "actpilot.overlay.MiniTreeOverlay_v54",
+     "hash": "aee7c0b8ecb60933"
+    },
+    "switch_profile": {
+     "defined_in": "actpilot.overlay.MiniTreeOverlay_v51",
+     "hash": "4aab791fbc5f738b"
+    }
+   },
+   "mro": [
+    "actpilot.overlay.CompactHeaderIconOverlay",
+    "actpilot.overlay.CompactHeaderOverlay",
+    "actpilot.overlay.KindCorrectGemOverlay",
+    "actpilot.overlay.CompleteMiniTreeOverlay",
+    "actpilot.overlay.DetailedMiniGemOverlay",
+    "actpilot.overlay.PobMiniPreviewOverlay",
+    "actpilot.overlay.FixedGemOverviewOverlay",
+    "actpilot.overlay.GemOverviewOverlay",
+    "actpilot.overlay.StagedGemOverlay",
+    "actpilot.overlay.MiniTreeAndGemsOverlay",
+    "actpilot.overlay.MiniTreeOverlay_v59",
+    "actpilot.overlay.MiniTreeOverlay_v57",
+    "actpilot.overlay.MiniTreeOverlay_v56",
+    "actpilot.overlay.MiniTreeOverlay_v55",
+    "actpilot.overlay.MiniTreeOverlay_v54",
+    "actpilot.overlay.MiniTreeOverlay_v53",
+    "actpilot.overlay.MiniTreeOverlay_v52",
+    "actpilot.overlay.MiniTreeOverlay_v51",
+    "actpilot.overlay.FixedInteractionOverlay",
+    "actpilot.overlay.FastTreeOverlay",
+    "actpilot.overlay.ReliableClientOverlay",
+    "actpilot.overlay.ClearGemEditorOverlay",
+    "actpilot.overlay.StableEditorOverlay",
+    "actpilot.overlay.ExactManualOverlay",
+    "actpilot.overlay.EditableBuildOverlay",
+    "actpilot.overlay.ExplicitRouteOverlay",
+    "actpilot.overlay.PolishedOverlay",
+    "actpilot.overlay.AssetFramedOverlay",
+    "actpilot.overlay.CompactBuildOverlay",
+    "actpilot.overlay.MasteryAndQuestOverlay",
+    "actpilot.overlay.StrictNearestOverlay",
+    "actpilot.overlay.LocalizedOverlay",
+    "actpilot.overlay.RestoredAscendancyOverlay",
+    "actpilot.overlay.NativeAscendancyOverlay",
+    "actpilot.overlay.IntegratedTreeOverlay",
+    "actpilot.overlay.ConnectedAscendancyOverlay",
+    "actpilot.overlay.AscendancyOverlay",
+    "actpilot.overlay.SocketedGemOverlay",
+    "actpilot.overlay.CleanArtworkOverlay",
+    "actpilot.overlay.CorrectedSemanticOverlay",
+    "actpilot.overlay.SemanticPassiveOverlay",
+    "actpilot.overlay.ContinuousPassiveOverlay",
+    "actpilot.overlay.BookOnlyOverlay",
+    "actpilot.overlay.QuestAwareOverlay",
+    "actpilot.overlay.StrictProgressionOverlay",
+    "actpilot.overlay.ImmediateFocusOverlay",
+    "actpilot.overlay.FinalLevelMappedOverlay",
+    "actpilot.overlay.LevelMappedOverlay",
+    "actpilot.overlay.ScaledGemOverlay",
+    "actpilot.overlay.FixedProgressionOverlay",
+    "actpilot.overlay.ProgressionOverlay",
+    "actpilot.overlay.CombinedOverlay",
+    "actpilot.overlay.RouteOverlay",
+    "actpilot.overlay.OrbitalOverlay",
+    "actpilot.overlay.MasteryOverlay",
+    "actpilot.overlay.FullStageOverlay",
+    "actpilot.overlay.CleanOverlay",
+    "actpilot.overlay.ReleaseOverlay",
+    "actpilot.overlay.FinalOverlay",
+    "actpilot.overlay.CorrectedOverlay",
+    "actpilot.overlay.PerLevelOverlay",
+    "actpilot.overlay.TargetPoe1Overlay",
+    "actpilot.overlay.EnhancedPoe1Overlay",
+    "actpilot.overlay.Poe1Overlay",
+    "actpilot.overlay.Overlay"
+   ]
+  },
+  "settings_dialog": {
+   "attributes": {
+    "__init__": {
+     "defined_in": "actpilot.settings_dialog.ActPilotSettingsDialog",
+     "hash": "91ac05020c51acdb"
+    },
+    "_browse_client_log": {
+     "defined_in": "actpilot.settings_dialog.ActPilotSettingsDialog",
+     "hash": "023a773d98ec8f73"
+    },
+    "_hotkey": {
+     "defined_in": "actpilot.settings_dialog.ActPilotSettingsDialog",
+     "hash": "a2e47f70f2b3bcf6"
+    },
+    "_label": {
+     "defined_in": "actpilot.settings_dialog.ActPilotSettingsDialog",
+     "hash": "dd357bdcdd13ef1d"
+    },
+    "_on_save": {
+     "defined_in": "actpilot.settings_dialog.ActPilotSettingsDialog",
+     "hash": "4cd8fddbb9eda264"
+    },
+    "_reset": {
+     "defined_in": "actpilot.settings_dialog.ActPilotSettingsDialog",
+     "hash": "468835038a31657e"
+    },
+    "_section": {
+     "defined_in": "actpilot.settings_dialog.ActPilotSettingsDialog",
+     "hash": "5e73499298db1019"
+    },
+    "_slider": {
+     "defined_in": "actpilot.settings_dialog.ActPilotSettingsDialog",
+     "hash": "6c468b4fe67771fe"
+    },
+    "get_settings": {
+     "defined_in": "actpilot.settings_dialog.ActPilotSettingsDialog",
+     "hash": "c5dbfd2e65ca0955"
+    },
+    "should_reset": {
+     "defined_in": "actpilot.settings_dialog.ActPilotSettingsDialog",
+     "hash": null
+    },
+    "showEvent": {
+     "defined_in": "actpilot.settings_dialog.ActPilotSettingsDialog",
+     "hash": "fcabe8bc192ebed7"
+    }
+   },
+   "mro": [
+    "actpilot.settings_dialog.ActPilotSettingsDialog"
+   ]
+  }
+ }
+}
