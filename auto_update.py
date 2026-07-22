@@ -13,7 +13,7 @@ import urllib.request
 import urllib.error
 from pathlib import Path
 
-from PyQt5.QtCore import QThread, QTimer, pyqtSignal
+from PyQt5.QtCore import Qt, QThread, QTimer, pyqtSignal
 from PyQt5.QtWidgets import QApplication, QLabel, QMessageBox, QPushButton, QScrollArea
 
 from version import __version__
@@ -151,9 +151,11 @@ def add_update_controls(dialog) -> None:
     if not scrolls:
         return
     layout = scrolls[0].widget().layout()
-    label = QLabel(f"Версия ActPilot: {__version__}")
-    label.setStyleSheet("color:#c9c3b8; margin-top:8px;")
+    label = QLabel(f"ActPilot  •  версия {__version__}")
+    label.setAlignment(Qt.AlignCenter)
+    label.setStyleSheet("color:#918b80; margin-top:8px; font-size:12px;")
     button = QPushButton("Проверить обновления")
+    button.setObjectName("secondaryButton")
     button.setMinimumHeight(38)
     button.clicked.connect(lambda: _check_from_dialog(dialog, button))
     layout.addWidget(label)

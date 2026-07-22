@@ -53,7 +53,7 @@ class MiniTreeAndGemsOverlay(BaseMiniTreeOverlay):
             profile.get("build") or {}, int(profile.get("level", 1))
         )
         self._mini_gem_panel.setFixedSize(self.mini_gems.size())
-        self._mini_gem_panel.setWindowOpacity(self.windowOpacity())
+        self._mini_gem_panel.setWindowOpacity(1.0)
         self._position_mini_gem_panel()
         self._sync_mini_gem_visibility()
 
@@ -99,10 +99,9 @@ class MiniTreeAndGemsOverlay(BaseMiniTreeOverlay):
     def _update_opacity(self):
         super()._update_opacity()
         if self._mini_gem_panel is not None:
-            self._mini_gem_panel.setWindowOpacity(self.windowOpacity())
+            self._mini_gem_panel.setWindowOpacity(1.0)
 
     def closeEvent(self, event):
         if self._mini_gem_panel is not None:
             self._mini_gem_panel.close()
         super().closeEvent(event)
-

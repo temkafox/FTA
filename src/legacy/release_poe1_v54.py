@@ -42,7 +42,7 @@ class MiniTreeOverlay(BaseMiniTreeOverlay):
         self.mini_tree.setFixedWidth(190)
         panel_layout.addWidget(self.mini_tree)
         self._mini_panel.setFixedSize(190, 56)
-        self._mini_panel.setWindowOpacity(self.windowOpacity())
+        self._mini_panel.setWindowOpacity(1.0)
 
         self.layout_hotkey.triggered.connect(self._toggle_mini_tree)
         self._position_mini_panel()
@@ -114,10 +114,9 @@ class MiniTreeOverlay(BaseMiniTreeOverlay):
     def _update_opacity(self):
         super()._update_opacity()
         if self._mini_panel is not None:
-            self._mini_panel.setWindowOpacity(self.windowOpacity())
+            self._mini_panel.setWindowOpacity(1.0)
 
     def closeEvent(self, event):
         if self._mini_panel is not None:
             self._mini_panel.close()
         super().closeEvent(event)
-

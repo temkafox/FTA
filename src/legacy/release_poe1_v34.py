@@ -60,8 +60,7 @@ class AssetFramedBuildDialog(previous.CompactBuildDialog):
             self, 900, 560, parent=self,
         )
         self._resize_handles.raise_()
-        opacity = getattr(self.overlay, "settings", {}).get("opacity", 0.95)
-        self.setWindowOpacity(max(0.75, min(1.0, float(opacity))))
+        self.setWindowOpacity(1.0)
 
     def _install_asset_header(self):
         self.asset_header = BuildAssetHeader(self)
@@ -151,6 +150,9 @@ class AssetFramedBuildDialog(previous.CompactBuildDialog):
                 border-radius:3px;
                 min-height:22px;
             }}
+            QScrollBar::handle:vertical:hover {{ background:rgba(218, 201, 167, 0.42); }}
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ height:0; }}
+            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{ background:transparent; }}
             QSplitter::handle {{ background:rgba(154, 116, 57, 0.22); }}
             QSlider#levelSlider::groove:horizontal {{
                 background:rgba(104, 83, 43, 0.42);

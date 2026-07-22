@@ -138,9 +138,41 @@ class PolishedOverlay(previous.AssetFramedOverlay):
         """)
 
     def _settings(self):
-        dialog = Poe1SettingsDialog(self.settings, self)
+        overlay_was_visible = self.isVisible()
+        layout_was_visible = bool(
+            self._layout_dialog is not None and self._layout_dialog.isVisible()
+        )
+        build_was_visible = bool(
+            self._build_dialog is not None and self._build_dialog.isVisible()
+        )
+        regex_was_visible = bool(
+            getattr(self, "_regex_dialog", None) is not None
+            and self._regex_dialog.isVisible()
+        )
+        if layout_was_visible:
+            self._layout_dialog.hide()
+        if build_was_visible:
+            self._build_dialog.hide()
+        if regex_was_visible:
+            self._regex_dialog.hide()
+        dialog = Poe1SettingsDialog(self.settings, None)
         dialog.move(self.x() + (self.width() - dialog.width()) // 2, self.y() + 40)
-        if dialog.exec_() != QDialog.Accepted:
+        if overlay_was_visible:
+            self.hide()
+        result = dialog.exec_()
+        if overlay_was_visible:
+            self.show()
+            self.raise_()
+        if layout_was_visible and self._layout_dialog is not None:
+            self._layout_dialog.show()
+            self._layout_dialog.raise_()
+        if build_was_visible and self._build_dialog is not None:
+            self._build_dialog.show()
+            self._build_dialog.raise_()
+        if regex_was_visible and self._regex_dialog is not None:
+            self._regex_dialog.show()
+            self._regex_dialog.raise_()
+        if result != QDialog.Accepted:
             return
         old_game = self.game
         self.settings = dialog.get_settings()

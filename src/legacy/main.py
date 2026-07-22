@@ -17,6 +17,8 @@ from PyQt5.QtGui import (
 from pynput import keyboard
 import time
 
+from regex_dialog import DEFAULT_REGEXES, RegexDialog
+
 
 # ==================== СТИЛИ ====================
 class Style:
@@ -428,8 +430,17 @@ def make_icon_button(
             border-radius: 16px;
         }
     """)
-    icon = scaled_ui_pixmap(asset_name, size, size)
-    if not icon.isNull():
+    if asset_name == "collapse":
+        icon = QPixmap()
+        btn.setIcon(QIcon())
+        btn.setFont(QFont("Segoe UI", 13, QFont.Normal))
+        btn.setText("−")
+        btn.setStyleSheet(btn.styleSheet() + "QPushButton { color:#c9a35a; padding:0; }")
+    else:
+        icon = scaled_ui_pixmap(asset_name, size, size)
+    if asset_name == "collapse":
+        pass
+    elif not icon.isNull():
         btn.setIcon(QIcon(icon))
         btn.setIconSize(icon.size())
     else:
@@ -745,16 +756,20 @@ DEFAULT_STEPS_POE2 = {
 
 DEFAULT_SETTINGS = {
     "hotkey": "F3",
+    "previous_hotkey": "Ctrl+F3",
     "opacity": 0.95,
     "layout_hotkey": "F4",
+    "regex_hotkey": "F6",
     "layout_opacity": 0.92,
     "layout_size": {"width": 420, "height": 520},
     "layout_position": {"x": -1, "y": -1},
     "position": {"x": 10, "y": 10},
     "size": {"width": 391, "height": 598},
-    "game": GAME_POE2,
+    "game": GAME_POE1,
     "click_through": False,
     "ui_scale": 1.0,
+    "show_hotkey_hints": True,
+    "regexes": DEFAULT_REGEXES,
     "show_welcome": True,
 }
 
@@ -809,11 +824,15 @@ def normalize_hotkey(hotkey: str) -> str:
 
 def display_hotkey(hotkey: str) -> str:
     normalized = normalize_hotkey(hotkey)
-    if normalized.count("<") == 1 and normalized.startswith("<") and normalized.endswith(">"):
-        inner = normalized[1:-1]
+    labels = {"ctrl": "Ctrl", "alt": "Alt", "shift": "Shift", "cmd": "Win", "win": "Win"}
+    parts = []
+    for part in normalized.split("+"):
+        inner = part[1:-1] if part.startswith("<") and part.endswith(">") else part
         if inner.startswith("f") and inner[1:].isdigit():
-            return inner.upper()
-    return hotkey.strip()
+            parts.append(inner.upper())
+        else:
+            parts.append(labels.get(inner, inner.upper() if len(inner) == 1 else inner))
+    return "+".join(parts)
 
 def format_time(seconds: float) -> str:
     mins = int(seconds // 60)
@@ -887,6 +906,33 @@ class HotkeyListener(QObject):
     def restart(self, hotkey: str):
         self._hotkey = normalize_hotkey(hotkey)
         self.start()
+
+
+class HotkeyFooter(QLabel):
+    """Compact hint that never dictates the overlay's minimum width."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._full_text = ""
+        self.setAlignment(Qt.AlignCenter)
+        self.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Fixed)
+        self.setMinimumWidth(0)
+        self.setFixedHeight(22)
+        self.setToolTip("")
+
+    def set_full_text(self, text: str):
+        self._full_text = text
+        self.setToolTip("")
+        self.setText(text)
+
+    def _update_elided_text(self):
+        # Rich-text labels are clipped naturally, while Ignored size policy
+        # keeps this decorative footer from constraining the overlay width.
+        pass
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._update_elided_text()
 
 
 # ==================== ТАЙМЕР ====================
@@ -1659,6 +1705,17 @@ class ContentArea(QScrollArea):
                 self._check_all_groups()
                 self._update_active()
                 self.progress_changed.emit()
+
+    def previous_current(self):
+        """Move progress back by one step and make that step active again."""
+        completed = [index for index, step in enumerate(self.all_steps) if step.done]
+        if not completed:
+            return
+        index = completed[-1]
+        self.all_steps[index].done = False
+        self._check_all_groups()
+        self._update_active()
+        self.progress_changed.emit()
     
     def _check_all_groups(self):
         for group in self.groups:
@@ -2244,7 +2301,9 @@ class LayoutHintDialog(QDialog):
         super().closeEvent(event)
 
     def set_opacity(self, value: float):
-        self.setWindowOpacity(max(0.3, min(1.0, float(value))))
+        # The zone/tree helper is a separate utility window and must remain
+        # fully readable regardless of the main overlay opacity.
+        self.setWindowOpacity(1.0)
 
     def _on_manor_floor(self, index: int):
         self._manor_floor = index
@@ -2380,6 +2439,8 @@ class WelcomePanel(QFrame):
                 background: rgba(255, 255, 255, 0.15);
                 border-radius: 3px; min-height: 30px;
             }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height:0; }
+            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background:transparent; }
         """)
 
         scroll_body = QWidget()
@@ -2743,6 +2804,19 @@ class Overlay(QWidget):
         ensure_dirs()
         migrate_legacy_progress()
         self.settings = load_json(SETTINGS_FILE, DEFAULT_SETTINGS)
+        if int(self.settings.get("regex_defaults_version", 0)) < 2:
+            self.settings["regexes"] = [entry.copy() for entry in DEFAULT_REGEXES]
+            self.settings["regex_defaults_version"] = 2
+            save_json(SETTINGS_FILE, self.settings)
+        if int(self.settings.get("hotkey_defaults_version", 0)) < 2:
+            self.settings.update({
+                "previous_hotkey": normalize_hotkey("Ctrl+F3"),
+                "hotkey": normalize_hotkey("F3"),
+                "layout_hotkey": normalize_hotkey("F4"),
+                "regex_hotkey": normalize_hotkey("F6"),
+                "hotkey_defaults_version": 2,
+            })
+            save_json(SETTINGS_FILE, self.settings)
         self.settings["hotkey"] = normalize_hotkey(
             self.settings.get("hotkey", DEFAULT_SETTINGS["hotkey"])
         )
@@ -2765,10 +2839,18 @@ class Overlay(QWidget):
         self._has_bg = not self._bg_pixmap.isNull()
         
         self.hotkey = HotkeyListener(self.settings["hotkey"])
+        self.previous_hotkey = HotkeyListener(
+            self.settings.get("previous_hotkey", DEFAULT_SETTINGS["previous_hotkey"])
+        )
         self.layout_hotkey = HotkeyListener(
             self.settings.get("layout_hotkey", DEFAULT_SETTINGS["layout_hotkey"])
         )
+        self.regex_hotkey = HotkeyListener(
+            self.settings.get("regex_hotkey", DEFAULT_SETTINGS["regex_hotkey"])
+        )
         self._layout_dialog = None
+        self._regex_dialog = None
+        self._regex_restore_state = None
         
         self._setup_ui()
         self._setup_hotkey()
@@ -2906,6 +2988,14 @@ class Overlay(QWidget):
         self.content.active_step_changed.connect(self._on_active_step_changed)
         body_layout.addWidget(self.content, 1)
 
+        self.hotkey_footer = HotkeyFooter()
+        self.hotkey_footer.setObjectName("hotkeyFooter")
+        self.hotkey_footer.setStyleSheet(
+            "color:#a9a08e; background:transparent; border:0; font-size:8px; padding:3px 1px 0 1px;"
+        )
+        body_layout.addWidget(self.hotkey_footer)
+        self._refresh_hotkey_footer()
+
         self._apply_welcome_visibility()
         
         layout.addWidget(self.body, 1)
@@ -3011,6 +3101,16 @@ class Overlay(QWidget):
     def _refresh_icon_button(self, btn: QPushButton, asset: str, fallback: str):
         size = Style.BTN_SIZE
         btn.setFixedSize(size, size)
+        if asset == "collapse":
+            btn.setIcon(QIcon())
+            btn.setText("+" if self._collapsed else "−")
+            btn.setFont(QFont("Segoe UI", max(10, int(round(13 * Style.ui_scale())))))
+            btn.setStyleSheet("""
+                QPushButton { background:transparent; color:#c9a35a; border:0; padding:0; }
+                QPushButton:hover { background:rgba(122,83,30,.18); border-radius:6px; }
+                QPushButton:pressed { background:rgba(172,124,47,.24); }
+            """)
+            return
         icon = scaled_ui_pixmap(asset, size, size)
         if not icon.isNull():
             btn.setIcon(QIcon(icon))
@@ -3069,6 +3169,12 @@ class Overlay(QWidget):
         return widgets
 
     def _hit_test_interactive(self, global_pos: QPoint) -> bool:
+        # Click-through must never swallow the title bar: it is the permanent
+        # grab handle for moving the overlay, including in passthrough mode.
+        if self.header is not None and self.header.isVisible():
+            header_top_left = self.header.mapToGlobal(QPoint(0, 0))
+            if QRect(header_top_left, self.header.size()).contains(global_pos):
+                return True
         if self.welcome_panel.isVisible():
             top_left = self.welcome_panel.mapToGlobal(QPoint(0, 0))
             if QRect(top_left, self.welcome_panel.size()).contains(global_pos):
@@ -3116,17 +3222,105 @@ class Overlay(QWidget):
             QTimer.singleShot(0, self._start_hotkey)
 
     def _setup_hotkey(self):
-        self.hotkey.triggered.connect(self.content.complete_current)
+        self._previous_combo_active = False
+        self.hotkey.triggered.connect(self._on_next_hotkey)
+        self.previous_hotkey.triggered.connect(self._on_previous_hotkey)
         self.layout_hotkey.triggered.connect(self._toggle_layout_hint)
+        self.regex_hotkey.triggered.connect(self._toggle_regex_dialog)
+
+    def _on_previous_hotkey(self):
+        self._previous_combo_active = True
+        self.content.previous_current()
+        QTimer.singleShot(120, lambda: setattr(self, "_previous_combo_active", False))
+
+    def _on_next_hotkey(self):
+        # Ctrl+F3 can also be observed by the plain F3 listener. Delay the
+        # plain action briefly so the more specific shortcut can suppress it.
+        QTimer.singleShot(
+            45,
+            lambda: None if self._previous_combo_active else self.content.complete_current(),
+        )
 
     def _start_hotkey(self):
         self.hotkey.restart(self.settings["hotkey"])
+        self.previous_hotkey.restart(
+            self.settings.get("previous_hotkey", DEFAULT_SETTINGS["previous_hotkey"])
+        )
+        self.regex_hotkey.restart(
+            self.settings.get("regex_hotkey", DEFAULT_SETTINGS["regex_hotkey"])
+        )
         if self.game == GAME_POE2:
             self.layout_hotkey.restart(
                 self.settings.get("layout_hotkey", DEFAULT_SETTINGS["layout_hotkey"])
             )
         else:
             self.layout_hotkey.stop()
+        self._refresh_hotkey_footer()
+
+    def _save_regexes(self, entries):
+        self.settings["regexes"] = entries
+        save_json(SETTINGS_FILE, self.settings)
+
+    def _toggle_regex_dialog(self):
+        if self._regex_dialog is not None and self._regex_dialog.isVisible():
+            self._regex_dialog.hide()
+            return
+        if self._regex_dialog is None:
+            self._regex_dialog = RegexDialog(
+                self.settings.get("regexes", DEFAULT_REGEXES), self._save_regexes, None
+            )
+            self._regex_dialog.hidden.connect(self._restore_after_regex)
+        self._regex_restore_state = {
+            "overlay": self.isVisible(),
+            "layout": bool(self._layout_dialog is not None and self._layout_dialog.isVisible()),
+            "build": bool(
+                getattr(self, "_build_dialog", None) is not None
+                and self._build_dialog.isVisible()
+            ),
+        }
+        if self._regex_restore_state["layout"]:
+            self._layout_dialog.hide()
+        if self._regex_restore_state["build"]:
+            self._build_dialog.hide()
+        if self._regex_restore_state["overlay"]:
+            self.hide()
+        screen = QApplication.primaryScreen().availableGeometry()
+        self._regex_dialog.move(
+            screen.center().x() - self._regex_dialog.width() // 2,
+            screen.center().y() - self._regex_dialog.height() // 2,
+        )
+        self._regex_dialog.show()
+        self._regex_dialog.raise_()
+        self._regex_dialog.activateWindow()
+
+    def _restore_after_regex(self):
+        state = self._regex_restore_state
+        self._regex_restore_state = None
+        if not state:
+            return
+        if state["overlay"]:
+            self.show()
+            self.raise_()
+        if state["layout"] and self._layout_dialog is not None:
+            self._layout_dialog.show()
+            self._layout_dialog.raise_()
+        if state["build"] and getattr(self, "_build_dialog", None) is not None:
+            self._build_dialog.show()
+            self._build_dialog.raise_()
+
+    def _refresh_hotkey_footer(self):
+        if not hasattr(self, "hotkey_footer"):
+            return
+        show = display_hotkey
+        def item(key, label):
+            return f"<span style='color:#629d6c;font-weight:600'>{key}</span>&nbsp; {label}"
+        self.hotkey_footer.set_full_text("&nbsp; · &nbsp;".join((
+            item(show(self.settings.get("hotkey", DEFAULT_SETTINGS["hotkey"])), "След. шаг"),
+            item(show(self.settings.get("previous_hotkey", DEFAULT_SETTINGS["previous_hotkey"])), "Пред. шаг"),
+            item(show(self.settings.get("layout_hotkey", DEFAULT_SETTINGS["layout_hotkey"])), "Камни"),
+            item(show(self.settings.get("regex_hotkey", DEFAULT_SETTINGS["regex_hotkey"])), "Регэкспы"),
+        )))
+        self.hotkey_footer.setVisible(bool(self.settings.get("show_hotkey_hints", True)))
 
     def _close_layout_dialog(self):
         if self._layout_dialog is not None:
@@ -3161,9 +3355,7 @@ class Overlay(QWidget):
             self._layout_dialog = LayoutHintDialog(self)
         was_visible = self._layout_dialog.isVisible()
         act, step_index, step_text = self.content.get_active_step_info()
-        self._layout_dialog.set_opacity(
-            self.settings.get("layout_opacity", DEFAULT_SETTINGS["layout_opacity"])
-        )
+        self._layout_dialog.set_opacity(1.0)
         self._layout_dialog.show_for_step(act, step_index, step_text)
         if first_open or not was_visible:
             self._position_layout_dialog()
@@ -3225,6 +3417,7 @@ class Overlay(QWidget):
             if self.collapse_btn.text():
                 self.collapse_btn.setText("−")
             self._apply_welcome_visibility()
+        self._refresh_icon_button(self.collapse_btn, "collapse", "−")
         self.update()
     
     def _settings(self):
@@ -3375,7 +3568,12 @@ class Overlay(QWidget):
         }
         save_json(SETTINGS_FILE, self.settings)
         self.hotkey.stop()
+        self.previous_hotkey.stop()
         self.layout_hotkey.stop()
+        self.regex_hotkey.stop()
+        if self._regex_dialog is not None:
+            self._regex_restore_state = None
+            self._regex_dialog.close()
         self._close_layout_dialog()
         if hasattr(self, "tray"):
             self.tray.hide()

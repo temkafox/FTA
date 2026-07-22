@@ -23,8 +23,7 @@ class FixedInteractionBuildDialog(previous.FastBuildDialog):
         self.sync_window_opacity()
 
     def sync_window_opacity(self):
-        value = float(self.overlay.settings.get("opacity", 0.95))
-        self.setWindowOpacity(max(0.5, min(1.0, value)))
+        self.setWindowOpacity(1.0)
 
     def reload(self):
         result = super().reload()
