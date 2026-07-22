@@ -13,6 +13,7 @@ import urllib.request
 import urllib.error
 from pathlib import Path
 
+from PyQt5 import sip
 from PyQt5.QtCore import Qt, QThread, QTimer, pyqtSignal
 from PyQt5.QtWidgets import QApplication, QLabel, QMessageBox, QPushButton, QScrollArea
 
@@ -61,6 +62,13 @@ class NoPublishedRelease(RuntimeError):
     pass
 
 
+_BUTTON_LABELS = {
+    QMessageBox.Ok: "ОК",
+    QMessageBox.Yes: "Установить",
+    QMessageBox.No: "Позже",
+}
+
+
 def _show_message(
     parent,
     icon: QMessageBox.Icon,
@@ -70,15 +78,31 @@ def _show_message(
     default_button: QMessageBox.StandardButton = QMessageBox.NoButton,
 ) -> int:
     """Show an updater message that remains readable under the app's dark theme."""
+    if parent is not None and sip.isdeleted(parent):
+        parent = None
     box = QMessageBox(parent)
     box.setWindowTitle(title)
     box.setIcon(icon)
     box.setText(text)
     box.setStandardButtons(buttons)
+    for standard, label in _BUTTON_LABELS.items():
+        button = box.button(standard)
+        if button is not None:
+            button.setText(label)
     if default_button != QMessageBox.NoButton:
         box.setDefaultButton(default_button)
     box.setStyleSheet(UPDATE_DIALOG_STYLE)
     return box.exec_()
+
+
+_ACTIVE_WORKERS: set = set()
+
+
+def _launch_worker(worker: "UpdateWorker") -> None:
+    # Держит QThread живым независимо от судьбы диалога, из которого он запущен
+    _ACTIVE_WORKERS.add(worker)
+    worker.finished.connect(lambda: _ACTIVE_WORKERS.discard(worker))
+    worker.start()
 
 
 def _version_tuple(value: str) -> tuple[int, ...]:
@@ -162,18 +186,30 @@ def add_update_controls(dialog) -> None:
     layout.addWidget(button)
 
 
+def _cleanup_stale_update_file() -> None:
+    stale = Path(sys.executable).with_name("ActPilot-PoE1.update.exe")
+    if Path(sys.executable).resolve() == stale.resolve():
+        return
+    try:
+        stale.unlink(missing_ok=True)
+    except OSError:
+        pass
+
+
 def schedule_startup_check(window, delay_ms: int = 3000) -> None:
     """Silently check on startup and only interrupt when an update exists."""
     if not getattr(sys, "frozen", False):
         return
+    _cleanup_stale_update_file()
     QTimer.singleShot(delay_ms, lambda: _check_on_startup(window))
 
 
 def _check_on_startup(window) -> None:
-    worker = UpdateWorker(parent=window)
-    window._startup_update_worker = worker
+    worker = UpdateWorker()
 
     def checked(release: dict):
+        if sip.isdeleted(window):
+            return
         if _version_tuple(release["version"]) <= _version_tuple(__version__):
             return
         answer = _show_message(
@@ -190,7 +226,7 @@ def _check_on_startup(window) -> None:
 
     worker.checked.connect(checked)
     # Startup checks are deliberately quiet on 404, offline mode and timeouts.
-    worker.start()
+    _launch_worker(worker)
 
 
 def _check_from_dialog(dialog, button: QPushButton) -> None:
@@ -204,10 +240,11 @@ def _check_from_dialog(dialog, button: QPushButton) -> None:
         return
     button.setEnabled(False)
     button.setText("Проверяем…")
-    worker = UpdateWorker(parent=dialog)
-    dialog._check_update_worker = worker
+    worker = UpdateWorker()
 
     def checked(release: dict):
+        if sip.isdeleted(button):
+            return
         button.setEnabled(True)
         button.setText("Проверить обновления")
         if _version_tuple(release["version"]) <= _version_tuple(__version__):
@@ -231,17 +268,14 @@ def _check_from_dialog(dialog, button: QPushButton) -> None:
 
     worker.checked.connect(checked)
     worker.failed.connect(lambda error: _show_error(dialog, button, error))
-    worker.start()
+    _launch_worker(worker)
 
 
 def _download_from_dialog(dialog, button: QPushButton | None, release: dict) -> None:
     if button is not None:
         button.setEnabled(False)
         button.setText("Скачиваем обновление…")
-    worker = UpdateWorker(download=True, release=release, parent=dialog)
-    # Keep both thread objects alive: the check thread can still be finishing
-    # while the download thread is being started from its result signal.
-    dialog._download_update_worker = worker
+    worker = UpdateWorker(download=True, release=release)
 
     def downloaded(path: str):
         target = str(Path(sys.executable).resolve())
@@ -250,11 +284,11 @@ def _download_from_dialog(dialog, button: QPushButton | None, release: dict) -> 
 
     worker.downloaded.connect(downloaded)
     worker.failed.connect(lambda error: _show_error(dialog, button, error))
-    worker.start()
+    _launch_worker(worker)
 
 
 def _show_error(dialog, button: QPushButton | None, error: str) -> None:
-    if button is not None:
+    if button is not None and not sip.isdeleted(button):
         button.setEnabled(True)
         button.setText("Проверить обновления")
     _show_message(
