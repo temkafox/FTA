@@ -2,22 +2,19 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 from PyQt5.QtCore import QRectF, Qt
 from PyQt5.QtGui import QFont, QPainter, QPixmap
 from PyQt5.QtWidgets import QHBoxLayout, QLabel, QWidget
 
+from actpilot.data_cache import game_data
 from poe1_combined_widgets import CompactGemChains, CompactGemIcon
 
 
 ROOT = Path(__file__).parent / "data" / "poe1"
 ICON_DIR = ROOT / "gem_icons"
-try:
-    ICON_INDEX = json.loads((ROOT / "gem_icons.json").read_text(encoding="utf-8"))
-except (OSError, ValueError):
-    ICON_INDEX = {}
+ICON_INDEX = game_data("gem_icons.json")
 
 
 class ArtworkGemIcon(CompactGemIcon):

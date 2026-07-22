@@ -2,15 +2,10 @@
 
 from __future__ import annotations
 
-import json
-from pathlib import Path
+from actpilot.data_cache import game_data
 
 
-FILE = Path(__file__).parent / "data" / "poe1" / "gem_acquisition.json"
-try:
-    DATA = json.loads(FILE.read_text(encoding="utf-8")).get("gems", {})
-except (OSError, ValueError):
-    DATA = {}
+DATA = game_data("gem_acquisition.json").get("gems", {})
 
 
 CLASS_ALIASES = {

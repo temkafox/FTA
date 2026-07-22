@@ -3,15 +3,11 @@
 from __future__ import annotations
 
 import copy
-import json
-from pathlib import Path
+
+from actpilot.data_cache import game_data
 
 
-LEVEL_FILE = Path(__file__).parent / "data" / "poe1" / "gem_levels.json"
-try:
-    GEM_LEVELS = json.loads(LEVEL_FILE.read_text(encoding="utf-8"))
-except (OSError, ValueError):
-    GEM_LEVELS = {}
+GEM_LEVELS = game_data("gem_levels.json")
 
 
 def effective_gem_level(name, character_level, imported_level=None):

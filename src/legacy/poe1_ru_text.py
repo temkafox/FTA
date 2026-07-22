@@ -3,16 +3,12 @@
 from __future__ import annotations
 
 import copy
-import json
 import re
-from pathlib import Path
+
+from actpilot.data_cache import game_data
 
 
-FILE = Path(__file__).parent / "data" / "poe1" / "ru_descriptions.json"
-try:
-    DATA = json.loads(FILE.read_text(encoding="utf-8"))
-except (OSError, ValueError):
-    DATA = {"nodes": {}, "gems": {}}
+DATA = game_data("ru_descriptions.json", {"nodes": {}, "gems": {}})
 
 
 EXACT_STATS = {

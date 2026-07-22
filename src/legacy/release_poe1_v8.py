@@ -10,13 +10,13 @@ from PyQt5.QtWidgets import QApplication
 
 import main as legacy
 import release_poe1_v7 as previous
+from actpilot.data_cache import tree_graph
 from poe1_level_plan import passive_plan, stage_at_level
-from poe1_progression import build_adjacency
 from poe1_target_widgets import ROOT
 from poe1_tree_renderer_v7 import ProgressionTreeCanvas
 
 
-TREE_GRAPH = build_adjacency(ROOT / "skilltree.json")
+TREE_GRAPH = tree_graph(ROOT / "skilltree.json")
 
 
 class ProgressionBuildDialog(previous.CombinedBuildDialog):

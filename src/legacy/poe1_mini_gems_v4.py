@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QCursor, QFont, QPixmap
 from PyQt5.QtWidgets import QLabel
 
+from actpilot.data_cache import game_data
 from poe1_gem_acquisition import badges_for
 from poe1_gem_widgets_v3 import ICON_DIR, ICON_INDEX
 from poe1_gem_widgets_v7 import AcquisitionGemTooltip
@@ -17,14 +17,8 @@ from poe1_widgets import infer_gem_color
 
 
 ROOT = Path(__file__).parent / "data" / "poe1"
-try:
-    GEM_COLOURS = json.loads((ROOT / "gem_colors.json").read_text(encoding="utf-8"))
-except (OSError, ValueError):
-    GEM_COLOURS = {}
-try:
-    GEM_LEVELS = json.loads((ROOT / "gem_levels.json").read_text(encoding="utf-8"))
-except (OSError, ValueError):
-    GEM_LEVELS = {}
+GEM_COLOURS = game_data("gem_colors.json")
+GEM_LEVELS = game_data("gem_levels.json")
 
 
 def gem_colour(name):

@@ -12,16 +12,14 @@ from PyQt5.QtCore import QPointF, QRectF, Qt
 from PyQt5.QtGui import QColor, QFont, QPainter, QPen, QPixmap
 from PyQt5.QtWidgets import QFrame, QHBoxLayout, QLabel, QToolTip, QVBoxLayout
 
+from actpilot.data_cache import game_data
 from poe1_builds import clamp_level, stage_for_level
 from poe1_widgets import GemCard, GemIcon, GemLinksView, PassiveTreeCanvas
 
 
 ROOT = Path(__file__).parent / "data" / "poe1"
 CATALOG_FILE = ROOT / "gem_catalog.json"
-try:
-    GEM_CATALOG = json.loads(CATALOG_FILE.read_text(encoding="utf-8"))
-except (OSError, ValueError):
-    GEM_CATALOG = {}
+GEM_CATALOG = game_data("gem_catalog.json")
 
 RANGE_PATTERN = re.compile(r"(?<!\d)(\d{1,3})\s*[-–—]\s*(\d{1,3})(?!\d)")
 

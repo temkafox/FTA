@@ -2,23 +2,16 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
+
+from actpilot.data_cache import game_data
 
 
 ROOT = Path(__file__).parent / "data" / "poe1"
 ICON_DIR = ROOT / "gem_icons"
 
-
-def _load(name):
-    try:
-        return json.loads((ROOT / name).read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return {}
-
-
-ICON_INDEX = _load("gem_icons.json")
-GEM_COLOURS = _load("gem_colors.json")
+ICON_INDEX = game_data("gem_icons.json")
+GEM_COLOURS = game_data("gem_colors.json")
 
 # These are deliberately explicit: names such as Arcane Surge do not contain
 # "Support", so guessing the kind from a filename is unreliable.

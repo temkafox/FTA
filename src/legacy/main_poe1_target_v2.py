@@ -11,12 +11,13 @@ from PyQt5.QtWidgets import QApplication
 
 import main as legacy
 import main_poe1_target as target
-from poe1_progression import build_adjacency, nodes_at_level
+from actpilot.data_cache import tree_graph
+from poe1_progression import nodes_at_level
 from poe1_target_widgets import leveling_stage
 
 
 TREE_FILE = Path(__file__).parent / "data" / "poe1" / "skilltree.json"
-TREE_GRAPH = build_adjacency(TREE_FILE)
+TREE_GRAPH = tree_graph(TREE_FILE)
 
 
 class PerLevelBuildDialog(target.TargetBuildProgressDialog):

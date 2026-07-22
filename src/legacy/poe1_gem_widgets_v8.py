@@ -3,27 +3,16 @@
 from __future__ import annotations
 
 import html
-import json
-from pathlib import Path
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QCursor, QFont
 from PyQt5.QtWidgets import QApplication, QLabel, QWidget
 
+from actpilot.data_cache import game_data
 from poe1_gem_widgets_v7 import AcquisitionGemChains, AcquisitionGemIcon, AcquisitionGemTooltip
 
 
-DATA_FILE = Path(__file__).parent / "data" / "poe1" / "poedb_gems_ru.json"
-
-
-def _load_details():
-    try:
-        return json.loads(DATA_FILE.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return {}
-
-
-POEDB_GEMS = _load_details()
+POEDB_GEMS = game_data("poedb_gems_ru.json")
 
 
 def _rich(lines, color="#9b9cff"):
