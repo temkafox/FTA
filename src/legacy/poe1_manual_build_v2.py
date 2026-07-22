@@ -1,18 +1,16 @@
-"""Compatibility fixes for the manual build serializer."""
+"""Совместимость: модуль переехал в actpilot.build_model."""
 
-from __future__ import annotations
-
-import poe1_manual_build as base
-from poe1_manual_build import *  # noqa: F401,F403
-
-
-def build_from_state(state):
-    result = base.build_from_state(state)
-    effects = {
-        str(node): effect for node, effect in state.get("masteries", {}).items() if effect
-    }
-    raw = ",".join(f"{{{node},{effect}}}" for node, effect in effects.items())
-    for tree in result.get("trees", []):
-        if len(tree.get("nodes", [])) > 2:
-            tree["masteries"] = raw
-    return result
+from actpilot.build_model import (
+    ASCENDANCIES,
+    CLASS_START_INDEX,
+    LAB_LEVELS,
+    ROOT,
+    TREE_FILE,
+    ascendancy_budget,
+    ascendancy_start_id,
+    class_start_id,
+    load_tree,
+    passive_budget,
+)
+from actpilot.build_model import build_from_state_v2 as build_from_state
+from actpilot.build_model import state_from_build_v1 as state_from_build

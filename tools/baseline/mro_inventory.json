@@ -233,103 +233,103 @@
      "hash": "6df82e93e64bab76"
     },
     "_add_gem": {
-     "defined_in": "poe1_manual_editor_v5.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "4e2c5f59849f359c"
     },
     "_ascendancy_changed": {
-     "defined_in": "poe1_manual_editor_v8.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "d68e1ef1e6190316"
     },
     "_available": {
-     "defined_in": "poe1_manual_editor.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "9745323c4f9aa179"
     },
     "_choose_ascendancy": {
-     "defined_in": "poe1_manual_editor_v8.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "14803731c92239e1"
     },
     "_choose_class": {
-     "defined_in": "poe1_manual_editor_v8.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "c1a3ee4dc53af95d"
     },
     "_choose_gem_stage": {
-     "defined_in": "poe1_manual_editor_v10.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "c6d033995d4414e6"
     },
     "_choose_passive_stage": {
-     "defined_in": "poe1_manual_editor_v8.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "148ddb9dca952a42"
     },
     "_choose_target_level": {
-     "defined_in": "poe1_manual_editor_v8.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "3e13651d31a29088"
     },
     "_class_changed": {
-     "defined_in": "poe1_manual_editor_v8.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "d3f250d3b19ec974"
     },
     "_current_gem_stage_index": {
-     "defined_in": "poe1_manual_editor_v10.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "92b4d011d2d8a011"
     },
     "_current_link": {
-     "defined_in": "poe1_manual_editor_v5.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "1cb5228fc0517a06"
     },
     "_current_stage": {
-     "defined_in": "poe1_manual_editor_v5.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "7dd73eec484c31e7"
     },
     "_delete_gem_stage": {
-     "defined_in": "poe1_manual_editor_v10.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "836630117c2245ce"
     },
     "_delete_link": {
-     "defined_in": "poe1_manual_editor_v5.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "8802cd36b3b10557"
     },
     "_delete_passive_stage": {
-     "defined_in": "poe1_manual_editor_v7.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "8b353f757a8fb212"
     },
     "_delete_stage": {
-     "defined_in": "poe1_manual_editor.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "0f2fe9e0899ec29b"
     },
     "_effective_stage_index": {
-     "defined_in": "poe1_manual_editor_v5.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "43f78ed79a81eda2"
     },
     "_ensure_editable_stage": {
-     "defined_in": "poe1_manual_editor_v5.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "d1516c421f75546e"
     },
     "_exact_stage_index": {
-     "defined_in": "poe1_manual_editor_v5.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "ea57234a06af39fe"
     },
     "_fill_ascendancies": {
-     "defined_in": "poe1_manual_editor.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "44dc7dd8303f9071"
     },
     "_fit_tree": {
-     "defined_in": "poe1_manual_editor.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "5a323ea5b0fac47b"
     },
     "_flash": {
-     "defined_in": "poe1_manual_editor.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "7c23c7b204eb21a0"
     },
     "_focus_stage_start": {
-     "defined_in": "poe1_manual_editor_v9.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "2660d138c02b72f3"
     },
     "_force_editor_input": {
-     "defined_in": "poe1_manual_editor_v8.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "ac3c8abeba0061f0"
     },
     "_gem_level_changed": {
-     "defined_in": "poe1_manual_editor_v5.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "89370221190c204d"
     },
     "_gem_overview_changed": {
@@ -337,23 +337,23 @@
      "hash": "09d476bd6fc505bf"
     },
     "_gem_page": {
-     "defined_in": "poe1_manual_editor_v5.ManualBuildEditor",
-     "hash": "3420518e3a7ff3cb"
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "21c79c5306c7c53a"
     },
     "_gem_stage_label": {
-     "defined_in": "poe1_manual_editor_v10.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "92c94adbcb92d957"
     },
     "_infer_support": {
-     "defined_in": "poe1_manual_editor_v2.ManualBuildEditor",
-     "hash": "85aade3ac4caaf32"
+     "defined_in": "actpilot.editor.ManualBuildEditor",
+     "hash": "c7ea9b16a8694520"
     },
     "_install_combo_popup_fix": {
-     "defined_in": "poe1_manual_editor_v7.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "1b0a8b3af9db74dc"
     },
     "_install_gem_stage_controls": {
-     "defined_in": "poe1_manual_editor_v10.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "622216eb8c54d0b5"
     },
     "_install_gem_stage_overview": {
@@ -361,19 +361,19 @@
      "hash": "f1e5ab38e0cafd56"
     },
     "_install_passive_stage_controls": {
-     "defined_in": "poe1_manual_editor_v7.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "407da9a03dd4df99"
     },
     "_install_reliable_selectors": {
-     "defined_in": "poe1_manual_editor_v8.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "6073f150df97dda3"
     },
     "_level_changed": {
-     "defined_in": "poe1_manual_editor_v8.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "18552359e7eb0f57"
     },
     "_link_changed": {
-     "defined_in": "poe1_manual_editor_v5.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "5edb572ec89c18c2"
     },
     "_link_title": {
@@ -381,47 +381,47 @@
      "hash": "417d33ea0fef6e44"
     },
     "_load_passive_stage": {
-     "defined_in": "poe1_manual_editor_v8.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "5d7b7bb42626aea5"
     },
     "_load_state_to_controls": {
-     "defined_in": "poe1_manual_editor_v5.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "8a39313defa0bbcb"
     },
     "_neighbors": {
-     "defined_in": "poe1_manual_editor.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "f23bec6962b416f3"
     },
     "_new_gem_stage": {
-     "defined_in": "poe1_manual_editor_v10.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "0c228642291e41c2"
     },
     "_new_link": {
-     "defined_in": "poe1_manual_editor_v5.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "be990947085af336"
     },
     "_new_passive_stage": {
-     "defined_in": "poe1_manual_editor_v7.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "98f18b28e3e08f93"
     },
     "_new_stage": {
-     "defined_in": "poe1_manual_editor.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "5ae1e93eea2e1fd7"
     },
     "_node_clicked": {
-     "defined_in": "poe1_manual_editor.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "aa399292831467ae"
     },
     "_passive_page": {
-     "defined_in": "poe1_manual_editor.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "e10e9062582ad2cc"
     },
     "_passive_stage_changed": {
-     "defined_in": "poe1_manual_editor_v7.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "71cddd33b8f5fa84"
     },
     "_populate_passive_stages": {
-     "defined_in": "poe1_manual_editor_v8.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "e0db71b955f5d129"
     },
     "_range_title": {
@@ -433,27 +433,27 @@
      "hash": "9006eeefd6acc0ed"
     },
     "_refresh_stages": {
-     "defined_in": "poe1_manual_editor_v5.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "c6b8b408e85a15fa"
     },
     "_refresh_tree": {
-     "defined_in": "poe1_manual_editor_v7.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "69aedb5da9fef7ff"
     },
     "_remove_gem": {
-     "defined_in": "poe1_manual_editor_v5.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "487594c202eebe0f"
     },
     "_replace_in_layout": {
-     "defined_in": "poe1_manual_editor_v8.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "992cbd4f2a47578c"
     },
     "_revert_level_gems": {
-     "defined_in": "poe1_manual_editor_v5.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "2c15d46a7d7a3832"
     },
     "_save": {
-     "defined_in": "poe1_manual_editor_v7.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "ec53b88ee1aafcfa"
     },
     "_select_gem_stage": {
@@ -461,15 +461,15 @@
      "hash": "f6ff870524dd6733"
     },
     "_selected_ascendancy": {
-     "defined_in": "poe1_manual_editor.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "b48aa6f7c3a5e138"
     },
     "_selected_regular": {
-     "defined_in": "poe1_manual_editor.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "392c03bf8e58e6b2"
     },
     "_selector_button": {
-     "defined_in": "poe1_manual_editor_v8.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "bef6539390e5640b"
     },
     "_show_gems_for_level": {
@@ -477,100 +477,100 @@
      "hash": "c19bd3208ed38493"
     },
     "_sorted_gem_stages": {
-     "defined_in": "poe1_manual_editor_v10.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "c44f5e814606abb6"
     },
     "_stage_changed": {
-     "defined_in": "poe1_manual_editor.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "a033d56229776422"
     },
     "_stage_label": {
-     "defined_in": "poe1_manual_editor_v7.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "76180c4a812e0d3d"
     },
     "_stage_level_changed": {
-     "defined_in": "poe1_manual_editor.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "f5151717ee8254ed"
     },
     "_style": {
-     "defined_in": "poe1_manual_editor.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "fce56a92bdb909bb"
     },
     "_sync_gem_stage_button": {
-     "defined_in": "poe1_manual_editor_v10.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "ebcd2cbb27370c98"
     },
     "_sync_passive_stage": {
-     "defined_in": "poe1_manual_editor_v7.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "e9ab1e64c1abdf8c"
     },
     "_sync_selector_texts": {
-     "defined_in": "poe1_manual_editor_v8.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "2036e5bd31c6a69c"
     },
     "_toggle_ascendancy_node": {
-     "defined_in": "poe1_manual_editor.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "faa4056116e95a34"
     },
     "_toggle_mastery": {
-     "defined_in": "poe1_manual_editor_v4.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "97f059b56ee1c9da"
     },
     "_toggle_passive": {
-     "defined_in": "poe1_manual_editor_v4.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "438238474af087a8"
     },
     "_undo_node": {
-     "defined_in": "poe1_manual_editor_v2.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "1ee85468b68250ff"
     },
     "showEvent": {
-     "defined_in": "poe1_manual_editor_v8.ManualBuildEditor",
+     "defined_in": "actpilot.editor.ManualBuildEditor",
      "hash": "8bd2167fb8f4475e"
     }
    },
    "mro": [
     "poe1_manual_editor_v11.ManualBuildEditor",
-    "poe1_manual_editor_v10.ManualBuildEditor",
-    "poe1_manual_editor_v9.ManualBuildEditor",
-    "poe1_manual_editor_v8.ManualBuildEditor",
-    "poe1_manual_editor_v7.ManualBuildEditor",
-    "poe1_manual_editor_v6.ManualBuildEditor",
-    "poe1_manual_editor_v5.ManualBuildEditor",
-    "poe1_manual_editor_v4.ManualBuildEditor",
-    "poe1_manual_editor_v3.ManualBuildEditor",
-    "poe1_manual_editor_v2.ManualBuildEditor",
-    "poe1_manual_editor.ManualBuildEditor"
+    "actpilot.editor.ManualBuildEditor",
+    "actpilot.editor.ManualBuildEditor",
+    "actpilot.editor.ManualBuildEditor",
+    "actpilot.editor.ManualBuildEditor",
+    "actpilot.editor.ManualBuildEditor",
+    "actpilot.editor.ManualBuildEditor",
+    "actpilot.editor.ManualBuildEditor",
+    "actpilot.editor.ManualBuildEditor",
+    "actpilot.editor.ManualBuildEditor",
+    "actpilot.editor.ManualBuildEditor"
    ]
   },
   "mini_route": {
    "attributes": {
     "VIEW_H": {
-     "defined_in": "poe1_mini_tree_v7.MiniPassiveRoute",
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
      "hash": null
     },
     "VIEW_W": {
-     "defined_in": "poe1_mini_tree_v7.MiniPassiveRoute",
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
      "hash": null
     },
     "WORLD_X": {
-     "defined_in": "poe1_mini_tree_v7.MiniPassiveRoute",
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
      "hash": null
     },
     "WORLD_Y": {
-     "defined_in": "poe1_mini_tree_v7.MiniPassiveRoute",
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
      "hash": null
     },
     "__init__": {
-     "defined_in": "poe1_mini_tree_v7.MiniPassiveRoute",
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
      "hash": "4b345d30a1aee39e"
     },
     "_build_tree_layout": {
-     "defined_in": "poe1_mini_tree_v7.MiniPassiveRoute",
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
      "hash": "3ccb3ca70341c65e"
     },
     "_connected": {
-     "defined_in": "poe1_mini_tree.MiniPassiveRoute",
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
      "hash": "e559662e48a4b9e9"
     },
     "_draw_local_node": {
@@ -578,7 +578,7 @@
      "hash": "6f3b8b3f9c58ee04"
     },
     "_draw_node": {
-     "defined_in": "poe1_mini_tree.MiniPassiveRoute",
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
      "hash": "84abc0814563867a"
     },
     "_fill_rectangular_crop": {
@@ -586,11 +586,11 @@
      "hash": "9077a4b68deac070"
     },
     "_graph": {
-     "defined_in": "poe1_mini_tree_v8.MiniPassiveRoute",
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
      "hash": null
     },
     "_node": {
-     "defined_in": "poe1_mini_tree.MiniPassiveRoute",
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
      "hash": "d4d537cb53424dc5"
     },
     "_node_size": {
@@ -598,43 +598,43 @@
      "hash": "b87b7cbe978d7ad8"
     },
     "_pick_nodes": {
-     "defined_in": "poe1_mini_tree_v6.MiniPassiveRoute",
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
      "hash": "bc7d557e1e3ff19b"
     },
     "_screen_positions": {
-     "defined_in": "poe1_mini_tree_v7.MiniPassiveRoute",
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
      "hash": "9fd28a25e1304876"
     },
     "_set_local_plan": {
-     "defined_in": "poe1_mini_tree_v8.MiniPassiveRoute",
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
      "hash": "a9498e0b9ee574d6"
     },
     "_tree_graph": {
-     "defined_in": "poe1_mini_tree_v8.MiniPassiveRoute",
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
      "hash": "ba82f53b252172cf"
     },
     "_world_position": {
-     "defined_in": "poe1_mini_tree.MiniPassiveRoute",
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
      "hash": "bd7e0d0183f695da"
     },
     "activated": {
-     "defined_in": "poe1_mini_tree.MiniPassiveRoute",
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
      "hash": null
     },
     "leaveEvent": {
-     "defined_in": "poe1_mini_tree_v3.MiniPassiveRoute",
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
      "hash": "6f29c6c1816bb99a"
     },
     "mouseMoveEvent": {
-     "defined_in": "poe1_mini_tree_v3.MiniPassiveRoute",
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
      "hash": "8e5b4fc1ecd0d673"
     },
     "mouseReleaseEvent": {
-     "defined_in": "poe1_mini_tree.MiniPassiveRoute",
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
      "hash": "0f6746cf3926f7fc"
     },
     "paintEvent": {
-     "defined_in": "poe1_mini_tree_v7.MiniPassiveRoute",
+     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
      "hash": "1d688ae975336a6e"
     },
     "set_build_level": {
@@ -644,14 +644,14 @@
    },
    "mro": [
     "poe1_mini_tree_v9.MiniPassiveRoute",
-    "poe1_mini_tree_v8.MiniPassiveRoute",
-    "poe1_mini_tree_v7.MiniPassiveRoute",
-    "poe1_mini_tree_v6.MiniPassiveRoute",
-    "poe1_mini_tree_v5.MiniPassiveRoute",
-    "poe1_mini_tree_v4.MiniPassiveRoute",
-    "poe1_mini_tree_v3.MiniPassiveRoute",
-    "poe1_mini_tree_v2.MiniPassiveRoute",
-    "poe1_mini_tree.MiniPassiveRoute"
+    "actpilot.minipanels.MiniPassiveRoute",
+    "actpilot.minipanels.MiniPassiveRoute",
+    "actpilot.minipanels.MiniPassiveRoute",
+    "actpilot.minipanels.MiniPassiveRoute",
+    "actpilot.minipanels.MiniPassiveRoute",
+    "actpilot.minipanels.MiniPassiveRoute",
+    "actpilot.minipanels.MiniPassiveRoute",
+    "actpilot.minipanels.MiniPassiveRoute"
    ]
   },
   "overlay": {
@@ -1012,52 +1012,52 @@
   "settings_dialog": {
    "attributes": {
     "__init__": {
-     "defined_in": "settings_dialog.ActPilotSettingsDialog",
+     "defined_in": "actpilot.settings_dialog.ActPilotSettingsDialog",
      "hash": "91ac05020c51acdb"
     },
     "_browse_client_log": {
-     "defined_in": "settings_dialog.ActPilotSettingsDialog",
+     "defined_in": "actpilot.settings_dialog.ActPilotSettingsDialog",
      "hash": "023a773d98ec8f73"
     },
     "_hotkey": {
-     "defined_in": "settings_dialog.ActPilotSettingsDialog",
+     "defined_in": "actpilot.settings_dialog.ActPilotSettingsDialog",
      "hash": "a2e47f70f2b3bcf6"
     },
     "_label": {
-     "defined_in": "settings_dialog.ActPilotSettingsDialog",
+     "defined_in": "actpilot.settings_dialog.ActPilotSettingsDialog",
      "hash": "dd357bdcdd13ef1d"
     },
     "_on_save": {
-     "defined_in": "settings_dialog.ActPilotSettingsDialog",
+     "defined_in": "actpilot.settings_dialog.ActPilotSettingsDialog",
      "hash": "4cd8fddbb9eda264"
     },
     "_reset": {
-     "defined_in": "settings_dialog.ActPilotSettingsDialog",
+     "defined_in": "actpilot.settings_dialog.ActPilotSettingsDialog",
      "hash": "468835038a31657e"
     },
     "_section": {
-     "defined_in": "settings_dialog.ActPilotSettingsDialog",
+     "defined_in": "actpilot.settings_dialog.ActPilotSettingsDialog",
      "hash": "5e73499298db1019"
     },
     "_slider": {
-     "defined_in": "settings_dialog.ActPilotSettingsDialog",
+     "defined_in": "actpilot.settings_dialog.ActPilotSettingsDialog",
      "hash": "6c468b4fe67771fe"
     },
     "get_settings": {
-     "defined_in": "settings_dialog.ActPilotSettingsDialog",
+     "defined_in": "actpilot.settings_dialog.ActPilotSettingsDialog",
      "hash": "c5dbfd2e65ca0955"
     },
     "should_reset": {
-     "defined_in": "settings_dialog.ActPilotSettingsDialog",
+     "defined_in": "actpilot.settings_dialog.ActPilotSettingsDialog",
      "hash": null
     },
     "showEvent": {
-     "defined_in": "settings_dialog.ActPilotSettingsDialog",
+     "defined_in": "actpilot.settings_dialog.ActPilotSettingsDialog",
      "hash": "fcabe8bc192ebed7"
     }
    },
    "mro": [
-    "settings_dialog.ActPilotSettingsDialog"
+    "actpilot.settings_dialog.ActPilotSettingsDialog"
    ]
   }
  }

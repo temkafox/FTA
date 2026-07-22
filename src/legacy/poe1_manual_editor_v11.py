@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import (
     QAbstractItemView, QLabel, QListWidget, QTreeWidget, QTreeWidgetItem,
 )
 
-from poe1_manual_editor_v10 import ManualBuildEditor as PreviousManualBuildEditor
+from actpilot.editor import ManualBuildEditorV10 as PreviousManualBuildEditor
 
 
 class ManualBuildEditor(PreviousManualBuildEditor):
