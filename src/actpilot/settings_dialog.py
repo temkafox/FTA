@@ -11,7 +11,9 @@ from PyQt5.QtWidgets import (
     QSlider, QVBoxLayout, QWidget,
 )
 
-from auto_update import UPDATE_DIALOG_STYLE as MESSAGE_STYLE
+from auto_update import UPDATE_DIALOG_STYLE as MESSAGE_STYLE, add_update_controls
+
+import main as legacy
 
 
 def capture_hotkey(key, modifiers):
@@ -410,3 +412,9 @@ QScrollBar::handle:vertical:hover { background:#806b49; }
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height:0; }
 QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background:transparent; }
 """
+
+
+class UpdateSettingsDialog(ActPilotSettingsDialog):
+    def __init__(self, settings, parent=None):
+        super().__init__(settings, legacy, parent)
+        add_update_controls(self)

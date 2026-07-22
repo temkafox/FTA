@@ -23,16 +23,5 @@ def _install_compact_metrics():
     legacy._STYLE_NUMERIC_BASE.update(COMPACT_BASE)
 
 
-class CompactHeaderOverlay(BaseOverlay):
-    def __init__(self, *args, **kwargs):
-        _install_compact_metrics()
-        super().__init__(*args, **kwargs)
-
-    def _refresh_header(self):
-        super()._refresh_header()
-        self.header.layout().setSpacing(max(6, int(round(8 * legacy.Style.ui_scale()))))
-        if hasattr(self, "build_btn"):
-            icon_size = max(14, int(round(18 * legacy.Style.ui_scale())))
-            self.build_btn.setIcon(build_tree_icon(icon_size))
-            self.build_btn.setIconSize(QSize(icon_size, icon_size))
+from actpilot.overlay import CompactHeaderOverlay
 

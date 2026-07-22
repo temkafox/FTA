@@ -6,6 +6,5 @@ import release_poe1_v51 as previous
 from poe1_mini_tree_v2 import MiniPassiveRoute
 
 
-class MiniTreeOverlay(previous.MiniTreeOverlay):
-    pass
+from actpilot.overlay import MiniTreeOverlay_v52 as MiniTreeOverlay
 

@@ -16,19 +16,7 @@ from poe1_ascendancy_widget import AscendancyProgressWidget
 from actpilot.build_dialog import AscendancyBuildDialog
 
 
-class AscendancyOverlay(previous.SocketedGemOverlay):
-    def _open_build_progress(self):
-        if self.game != legacy.GAME_POE1:
-            return
-        if self._build_dialog is None:
-            self._build_dialog = AscendancyBuildDialog(self)
-            self._build_dialog.finished.connect(
-                lambda _: setattr(self, "_build_dialog", None)
-            )
-        self._build_dialog.reload()
-        self._build_dialog.show()
-        self._build_dialog.raise_()
-        self._build_dialog.activateWindow()
+from actpilot.overlay import AscendancyOverlay
 
 
 def main():

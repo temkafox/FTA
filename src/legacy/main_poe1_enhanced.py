@@ -21,25 +21,7 @@ from poe1_widgets import GemLinksView
 from actpilot.build_dialog import EnhancedBuildProgressDialog
 
 
-class EnhancedPoe1Overlay(base.Poe1Overlay):
-    def _interactive_widgets(self):
-        widgets = super()._interactive_widgets()
-        if hasattr(self, "build_btn") and self.build_btn not in widgets:
-            widgets.append(self.build_btn)
-        return widgets
-
-    def _open_build_progress(self):
-        if self.game != legacy.GAME_POE1:
-            return
-        if self._build_dialog is None:
-            self._build_dialog = EnhancedBuildProgressDialog(self)
-            self._build_dialog.finished.connect(
-                lambda _: setattr(self, "_build_dialog", None)
-            )
-        self._build_dialog.reload()
-        self._build_dialog.show()
-        self._build_dialog.raise_()
-        self._build_dialog.activateWindow()
+from actpilot.overlay import EnhancedPoe1Overlay
 
 
 def main():

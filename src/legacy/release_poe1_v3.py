@@ -18,19 +18,7 @@ from poe1_tree_fast import ConstructionTreePlaceholder as ConnectedPassiveTreeCa
 from actpilot.build_dialog import FullStageBuildDialog
 
 
-class FullStageOverlay(previous.CleanOverlay):
-    def _open_build_progress(self):
-        if self.game != legacy.GAME_POE1:
-            return
-        if self._build_dialog is None:
-            self._build_dialog = FullStageBuildDialog(self)
-            self._build_dialog.finished.connect(
-                lambda _: setattr(self, "_build_dialog", None)
-            )
-        self._build_dialog.reload()
-        self._build_dialog.show()
-        self._build_dialog.raise_()
-        self._build_dialog.activateWindow()
+from actpilot.overlay import FullStageOverlay
 
 
 def main():

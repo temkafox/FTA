@@ -17,19 +17,7 @@ from release_poe1_v8 import TREE_GRAPH
 from actpilot.build_dialog import StrictProgressionBuildDialog
 
 
-class StrictProgressionOverlay(previous.ImmediateFocusOverlay):
-    def _open_build_progress(self):
-        if self.game != legacy.GAME_POE1:
-            return
-        if self._build_dialog is None:
-            self._build_dialog = StrictProgressionBuildDialog(self)
-            self._build_dialog.finished.connect(
-                lambda _: setattr(self, "_build_dialog", None)
-            )
-        self._build_dialog.reload()
-        self._build_dialog.show()
-        self._build_dialog.raise_()
-        self._build_dialog.activateWindow()
+from actpilot.overlay import StrictProgressionOverlay
 
 
 def main():

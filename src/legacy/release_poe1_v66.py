@@ -7,6 +7,5 @@ from poe1_mini_tree_v9 import MiniPassiveRoute
 from release_poe1_v65 import DetailedMiniGemOverlay as BaseOverlay
 
 
-class CompleteMiniTreeOverlay(BaseOverlay):
-    pass
+from actpilot.overlay import CompleteMiniTreeOverlay
 

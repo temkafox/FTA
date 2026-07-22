@@ -17,23 +17,7 @@ from poe1_manual_editor_v6 import ManualBuildEditor
 from actpilot.build_dialog import FixedInteractionBuildDialog
 
 
-class FixedInteractionOverlay(previous.FastTreeOverlay):
-    def _open_build_progress(self):
-        if self.game != legacy.GAME_POE1:
-            return
-        if self._build_dialog is None:
-            self._build_dialog = FixedInteractionBuildDialog(self)
-        else:
-            self._build_dialog.reload()
-        self._build_dialog.sync_window_opacity()
-        self._build_dialog.show()
-        self._build_dialog.raise_()
-        self._build_dialog.activateWindow()
-
-    def _settings(self):
-        super()._settings()
-        if self._build_dialog is not None:
-            self._build_dialog.sync_window_opacity()
+from actpilot.overlay import FixedInteractionOverlay
 
 
 def main():

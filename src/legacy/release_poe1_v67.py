@@ -9,5 +9,4 @@ from poe1_mini_gems_v5 import MiniGemLinks
 from release_poe1_v66 import CompleteMiniTreeOverlay as BaseOverlay
 
 
-class KindCorrectGemOverlay(BaseOverlay):
-    pass
+from actpilot.overlay import KindCorrectGemOverlay

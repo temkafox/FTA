@@ -81,9 +81,6 @@ def build_report() -> dict:
     from release_poe1_v69 import CompactHeaderIconOverlay
     from actpilot.settings_dialog import ActPilotSettingsDialog
 
-    # Точное повторение проводки app.py:70-73
-    settings_release.Poe1SettingsDialog = ActPilotSettingsDialog
-
     window = CompactHeaderIconOverlay()
     window.show()
     app.processEvents()
@@ -102,7 +99,7 @@ def build_report() -> dict:
 
     roots = {
         "overlay": type(window),
-        "settings_dialog": settings_release.Poe1SettingsDialog,
+        "settings_dialog": ActPilotSettingsDialog,
         "editor": editor_release.ManualBuildEditor,
         "mini_route": mini_release.MiniPassiveRoute,
         "client_monitor": enhanced.ClientLevelMonitor,

@@ -5,7 +5,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from auto_update import add_update_controls, apply_pending_update, schedule_startup_check
+from auto_update import apply_pending_update, schedule_startup_check
 
 
 if apply_pending_update(sys.argv):
@@ -27,13 +27,7 @@ import release_poe1_v50 as editor_bridge  # noqa: E402
 import release_poe1_v35 as settings_release  # noqa: E402
 from poe1_manual_editor_v11 import ManualBuildEditor  # noqa: E402
 from release_poe1_v69 import CompactHeaderIconOverlay  # noqa: E402
-from actpilot.settings_dialog import ActPilotSettingsDialog  # noqa: E402
-
-
-class UpdateSettingsDialog(ActPilotSettingsDialog):
-    def __init__(self, settings, parent=None):
-        super().__init__(settings, legacy, parent)
-        add_update_controls(self)
+from actpilot.settings_dialog import UpdateSettingsDialog  # noqa: E402
 
 
 def main() -> int:
@@ -64,8 +58,6 @@ def main() -> int:
         QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width:0; }
         QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal { background:transparent; }
     """)
-
-    settings_release.Poe1SettingsDialog = UpdateSettingsDialog
 
     window = CompactHeaderIconOverlay()
     window.show()

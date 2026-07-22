@@ -10,10 +10,5 @@ from poe1_mini_gems_v2 import MiniGemLinks
 from release_poe1_v62 import GemOverviewOverlay as BaseOverlay
 
 
-class FixedGemOverviewOverlay(BaseOverlay):
-    def _open_build_progress(self):
-        editor_bridge.ManualBuildEditor = ManualBuildEditor
-        editor_bridge.editor_release.ManualBuildEditor = ManualBuildEditor
-        editor_release.ManualBuildEditor = ManualBuildEditor
-        super()._open_build_progress()
+from actpilot.overlay import FixedGemOverviewOverlay
 

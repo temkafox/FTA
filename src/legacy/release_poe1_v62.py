@@ -7,6 +7,5 @@ from poe1_manual_editor_v11 import ManualBuildEditor
 from release_poe1_v61 import StagedGemOverlay as BaseOverlay
 
 
-class GemOverviewOverlay(BaseOverlay):
-    pass
+from actpilot.overlay import GemOverviewOverlay
 

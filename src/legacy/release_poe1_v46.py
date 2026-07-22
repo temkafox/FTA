@@ -21,18 +21,7 @@ from poe1_tree_fast import CachedZoomSafeTreeCanvas, ConstructionTreePlaceholder
 from actpilot.build_dialog import FastBuildDialog
 
 
-class FastTreeOverlay(reliable.ReliableClientOverlay):
-    def _open_build_progress(self):
-        if self.game != legacy.GAME_POE1:
-            return
-        created = self._build_dialog is None
-        if created:
-            self._build_dialog = FastBuildDialog(self)
-        else:
-            self._build_dialog.reload()
-        self._build_dialog.show()
-        self._build_dialog.raise_()
-        self._build_dialog.activateWindow()
+from actpilot.overlay import FastTreeOverlay
 
 
 def main():
