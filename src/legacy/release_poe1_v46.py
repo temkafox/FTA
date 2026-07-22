@@ -18,29 +18,7 @@ from poe1_client_monitor_v3 import ClientLevelMonitor, find_client_log
 from poe1_tree_fast import CachedZoomSafeTreeCanvas, ConstructionTreePlaceholder
 
 
-class FastBuildDialog(reliable.ReliableClientBuildDialog):
-    def __init__(self, overlay):
-        self._fast_construction_complete = False
-        super().__init__(overlay)
-        self._fast_construction_complete = True
-        # Every inherited constructor attempted to reload. They were deferred,
-        # so populate the fully assembled window exactly once now.
-        super().reload()
-
-    def reload(self):
-        if not self._fast_construction_complete:
-            return
-        return super().reload()
-
-    def refresh_level(self):
-        if not self._fast_construction_complete:
-            return
-        return super().refresh_level()
-
-    def closeEvent(self, event):
-        # Keep the parsed tree and widgets alive. Reopening is then immediate.
-        self.hide()
-        event.ignore()
+from actpilot.build_dialog import FastBuildDialog
 
 
 class FastTreeOverlay(reliable.ReliableClientOverlay):

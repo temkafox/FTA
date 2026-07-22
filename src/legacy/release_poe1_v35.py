@@ -89,31 +89,7 @@ class Poe1SettingsDialog(legacy.SettingsDialog):
         return settings
 
 
-class PolishedBuildDialog(previous.AssetFramedBuildDialog):
-    def __init__(self, overlay):
-        super().__init__(overlay)
-        self.step_context.clear()
-        self.step_context.hide()
-        self.step_context.setMaximumHeight(0)
-
-        old_gems = self.gem_links
-        gem_layout = old_gems.parentWidget().layout()
-        index = gem_layout.indexOf(old_gems)
-        gem_layout.removeWidget(old_gems)
-        old_gems.deleteLater()
-        self.gem_links = PoedbGemChains()
-        self.gem_links.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        self.gem_links.body.setStyleSheet("background:rgba(2,4,4,0.38);")
-        gem_layout.insertWidget(index, self.gem_links, 1)
-        self._configure_client_monitor()
-        self.reload()
-
-    def _configure_client_monitor(self):
-        self.monitor._timer.stop()
-        configured = str(self.overlay.settings.get("poe1_client_path", "")).strip()
-        self.monitor.path = Path(configured) if configured else find_client_log()
-        self.monitor._position = 0
-        self.monitor.start()
+from actpilot.build_dialog import PolishedBuildDialog
 
 
 class PolishedOverlay(previous.AssetFramedOverlay):

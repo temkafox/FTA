@@ -13,39 +13,7 @@ import release_poe1_v21 as previous
 from poe1_ascendancy_widget import AscendancyProgressWidget
 
 
-class AscendancyBuildDialog(previous.SocketedGemBuildDialog):
-    def __init__(self, overlay):
-        self._ascendancy_ready = False
-        super().__init__(overlay)
-
-        gem_page = self.gem_links.parentWidget()
-        page_layout = gem_page.layout()
-        gem_index = page_layout.indexOf(self.gem_links)
-        page_layout.removeWidget(self.gem_links)
-
-        tabs = QTabWidget()
-        tabs.setDocumentMode(True)
-        tabs.setStyleSheet(
-            "QTabWidget::pane{border:0;background:#08090b;}"
-            "QTabBar::tab{background:#17181d;color:#aaa;padding:8px 16px;}"
-            "QTabBar::tab:selected{color:#f0d387;border-bottom:2px solid #d8a52e;}"
-        )
-        gems_tab = QWidget()
-        gems_layout = QVBoxLayout(gems_tab)
-        gems_layout.setContentsMargins(0, 0, 0, 0)
-        gems_layout.addWidget(self.gem_links)
-        self.ascendancy_view = AscendancyProgressWidget()
-        tabs.addTab(gems_tab, "Камни")
-        tabs.addTab(self.ascendancy_view, "Ассенданси")
-        page_layout.insertWidget(gem_index, tabs, 1)
-        self.left_tabs = tabs
-        self._ascendancy_ready = True
-        self.reload()
-
-    def _render_tree(self, build, level):
-        super()._render_tree(build, level)
-        if self._ascendancy_ready:
-            self.ascendancy_view.set_build(build, level)
+from actpilot.build_dialog import AscendancyBuildDialog
 
 
 class AscendancyOverlay(previous.SocketedGemOverlay):

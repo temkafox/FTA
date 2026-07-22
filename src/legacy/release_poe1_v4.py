@@ -14,28 +14,7 @@ from poe1_target_widgets import leveling_stage
 from poe1_tree_fast import ConstructionTreePlaceholder as MasteryAwareTreeCanvas
 
 
-class MasteryBuildDialog(previous.FullStageBuildDialog):
-    def __init__(self, overlay):
-        self._v4_ready = False
-        super().__init__(overlay)
-        old_canvas = self.tree_canvas
-        layout = old_canvas.parentWidget().layout()
-        index = layout.indexOf(old_canvas)
-        layout.removeWidget(old_canvas)
-        old_canvas.deleteLater()
-        self.tree_canvas = MasteryAwareTreeCanvas()
-        layout.insertWidget(index, self.tree_canvas, 1)
-        self._tree_initialized = False
-        self._v4_ready = True
-        self.reload()
-
-    def _render_tree(self, build, level):
-        if not self._v4_ready:
-            return super()._render_tree(build, level)
-        super()._render_tree(build, level)
-        if build:
-            stage = leveling_stage(build.get("trees", []), level)
-            self.tree_canvas.set_masteries(stage.get("masteries", "") if stage else "")
+from actpilot.build_dialog import MasteryBuildDialog
 
 
 class MasteryOverlay(previous.FullStageOverlay):

@@ -14,36 +14,7 @@ from poe1_gem_progression import links_at_level
 from poe1_level_plan_v2 import stage_at_level
 
 
-class ScaledGemBuildDialog(previous.FixedProgressionBuildDialog):
-    def __init__(self, overlay):
-        self._v10_ready = False
-        super().__init__(overlay)
-        self._v10_ready = True
-        self.reload()
-
-    def _render_gems(self, build, level):
-        if not self._v10_ready:
-            return super()._render_gems(build, level)
-        if not build:
-            self.gem_links.set_links("Импортируйте PoB", [])
-            return
-        stages = build.get("gem_sets", [])
-        stage = stage_at_level(stages, level)
-        if not stage:
-            self.gem_links.set_links("Связки не найдены", [])
-            return
-        title = stage.get("title", "Связки")
-        links = links_at_level(stage.get("links", []), level)
-        self.gem_links.set_links(title, links)
-        future_levels = sorted({
-            int(item.get("level", 1)) for item in stages
-            if int(item.get("level", 1)) > level
-        })
-        next_text = f" · следующая смена на {future_levels[0]}" if future_levels else ""
-        self.status.setText(
-            f"Уровень персонажа {level} · камни пересчитаны для этого уровня · "
-            f"набор «{title}»{next_text}"
-        )
+from actpilot.build_dialog import ScaledGemBuildDialog
 
 
 class ScaledGemOverlay(previous.FixedProgressionOverlay):

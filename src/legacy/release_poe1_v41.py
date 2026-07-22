@@ -14,37 +14,7 @@ from poe1_manual_editor_v11 import ManualBuildEditor
 from actpilot.tree import CachedZoomSafeTreeCanvas as ZoomSafeTreeCanvas
 
 
-class ClearGemEditorBuildDialog(previous.StableEditorBuildDialog):
-    def __init__(self, overlay):
-        super().__init__(overlay)
-        old_tree = self.tree_canvas
-        layout = old_tree.parentWidget().layout()
-        index = layout.indexOf(old_tree)
-        selected_masteries = dict(old_tree.selected_masteries)
-        layout.removeWidget(old_tree)
-        old_tree.deleteLater()
-        self.tree_canvas = ZoomSafeTreeCanvas()
-        self.tree_canvas.selected_masteries = selected_masteries
-        layout.insertWidget(index, self.tree_canvas, 1)
-        try:
-            self.ascendancy_button.clicked.disconnect()
-        except TypeError:
-            pass
-        self.ascendancy_button.clicked.connect(self.tree_canvas.fit_ascendancy)
-        self._tree_initialized = False
-        self._focused_stage_key = None
-        self._mastery_focus_key = None
-        self._manual_focus_key = None
-        self.reload()
-
-    def _open_manual_editor(self):
-        editor = ManualBuildEditor(self.overlay, self)
-        if editor.exec_():
-            self._tree_initialized = False
-            self._focused_stage_key = None
-            self._mastery_focus_key = None
-            self._manual_focus_key = None
-            self.reload()
+from actpilot.build_dialog import ClearGemEditorBuildDialog
 
 
 class ClearGemEditorOverlay(previous.StableEditorOverlay):

@@ -12,17 +12,7 @@ import main as legacy
 import release_poe1_v11 as previous
 
 
-class FinalLevelMappedBuildDialog(previous.LevelMappedBuildDialog):
-    def __init__(self, overlay):
-        super().__init__(overlay)
-        for label in self.tree_canvas.parentWidget().findChildren(QLabel):
-            if label is self.tree_stage_label:
-                continue
-            if "Золот" in label.text() or "зелён" in label.text():
-                label.setText(
-                    "Зелёное — уже взято на выбранном уровне · "
-                    "золотое — будущий маршрут · число у узла — уровень его получения"
-                )
+from actpilot.build_dialog import FinalLevelMappedBuildDialog
 
 
 class FinalLevelMappedOverlay(previous.LevelMappedOverlay):

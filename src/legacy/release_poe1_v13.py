@@ -13,21 +13,7 @@ import release_poe1_v12 as previous
 from poe1_tree_fast import ConstructionTreePlaceholder as ImmediateFocusTreeCanvas
 
 
-class ImmediateFocusBuildDialog(previous.FinalLevelMappedBuildDialog):
-    def __init__(self, overlay):
-        super().__init__(overlay)
-        old_tree = self.tree_canvas
-        layout = old_tree.parentWidget().layout()
-        index = layout.indexOf(old_tree)
-        selected_masteries = dict(old_tree.selected_masteries)
-        layout.removeWidget(old_tree)
-        old_tree.deleteLater()
-        self.tree_canvas = ImmediateFocusTreeCanvas()
-        self.tree_canvas.selected_masteries = selected_masteries
-        layout.insertWidget(index, self.tree_canvas, 1)
-        self._tree_initialized = False
-        self._focused_stage_key = None
-        self.reload()
+from actpilot.build_dialog import ImmediateFocusBuildDialog
 
 
 class ImmediateFocusOverlay(previous.FinalLevelMappedOverlay):

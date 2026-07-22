@@ -13,8 +13,7 @@ import release_poe1_v27 as previous
 from poe1_level_plan_v11 import ordinary_nearest_plan
 
 
-class StrictNearestBuildDialog(previous.LocalizedOverlayBuildDialog):
-    pass
+from actpilot.build_dialog import StrictNearestBuildDialog
 
 
 class StrictNearestOverlay(previous.LocalizedOverlay):

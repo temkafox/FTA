@@ -13,17 +13,7 @@ import release_poe1_v22 as previous
 from poe1_ascendancy_widget_v2 import ConnectedAscendancyProgressWidget
 
 
-class ConnectedAscendancyBuildDialog(previous.AscendancyBuildDialog):
-    def __init__(self, overlay):
-        super().__init__(overlay)
-        current_index = self.left_tabs.currentIndex()
-        old_view = self.ascendancy_view
-        self.left_tabs.removeTab(1)
-        old_view.deleteLater()
-        self.ascendancy_view = ConnectedAscendancyProgressWidget()
-        self.left_tabs.insertTab(1, self.ascendancy_view, "Ассенданси")
-        self.left_tabs.setCurrentIndex(current_index)
-        self.reload()
+from actpilot.build_dialog import ConnectedAscendancyBuildDialog
 
 
 class ConnectedAscendancyOverlay(previous.AscendancyOverlay):

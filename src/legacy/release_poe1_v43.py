@@ -16,35 +16,7 @@ from poe1_client_monitor_v2 import ClientLevelMonitor
 from poe1_builds import clamp_level
 
 
-class ReliableClientBuildDialog(previous.ClearGemEditorBuildDialog):
-    def _on_level_seen(self, character_name, character_class, level):
-        profile = self.overlay.active_profile()
-        bound_name = str(profile.get("log_character_name", "")).strip()
-        if bound_name and character_name.casefold() != bound_name.casefold():
-            return
-
-        build = profile.get("build") or {}
-        profile_name = str(profile.get("name", "")).strip()
-        same_profile_name = profile_name.casefold() == character_name.casefold()
-        compatible_class = class_matches(
-            str(build.get("class", "")),
-            str(build.get("ascendancy", "")),
-            character_class,
-        )
-        if not bound_name and not same_profile_name and not compatible_class:
-            return
-
-        profile["log_character_name"] = character_name
-        new_level = clamp_level(level)
-        if profile.get("level") != new_level:
-            profile["level"] = new_level
-            self.overlay.save_profiles()
-            self.refresh_level()
-        else:
-            self.overlay.save_profiles()
-        self.log_status.setText(
-            f"Client.txt: {character_name} ({character_class}) · уровень {new_level}"
-        )
+from actpilot.build_dialog import ReliableClientBuildDialog
 
 
 class ReliableClientOverlay(previous.ClearGemEditorOverlay):

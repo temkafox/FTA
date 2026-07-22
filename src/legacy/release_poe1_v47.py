@@ -14,23 +14,7 @@ import release_poe1_v46 as previous
 from poe1_manual_editor_v6 import ManualBuildEditor
 
 
-class FixedInteractionBuildDialog(previous.FastBuildDialog):
-    def __init__(self, overlay):
-        super().__init__(overlay)
-        self.sync_window_opacity()
-
-    def sync_window_opacity(self):
-        self.setWindowOpacity(1.0)
-
-    def reload(self):
-        result = super().reload()
-        if getattr(self, "_fast_construction_complete", False):
-            self.sync_window_opacity()
-        return result
-
-    def showEvent(self, event):
-        self.sync_window_opacity()
-        super().showEvent(event)
+from actpilot.build_dialog import FixedInteractionBuildDialog
 
 
 class FixedInteractionOverlay(previous.FastTreeOverlay):

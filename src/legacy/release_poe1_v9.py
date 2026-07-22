@@ -13,34 +13,7 @@ import release_poe1_v8 as previous
 from poe1_level_plan_v2 import stage_at_level
 
 
-class FixedProgressionBuildDialog(previous.ProgressionBuildDialog):
-    def __init__(self, overlay):
-        self._v9_ready = False
-        super().__init__(overlay)
-        self._v9_ready = True
-        self.reload()
-
-    def _render_gems(self, build, level):
-        if not self._v9_ready:
-            return super()._render_gems(build, level)
-        if not build:
-            self.gem_links.set_links("Импортируйте PoB", [])
-            return
-        stages = build.get("gem_sets", [])
-        stage = stage_at_level(stages, level)
-        if not stage:
-            self.gem_links.set_links("Связки не найдены", [])
-            return
-        title = stage.get("title", "Связки")
-        self.gem_links.set_links(title, stage.get("links", []))
-        future_levels = sorted({
-            int(item.get("level", 1)) for item in stages
-            if int(item.get("level", 1)) > level
-        })
-        next_text = f" · следующая смена на {future_levels[0]}" if future_levels else ""
-        self.status.setText(
-            f"Уровень персонажа {level} · набор камней «{title}»{next_text}"
-        )
+from actpilot.build_dialog import FixedProgressionBuildDialog
 
 
 class FixedProgressionOverlay(previous.ProgressionOverlay):

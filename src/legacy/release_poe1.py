@@ -13,18 +13,7 @@ import main_poe1_corrected as corrected
 from poe1_mastery_tree import CompleteTooltipTreeCanvas
 
 
-class ReleaseBuildDialog(corrected.FinalBuildDialog):
-    def __init__(self, overlay):
-        super().__init__(overlay)
-        old_canvas = self.tree_canvas
-        layout = old_canvas.parentWidget().layout()
-        index = layout.indexOf(old_canvas)
-        layout.removeWidget(old_canvas)
-        old_canvas.deleteLater()
-        self.tree_canvas = CompleteTooltipTreeCanvas()
-        layout.insertWidget(index, self.tree_canvas, 1)
-        self._tree_initialized = False
-        self.reload()
+from actpilot.build_dialog import ReleaseBuildDialog
 
 
 class ReleaseOverlay(corrected.FinalOverlay):

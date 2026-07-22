@@ -13,26 +13,7 @@ import release_poe1_v25 as previous
 from poe1_tree_fast import ConstructionTreePlaceholder as RestoredAscendancyTreeCanvas
 
 
-class RestoredAscendancyBuildDialog(previous.NativeAscendancyBuildDialog):
-    def __init__(self, overlay):
-        super().__init__(overlay)
-        old_tree = self.tree_canvas
-        tree_layout = old_tree.parentWidget().layout()
-        tree_index = tree_layout.indexOf(old_tree)
-        selected_masteries = dict(old_tree.selected_masteries)
-        tree_layout.removeWidget(old_tree)
-        old_tree.deleteLater()
-        self.tree_canvas = RestoredAscendancyTreeCanvas()
-        self.tree_canvas.selected_masteries = selected_masteries
-        tree_layout.insertWidget(tree_index, self.tree_canvas, 1)
-        try:
-            self.ascendancy_button.clicked.disconnect()
-        except TypeError:
-            pass
-        self.ascendancy_button.clicked.connect(self.tree_canvas.fit_ascendancy)
-        self._tree_initialized = False
-        self._focused_stage_key = None
-        self.reload()
+from actpilot.build_dialog import RestoredAscendancyBuildDialog
 
 
 class RestoredAscendancyOverlay(previous.NativeAscendancyOverlay):

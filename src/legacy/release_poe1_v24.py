@@ -14,46 +14,7 @@ from poe1_gem_widgets_v5 import CopyableGemChains
 from poe1_tree_fast import ConstructionTreePlaceholder as IntegratedAscendancyTreeCanvas
 
 
-class IntegratedTreeBuildDialog(previous.ConnectedAscendancyBuildDialog):
-    def __init__(self, overlay):
-        self._integrated_ready = False
-        super().__init__(overlay)
-
-        # The ascendancy now lives inside the main tree canvas.
-        if self.left_tabs.count() > 1:
-            hidden_ascendancy = self.left_tabs.widget(1)
-            self.left_tabs.removeTab(1)
-            hidden_ascendancy.hide()
-        self.left_tabs.tabBar().hide()
-
-        old_gems = self.gem_links
-        gem_layout = old_gems.parentWidget().layout()
-        gem_index = gem_layout.indexOf(old_gems)
-        gem_layout.removeWidget(old_gems)
-        old_gems.deleteLater()
-        self.gem_links = CopyableGemChains()
-        self.gem_links.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        gem_layout.insertWidget(gem_index, self.gem_links, 1)
-
-        old_tree = self.tree_canvas
-        tree_layout = old_tree.parentWidget().layout()
-        tree_index = tree_layout.indexOf(old_tree)
-        selected_masteries = dict(old_tree.selected_masteries)
-        tree_layout.removeWidget(old_tree)
-        old_tree.deleteLater()
-        self.tree_canvas = IntegratedAscendancyTreeCanvas()
-        self.tree_canvas.selected_masteries = selected_masteries
-        tree_layout.insertWidget(tree_index, self.tree_canvas, 1)
-
-        self._tree_initialized = False
-        self._focused_stage_key = None
-        self._integrated_ready = True
-        self.reload()
-
-    def _render_tree(self, build, level):
-        super()._render_tree(build, level)
-        if self._integrated_ready:
-            self.tree_canvas.set_ascendancy_build(build, level)
+from actpilot.build_dialog import IntegratedTreeBuildDialog
 
 
 class IntegratedTreeOverlay(previous.ConnectedAscendancyOverlay):

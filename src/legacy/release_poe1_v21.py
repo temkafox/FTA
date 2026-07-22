@@ -13,18 +13,7 @@ import release_poe1_v20 as previous
 from poe1_gem_widgets_v4 import CleanArtworkGemChains
 
 
-class SocketedGemBuildDialog(previous.CleanArtworkBuildDialog):
-    def __init__(self, overlay):
-        super().__init__(overlay)
-        old_gems = self.gem_links
-        gem_layout = old_gems.parentWidget().layout()
-        gem_index = gem_layout.indexOf(old_gems)
-        gem_layout.removeWidget(old_gems)
-        old_gems.deleteLater()
-        self.gem_links = CleanArtworkGemChains()
-        self.gem_links.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        gem_layout.insertWidget(gem_index, self.gem_links, 1)
-        self.reload()
+from actpilot.build_dialog import SocketedGemBuildDialog
 
 
 class SocketedGemOverlay(previous.CleanArtworkOverlay):

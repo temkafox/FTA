@@ -15,50 +15,7 @@ from poe1_target_widgets import leveling_stage
 from poe1_tree_fast import ConstructionTreePlaceholder as ConnectedPassiveTreeCanvas
 
 
-class FullStageBuildDialog(previous.CleanBuildDialog):
-    def __init__(self, overlay):
-        self._v3_ready = False
-        super().__init__(overlay)
-        old_canvas = self.tree_canvas
-        layout = old_canvas.parentWidget().layout()
-        index = layout.indexOf(old_canvas)
-        layout.removeWidget(old_canvas)
-        old_canvas.deleteLater()
-        self.tree_canvas = ConnectedPassiveTreeCanvas()
-        layout.insertWidget(index, self.tree_canvas, 1)
-        self._tree_initialized = False
-        self._v3_ready = True
-        self.reload()
-
-    def _render_tree(self, build, level):
-        if not self._v3_ready:
-            return super()._render_tree(build, level)
-        if not build:
-            self.tree_stage_label.setText("Импортируйте PoB")
-            self.tree_canvas.set_stage([])
-            return
-        trees = build.get("trees", [])
-        stage = leveling_stage(trees, level)
-        if not stage:
-            self.tree_stage_label.setText("Дерево в PoB не найдено")
-            self.tree_canvas.set_stage([])
-            return
-        previous = previous_stage(trees, stage)
-        previous_nodes = previous.get("nodes", []) if previous else []
-        old_center, old_scale = self.tree_canvas.center, self.tree_canvas.scale
-        self.tree_canvas.set_stage(stage.get("nodes", []), previous_nodes)
-        if self._tree_initialized:
-            self.tree_canvas.center, self.tree_canvas.scale = old_center, old_scale
-            self.tree_canvas.update()
-        else:
-            self.tree_canvas.fit_all()
-            self._tree_initialized = True
-        current_count = len(self.tree_canvas.selected)
-        added_count = len(self.tree_canvas.added)
-        self.tree_stage_label.setText(
-            f"Уровень {level} · {stage.get('title', 'Дерево')} · "
-            f"{current_count}/{current_count} пассивов · +{added_count} с прошлого этапа"
-        )
+from actpilot.build_dialog import FullStageBuildDialog
 
 
 class FullStageOverlay(previous.CleanOverlay):

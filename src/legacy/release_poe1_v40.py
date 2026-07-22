@@ -15,36 +15,7 @@ from poe1_manual_editor_v4 import ManualBuildEditor
 from release_poe1_v37 import _layout_with_widget
 
 
-class StableEditorBuildDialog(previous.ExactManualBuildDialog):
-    def __init__(self, overlay):
-        super().__init__(overlay)
-        # Replace the preceding editor button so there is always exactly one
-        # entry point, bound to the latest editor implementation.
-        old = self.editor_button
-        row = _layout_with_widget(self.layout(), old)
-        if row is not None:
-            row.removeWidget(old)
-        old.deleteLater()
-        self.editor_button = QPushButton("Редактор")
-        self.editor_button.setCursor(Qt.PointingHandCursor)
-        self.editor_button.setToolTip("Настроить пассивы и наборы камней по уровню")
-        self.editor_button.clicked.connect(self._open_manual_editor)
-        self.editor_button.setStyleSheet("""
-            QPushButton {background:rgba(91,64,24,.24); color:#d8bd7a;
-                border:1px solid rgba(190,145,69,.56); border-radius:5px; padding:5px 11px;}
-            QPushButton:hover {background:rgba(122,83,30,.32); color:#f0dfb9; border-color:#d1a85d;}
-        """)
-        if row is not None:
-            row.addWidget(self.editor_button)
-
-    def _open_manual_editor(self):
-        editor = ManualBuildEditor(self.overlay, self)
-        if editor.exec_():
-            self._tree_initialized = False
-            self._focused_stage_key = None
-            self._mastery_focus_key = None
-            self._manual_focus_key = None
-            self.reload()
+from actpilot.build_dialog import StableEditorBuildDialog
 
 
 class StableEditorOverlay(previous.ExactManualOverlay):
