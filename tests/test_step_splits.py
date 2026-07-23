@@ -118,14 +118,14 @@ def test_complete_without_timer(qapp):
     assert content.all_steps[0].split is None
 
 
-def test_splits_disabled_does_not_stamp(qapp):
+def test_splits_disabled_still_stamps_but_hides(qapp):
     timer = FakeTimer(83)
     content = make_content(qapp, timer)
     content.set_show_splits(False)
     content.complete_current()
     assert content.all_steps[0].done
-    assert content.all_steps[0].split is None
-    assert content.all_steps[0].split_label.isHidden()
+    assert content.all_steps[0].split == "01:23"  # время зафиксировано
+    assert content.all_steps[0].split_label.isHidden()  # но не показано
 
 
 def test_toggle_hides_and_restores_splits(qapp):
@@ -143,15 +143,18 @@ def test_toggle_hides_and_restores_splits(qapp):
     assert not content.all_steps[0].split_label.isHidden()
 
 
-def test_step_completed_while_off_has_no_split(qapp):
+def test_step_completed_while_off_reveals_split_after_enable(qapp):
     timer = FakeTimer(120)
     content = make_content(qapp, timer)
     content.set_show_splits(False)
-    content.complete_current()  # шаг завершён с выключенной фичей
+    content.complete_current()  # шаг завершён с выключенным отображением
+    assert content.all_steps[0].split == "02:00"  # время записано скрыто
+    assert content.all_steps[0].split_label.isHidden()
+
     content.set_show_splits(True)
     assert content.all_steps[0].done
-    assert content.all_steps[0].split is None  # честный пропуск
-    assert content.all_steps[0].split_label.isHidden()
+    assert content.all_steps[0].split == "02:00"
+    assert not content.all_steps[0].split_label.isHidden()  # теперь видно
 
 
 def test_load_applies_show_splits_flag(qapp):

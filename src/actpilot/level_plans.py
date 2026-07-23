@@ -1,4 +1,4 @@
-"""Живые PoB level-планы v1,v3..v12, сведённые в один модуль (v2 в level_plans_v2)."""
+"""Живые PoB level-планы, сведённые в один модуль; stage_at_level реэкспортится в level_plans_v2."""
 
 from __future__ import annotations
 
@@ -21,16 +21,11 @@ def range_bounds(stage):
 
 
 def stage_at_level(stages, level):
+    # Уровень-этап выбирается раньше диапазона в заголовке: PoB-наборы гемов
+    # часто перекрываются по диапазонам, и явный level — более точный признак.
     if not stages:
         return None
     level = clamp_level(level)
-    ranged = []
-    for index, stage in enumerate(stages):
-        bounds = range_bounds(stage)
-        if bounds and bounds[0] <= level <= bounds[1]:
-            ranged.append((bounds[0], index, stage))
-    if ranged:
-        return max(ranged, key=lambda item: (item[0], item[1]))[2]
     eligible = [
         (clamp_level(stage.get("level", 1)), index, stage)
         for index, stage in enumerate(stages)
@@ -38,6 +33,13 @@ def stage_at_level(stages, level):
     ]
     if eligible:
         return max(eligible, key=lambda item: (item[0], item[1]))[2]
+    ranged = []
+    for index, stage in enumerate(stages):
+        bounds = range_bounds(stage)
+        if bounds and bounds[0] <= level <= bounds[1]:
+            ranged.append((bounds[0], index, stage))
+    if ranged:
+        return max(ranged, key=lambda item: (item[0], item[1]))[2]
     return min(
         enumerate(stages),
         key=lambda item: (clamp_level(item[1].get("level", 1)), item[0]),

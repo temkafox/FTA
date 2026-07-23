@@ -92,6 +92,16 @@ class Style:
         for key, base in _STYLE_NUMERIC_BASE.items():
             setattr(cls, key, max(1, int(round(base * scale))))
 
+    @classmethod
+    def button_qss(cls, primary: bool = False) -> str:
+        color = cls.ACCENT if primary else "rgba(8,9,9,190)"
+        text = cls.BG if primary else cls.TEXT_SECONDARY
+        return f"""
+            QPushButton {{background:{color}; color:{text}; border:1px solid rgba(154,116,57,.42);
+                border-radius:{cls.RAD_S}px; padding:5px 10px;}}
+            QPushButton:hover {{border-color:#d0aa61; color:{cls.TEXT_PRIMARY};}}
+        """
+
 
 _STYLE_NUMERIC_BASE = {
     name: getattr(Style, name)

@@ -1,103 +1,39 @@
-"""Гем-виджеты и Client.txt-монитор; PassiveTreeCanvas переехал в actpilot.tree."""
+"""Гем-виджеты и WindowDragHeader; монитор — в actpilot.clientmonitor, дерево — в actpilot.tree."""
 
 from __future__ import annotations
 
-import os
-import re
-from pathlib import Path
-
-from PyQt5.QtCore import QPointF, Qt, QTimer, pyqtSignal, QObject
+from PyQt5.QtCore import QPointF, Qt
 from PyQt5.QtGui import QColor, QFont, QPainter, QPen, QPolygonF
 from PyQt5.QtWidgets import (
     QFrame, QHBoxLayout, QLabel, QScrollArea, QVBoxLayout, QWidget,
 )
 
 
-LEVEL_PATTERN = re.compile(
-    r":\s*(?P<name>[^\r\n:]+?)\s*\((?P<class>[^)]+)\)\s+is now level\s+(?P<level>\d{1,3})",
-    re.IGNORECASE,
-)
+class WindowDragHeader(QFrame):
+    """Заголовок без рамки: тащит окно-владельца за смещение курсора."""
 
+    def __init__(self, window, parent=None):
+        super().__init__(parent if parent is not None else window)
+        self._window = window
+        self._drag_offset = None
 
-def find_client_log() -> Path | None:
-    candidates = []
-    for env_name in ("PROGRAMFILES(X86)", "PROGRAMFILES"):
-        root = os.environ.get(env_name)
-        if not root:
-            continue
-        candidates.extend(
-            [
-                Path(root) / "Grinding Gear Games" / "Path of Exile" / "logs" / "Client.txt",
-                Path(root) / "Steam" / "steamapps" / "common" / "Path of Exile" / "logs" / "Client.txt",
-            ]
-        )
-    documents = Path.home() / "Documents" / "My Games" / "Path of Exile" / "logs" / "Client.txt"
-    candidates.append(documents)
-    existing = [path for path in candidates if path.is_file()]
-    return max(existing, key=lambda path: path.stat().st_mtime) if existing else None
-
-
-def read_log_tail(path: Path, byte_count=2_000_000) -> str:
-    try:
-        with path.open("rb") as stream:
-            stream.seek(0, os.SEEK_END)
-            size = stream.tell()
-            stream.seek(max(0, size - byte_count))
-            return stream.read().decode("utf-8", errors="replace")
-    except OSError:
-        return ""
-
-
-class ClientLevelMonitor(QObject):
-    level_seen = pyqtSignal(str, str, int)
-    status_changed = pyqtSignal(str)
-
-    def __init__(self, parent=None, path: Path | None = None):
-        super().__init__(parent)
-        self.path = path or find_client_log()
-        self._position = 0
-        self._timer = QTimer(self)
-        self._timer.setInterval(1500)
-        self._timer.timeout.connect(self.poll)
-
-    def start(self):
-        if not self.path or not self.path.is_file():
-            self.status_changed.emit("Client.txt не найден — уровень меняется кнопками −/+")
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self._drag_offset = event.globalPos() - self._window.frameGeometry().topLeft()
+            event.accept()
             return
-        tail = read_log_tail(self.path)
-        matches = list(LEVEL_PATTERN.finditer(tail))
-        if matches:
-            match = matches[-1]
-            self.level_seen.emit(
-                match.group("name").strip(), match.group("class").strip(), int(match.group("level"))
-            )
-        try:
-            self._position = self.path.stat().st_size
-        except OSError:
-            self._position = 0
-        self.status_changed.emit(f"Уровень синхронизируется: {self.path}")
-        self._timer.start()
+        super().mousePressEvent(event)
 
-    def poll(self):
-        if not self.path:
+    def mouseMoveEvent(self, event):
+        if self._drag_offset is not None and event.buttons() & Qt.LeftButton:
+            self._window.move(event.globalPos() - self._drag_offset)
+            event.accept()
             return
-        try:
-            size = self.path.stat().st_size
-            if size < self._position:
-                self._position = 0
-            if size == self._position:
-                return
-            with self.path.open("rb") as stream:
-                stream.seek(self._position)
-                chunk = stream.read()
-                self._position = stream.tell()
-            text = chunk.decode("utf-8", errors="replace")
-        except OSError:
-            return
-        for match in LEVEL_PATTERN.finditer(text):
-            self.level_seen.emit(
-                match.group("name").strip(), match.group("class").strip(), int(match.group("level"))
-            )
+        super().mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        self._drag_offset = None
+        super().mouseReleaseEvent(event)
 
 
 def infer_gem_color(name: str) -> str:
@@ -211,7 +147,9 @@ class GemLinksView(QScrollArea):
         heading.setStyleSheet("color:white;")
         self.layout.addWidget(heading)
         if not links:
-            self.layout.addWidget(QLabel("На этом этапе связки не найдены."))
+            empty = QLabel("На этом этапе связки не найдены.")
+            empty.setStyleSheet("color:#918b80;")
+            self.layout.addWidget(empty)
         for link in links:
             block = QFrame()
             block.setStyleSheet("QFrame{background:#202027;border:1px solid #34343d;border-radius:9px;}")

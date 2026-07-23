@@ -991,7 +991,8 @@ class GroupWidget(QFrame):
         return {
             "steps": [s.done for s in self.steps],
             "time": self._completion_time,
-            "step_times": [s.split for s in self.steps]
+            "step_times": [s.split for s in self.steps],
+            "step_texts": [s.text for s in self.steps],
         }
 
     def set_state(self, state):
@@ -999,15 +1000,45 @@ class GroupWidget(QFrame):
             for i, done in enumerate(state):
                 if i < len(self.steps):
                     self.steps[i].done = done
+            return
+
+        steps_done = state.get("steps", [])
+        step_times = state.get("step_times") or []
+        step_texts = state.get("step_texts")
+        current_texts = [s.text for s in self.steps]
+
+        if step_texts is not None and step_texts != current_texts:
+            self._apply_state_by_text(steps_done, step_times, step_texts)
         else:
-            for i, done in enumerate(state.get("steps", [])):
+            for i, done in enumerate(steps_done):
                 if i < len(self.steps):
                     self.steps[i].done = done
-            if state.get("time"):
-                self.set_completion_time(state["time"])
-            for i, t in enumerate(state.get("step_times") or []):
+            for i, t in enumerate(step_times):
                 if t and i < len(self.steps) and self.steps[i].done:
                     self.steps[i].set_split(t)
+
+        if state.get("time") and self.is_completed():
+            self.set_completion_time(state["time"])
+
+    def _apply_state_by_text(self, steps_done, step_times, step_texts):
+        """Переносит прогресс на новые шаги по совпадению текста, сохраняя порядок.
+
+        Указатель по текущим шагам не откатывается назад, поэтому повторяющиеся
+        тексты («Тп в город, сдаем квесты») мапятся по очереди, а вставленные
+        или удалённые шаги не смещают отметки соседей."""
+        cursor = 0
+        for i, text in enumerate(step_texts):
+            done = steps_done[i] if i < len(steps_done) else False
+            split = step_times[i] if i < len(step_times) else None
+            j = cursor
+            while j < len(self.steps):
+                if self.steps[j].text == text:
+                    self.steps[j].done = done
+                    if done and split:
+                        self.steps[j].set_split(split)
+                    cursor = j + 1
+                    break
+                j += 1
 
 
 class ContentArea(QScrollArea):
@@ -1070,7 +1101,7 @@ class ContentArea(QScrollArea):
             s.set_split_visible(value)
 
     def _stamp_step(self, step):
-        if self._show_splits and self._timer_ref is not None:
+        if self._timer_ref is not None:
             step.set_split(format_time(self._timer_ref.get_elapsed()))
 
     def _refresh_splits(self):

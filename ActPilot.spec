@@ -29,7 +29,10 @@ def include_directory(source_root, destination_root):
     return result
 
 
-datas = [(str(RUNTIME / "steps.json"), ".")]
+datas = [
+    (str(RUNTIME / "steps.json"), "."),
+    (str(RUNTIME / "steps_poe2.json"), "."),
+]
 datas += include_directory(RUNTIME / "assets", "assets")
 datas += include_directory(RUNTIME / "data" / "poe1", "data/poe1")
 

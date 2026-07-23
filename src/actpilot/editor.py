@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import copy
-import math
 
 from PyQt5.QtCore import QEvent, QObject, QPoint, QPointF, Qt, QTimer, pyqtSignal
 from PyQt5.QtGui import QColor, QFont, QPainter, QPen
@@ -14,6 +13,7 @@ from PyQt5.QtWidgets import (
 )
 
 import actpilot.shared as legacy
+from actpilot.messagebox import BUTTON_QSS, show_message
 from actpilot.build_model import (
     ASCENDANCIES, CLASS_START_INDEX, SNAPSHOT_KEYS,
     ascendancy_budget, ascendancy_start_id, class_start_id, load_tree,
@@ -32,13 +32,7 @@ ROOT = get_resource_dir()
 
 
 def _button(primary=False):
-    color = legacy.Style.ACCENT if primary else "rgba(8,9,9,190)"
-    text = legacy.Style.BG if primary else legacy.Style.TEXT_SECONDARY
-    return f"""
-        QPushButton {{background:{color}; color:{text}; border:1px solid rgba(154,116,57,.42);
-            border-radius:{legacy.Style.RAD_S}px; padding:5px 10px;}}
-        QPushButton:hover {{border-color:#d0aa61; color:{legacy.Style.TEXT_PRIMARY};}}
-    """
+    return legacy.Style.button_qss(primary)
 
 
 class ManualTreeCanvas(ExplicitProgressionTreeCanvas):
@@ -168,6 +162,7 @@ class ManualBuildEditor(QDialog):
             QTabBar::tab {{background:{s.BG_SECONDARY}; padding:8px 18px; color:{s.TEXT_MUTED};}}
             QTabBar::tab:selected {{color:#e8dcc0; border-bottom:2px solid {s.ACCENT};}}
             QSplitter::handle {{background:rgba(154,116,57,.28);}}
+            {BUTTON_QSS}
         """
 
     def _passive_page(self):
@@ -419,7 +414,14 @@ class ManualBuildEditor(QDialog):
         if self._loading or not class_name:
             return
         if self.state.get("class") != class_name and (self.state["passives"] or self.state["masteries"]):
-            answer = QMessageBox.question(self, "Сменить класс", "Маршрут пассивов будет очищен. Продолжить?")
+            answer = show_message(
+                self,
+                QMessageBox.Question,
+                "Сменить класс",
+                "Маршрут пассивов будет очищен. Продолжить?",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No,
+            )
             if answer != QMessageBox.Yes:
                 self.class_combo.blockSignals(True)
                 self.class_combo.setCurrentText(self.state["class"])

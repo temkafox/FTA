@@ -3,15 +3,10 @@
 from __future__ import annotations
 
 import copy
-import json
-from pathlib import Path
 
-from actpilot.paths import get_resource_dir
+from actpilot.data_cache import game_data
 from actpilot.level_plans import passive_point_events
 
-
-ROOT = get_resource_dir()
-TREE_FILE = ROOT / "data" / "poe1" / "skilltree.json"
 
 CLASS_START_INDEX = {
     "Scion": 0,
@@ -37,7 +32,9 @@ LAB_LEVELS = (33, 55, 68, 75)
 
 
 def load_tree():
-    return json.loads(TREE_FILE.read_text(encoding="utf-8"))
+    # Общий кеш data_cache: skilltree.json (6.5 МБ) парсится один раз на процесс.
+    # Все вызыватели (build_model, editor, minipanels) читают дерево только на чтение.
+    return game_data("skilltree.json")
 
 
 def class_start_id(nodes, class_name):

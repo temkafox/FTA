@@ -19,6 +19,7 @@ from PyQt5.QtWidgets import (
 import actpilot.shared as legacy
 
 from actpilot.hotkeys import HotkeyListener, display_hotkey, normalize_hotkey
+from actpilot.messagebox import MESSAGE_STYLE
 from actpilot.paths import APP_NAME, SETTINGS_FILE
 from actpilot.persistence import load_json, save_json
 from actpilot.regex_dialog import DEFAULT_REGEXES, RegexDialog
@@ -34,7 +35,7 @@ from actpilot.widgets import (
     load_background_pixmap, make_icon_button, scaled_ui_pixmap,
     set_widget_transparent,
 )
-from actpilot.shared import SettingsDialog, ensure_dirs, migrate_legacy_progress, migrate_settings
+from actpilot.shared import ensure_dirs, migrate_legacy_progress, migrate_settings
 from actpilot.settings_dialog import UpdateSettingsDialog
 
 from actpilot.builds import Poe1ProfileStore, clamp_level, new_profile
@@ -132,11 +133,6 @@ class Overlay(QWidget):
         steps_file = get_steps_file(self.game)
         default = DEFAULT_STEPS_POE2 if self.game == GAME_POE2 else DEFAULT_STEPS
         self.steps_data = load_json(steps_file, default)
-        if not steps_file.exists():
-            try:
-                save_json(steps_file, default)
-            except OSError:
-                pass
     
     def _switch_game(self, game: str):
         self.game = game
@@ -523,6 +519,7 @@ class Overlay(QWidget):
             box.setIcon(QMessageBox.Warning)
             box.setWindowTitle("Горячие клавиши")
             box.setWindowModality(Qt.NonModal)
+            box.setStyleSheet(MESSAGE_STYLE)
             self._hotkey_error_box = box
         elif box.isVisible():
             return
@@ -724,33 +721,6 @@ class Overlay(QWidget):
         self._refresh_icon_button(self.collapse_btn, "collapse", "−")
         self.update()
     
-    def _settings(self):
-        dialog = SettingsDialog(self.settings, self)
-        dialog.move(self.x() + (self.width() - dialog.width()) // 2, self.y() + 60)
-        
-        if dialog.exec_() == QDialog.Accepted:
-            old_game = self.game
-            self.settings = dialog.get_settings()
-            save_json(SETTINGS_FILE, self.settings)
-            self.hotkey.restart(self.settings["hotkey"])
-            self._start_hotkey()
-            self._update_opacity()
-            self._apply_click_through_mode()
-            new_scale = float(self.settings.get("ui_scale", DEFAULT_SETTINGS["ui_scale"]))
-            self._apply_ui_scale(self._ui_scale, new_scale)
-            self._ui_scale = new_scale
-            
-            new_game = self.settings.get("game", GAME_POE2)
-            if new_game != old_game:
-                self._close_layout_dialog()
-                self._save_progress()
-                self._switch_game(new_game)
-            
-            if dialog.should_reset:
-                self.content.reset()
-                self.timer.reset()
-                self._save_progress()
-    
     def resizeEvent(self, event):
         super().resizeEvent(event)
         self._reposition_resize_handles()
@@ -858,6 +828,18 @@ class Overlay(QWidget):
         if "timer" in data:
             self.timer.set_state(data["timer"])
         self._update_progress_bar()
+
+    def _reload_steps(self):
+        """Перечитывает шаги после правки в редакторе, сохраняя прогресс.
+
+        set_state переносит отметки по тексту шага, поэтому вставка/удаление
+        шагов не сбивает уже пройденное. Таймер не трогаем."""
+        state = self.content.get_state()
+        self._load_steps_data()
+        self.content.load(self.steps_data)
+        self.content.set_state(state)
+        self._update_progress_bar()
+        self._save_progress()
 
     def closeEvent(self, e):
         self._click_through_timer.stop()
@@ -1598,7 +1580,10 @@ class PolishedOverlay(AssetFramedOverlay):
         if regex_was_visible and self._regex_dialog is not None:
             self._regex_dialog.show()
             self._regex_dialog.raise_()
+        steps_changed = getattr(dialog, "steps_changed_games", set())
         if result != QDialog.Accepted:
+            if self.game in steps_changed:
+                self._reload_steps()
             return
         old_game = self.game
         self.settings = dialog.get_settings()
@@ -1615,6 +1600,8 @@ class PolishedOverlay(AssetFramedOverlay):
             self._close_layout_dialog()
             self._save_progress()
             self._switch_game(new_game)
+        elif self.game in steps_changed:
+            self._reload_steps()
         self.content.set_show_splits(
             self.settings.get("show_step_splits", legacy.DEFAULT_SETTINGS["show_step_splits"]))
         if self._build_dialog is not None:

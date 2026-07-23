@@ -14,15 +14,7 @@ PROFILE_FILE = legacy.DATA_DIR / "poe1_characters.json"
 
 
 def button_style(accent=False):
-    background = legacy.Style.ACCENT if accent else legacy.Style.BG_SECONDARY
-    color = legacy.Style.BG if accent else legacy.Style.TEXT_SECONDARY
-    return f"""
-        QPushButton {{
-            background: {background}; border: 1px solid {legacy.Style.BORDER};
-            border-radius: 7px; color: {color}; padding: 7px 12px;
-        }}
-        QPushButton:hover {{ border-color: {legacy.Style.ACCENT}; color: white; }}
-    """
+    return legacy.Style.button_qss(accent)
 
 
 class PobImportDialog(QDialog):

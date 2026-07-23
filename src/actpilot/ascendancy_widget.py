@@ -2,21 +2,15 @@
 
 from __future__ import annotations
 
-import json
 import math
-from pathlib import Path
-
-from actpilot.paths import get_resource_dir
 
 from PyQt5.QtCore import QPointF, QRectF, Qt
 from PyQt5.QtGui import QColor, QFont, QPainter, QPen
 from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
 
 from actpilot.ascendancy_plan import ascendancy_plan
+from actpilot.data_cache import game_data
 from actpilot.tree import PoePassiveTooltip
-
-
-TREE_FILE = get_resource_dir() / "data" / "poe1" / "skilltree.json"
 
 
 class AscendancyRouteCanvas(QWidget):
@@ -132,10 +126,7 @@ class AscendancyRouteCanvas(QWidget):
 class AscendancyProgressWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        try:
-            tree = json.loads(TREE_FILE.read_text(encoding="utf-8"))
-        except (OSError, ValueError):
-            tree = {}
+        tree = game_data("skilltree.json")
         self.nodes = tree.get("nodes", {})
         groups = tree.get("groups", {})
         radii = tree.get("constants", {}).get("orbitRadii", [])
@@ -165,7 +156,7 @@ class AscendancyProgressWidget(QWidget):
         layout.addWidget(self.canvas, 1)
         legend = QLabel("Зелёное — получено · золотое — будущий маршрут · светлая рамка — следующая лаборатория")
         legend.setWordWrap(True)
-        legend.setStyleSheet("color:#777777;")
+        legend.setStyleSheet("color:#9a938a;")
         layout.addWidget(legend)
 
     def set_build(self, build, level):

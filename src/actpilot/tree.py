@@ -1334,8 +1334,8 @@ class RestoredAscendancyTreeCanvas(NativeAscendancyTreeCanvas):
             )
 
 
-# Импорт после определения OpaqueMasteryTooltip: poe1_tooltips_ru тянет его обратно из этого модуля
-from actpilot.tooltips_ru import RussianPassiveTooltip
+# Импорт после определения OpaqueMasteryTooltip: tooltips_ru_v3 тянет его обратно из этого модуля
+from actpilot.tooltips_ru_v3 import OfficialRussianPassiveTooltip
 
 
 class RussianDescriptionTreeCanvas(RestoredAscendancyTreeCanvas):
@@ -1345,18 +1345,11 @@ class RussianDescriptionTreeCanvas(RestoredAscendancyTreeCanvas):
             node["_id"] = str(node_id)
         self.node_tooltip.hide()
         self.node_tooltip.deleteLater()
-        self.node_tooltip = RussianPassiveTooltip()
-
-
-from actpilot.tooltips_ru_v3 import OfficialRussianPassiveTooltip
+        self.node_tooltip = OfficialRussianPassiveTooltip()
 
 
 class OfficialRussianTreeCanvas(RussianDescriptionTreeCanvas):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        old = self.node_tooltip
-        self.node_tooltip = OfficialRussianPassiveTooltip()
-        old.deleteLater()
+    pass
 
 
 class SeparateMasteryTreeCanvas(OfficialRussianTreeCanvas):

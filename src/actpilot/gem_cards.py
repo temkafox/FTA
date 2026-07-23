@@ -88,7 +88,9 @@ class DescribedGemLinksView(GemLinksView):
         heading.setStyleSheet("color:white;")
         self.layout.addWidget(heading)
         if not links:
-            self.layout.addWidget(QLabel("На этом этапе связки не найдены."))
+            empty = QLabel("На этом этапе связки не найдены.")
+            empty.setStyleSheet("color:#918b80;")
+            self.layout.addWidget(empty)
         for link in links:
             block = QFrame()
             block.setStyleSheet(

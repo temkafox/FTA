@@ -41,6 +41,7 @@ from actpilot.clientmonitor import ClientLevelMonitor, find_client_log
 from actpilot.gems.widgets import LevelGemChains
 from actpilot.level_plans import passive_plan
 from actpilot.level_plans_v2 import stage_at_level
+from actpilot.messagebox import show_message
 from actpilot.level_plans import passive_plan_by_level
 from actpilot.level_plans import strict_passive_plan
 from actpilot.level_plans import pob_kills_all_bandits, quest_aware_passive_plan
@@ -72,10 +73,16 @@ from actpilot.tree_placeholder import (
     ConstructionTreePlaceholder as RussianDescriptionTreeCanvas,
     ConstructionTreePlaceholder as SeparateMasteryTreeCanvas,
 )
-from actpilot.base_widgets import GemLinksView
+from actpilot.base_widgets import GemLinksView, WindowDragHeader
 
 
 TREE_GRAPH = tree_graph(_SKILLTREE_ROOT / "skilltree.json")
+
+_EDITOR_BUTTON_QSS = """
+    QPushButton {background:rgba(91,64,24,.24); color:#d8bd7a;
+        border:1px solid rgba(190,145,69,.56); border-radius:5px; padding:5px 11px;}
+    QPushButton:hover {background:rgba(122,83,30,.32); color:#f0dfb9; border-color:#d1a85d;}
+"""
 
 
 def _layout_with_widget(layout, target):
@@ -91,32 +98,12 @@ def _layout_with_widget(layout, target):
     return None
 
 
-class BuildAssetHeader(QFrame):
+class BuildAssetHeader(WindowDragHeader):
     def __init__(self, owner):
         super().__init__(owner)
-        self.owner = owner
-        self._drag_offset = None
         self.setObjectName("assetHeader")
         self.setFixedHeight(46)
         self.setCursor(Qt.SizeAllCursor)
-
-    def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            self._drag_offset = event.globalPos() - self.owner.frameGeometry().topLeft()
-            event.accept()
-            return
-        super().mousePressEvent(event)
-
-    def mouseMoveEvent(self, event):
-        if self._drag_offset is not None and event.buttons() & Qt.LeftButton:
-            self.owner.move(event.globalPos() - self._drag_offset)
-            event.accept()
-            return
-        super().mouseMoveEvent(event)
-
-    def mouseReleaseEvent(self, event):
-        self._drag_offset = None
-        super().mouseReleaseEvent(event)
 
 
 
@@ -331,7 +318,9 @@ class BuildProgressDialog(QDialog):
         try:
             build = parse_pob(dialog.source())
         except PobImportError as exc:
-            QMessageBox.warning(self, "Не удалось импортировать PoB", str(exc))
+            show_message(
+                self, QMessageBox.Warning, "Не удалось импортировать PoB", str(exc)
+            )
             return
         profile = self.overlay.active_profile()
         profile["build"] = build
@@ -339,10 +328,12 @@ class BuildProgressDialog(QDialog):
             profile["level"] = clamp_level(build["character_level"])
         self.overlay.save_profiles()
         self.refresh_level()
-        QMessageBox.information(
-            self, "PoB импортирован",
+        show_message(
+            self,
+            QMessageBox.Information,
+            "PoB импортирован",
             f"Деревьев: {len(build.get('trees', []))}\n"
-            f"Наборов камней: {len(build.get('gem_sets', []))}"
+            f"Наборов камней: {len(build.get('gem_sets', []))}",
         )
 
 
@@ -651,7 +642,7 @@ class CorrectedBuildDialog(PerLevelBuildDialog):
         previous = previous_stage(trees, stage)
         previous_nodes = previous.get("nodes", []) if previous else []
         visible_nodes, newly_added = nodes_at_level(
-            stage, previous_nodes, level, per_level.TREE_GRAPH
+            stage, previous_nodes, level, TREE_GRAPH
         )
         new_set = set(newly_added)
         before_current_level = [node for node in visible_nodes if str(node) not in new_set]
@@ -694,7 +685,7 @@ class FinalBuildDialog(CorrectedBuildDialog):
         previous = previous_stage(trees, stage)
         previous_nodes = previous.get("nodes", []) if previous else []
         visible_nodes, newly_added = nodes_at_level(
-            stage, previous_nodes, level, v3.per_level.TREE_GRAPH
+            stage, previous_nodes, level, TREE_GRAPH
         )
         new_set = set(newly_added)
         before_current_level = [node for node in visible_nodes if str(node) not in new_set]
@@ -2537,11 +2528,7 @@ class EditableBuildDialog(ExplicitRouteBuildDialog):
         self.editor_button.setCursor(Qt.PointingHandCursor)
         self.editor_button.setToolTip("Вручную выбрать пассивы и этапы связок камней")
         self.editor_button.clicked.connect(self._open_manual_editor)
-        self.editor_button.setStyleSheet("""
-            QPushButton {background:rgba(91,64,24,.24); color:#d8bd7a;
-                border:1px solid rgba(190,145,69,.56); border-radius:5px; padding:5px 11px;}
-            QPushButton:hover {background:rgba(122,83,30,.32); color:#f0dfb9; border-color:#d1a85d;}
-        """)
+        self.editor_button.setStyleSheet(_EDITOR_BUTTON_QSS)
         row = _layout_with_widget(self.layout(), self.profile_combo)
         if row is not None:
             row.addWidget(self.editor_button)
@@ -2622,11 +2609,7 @@ class StableEditorBuildDialog(ExactManualBuildDialog):
         self.editor_button.setCursor(Qt.PointingHandCursor)
         self.editor_button.setToolTip("Настроить пассивы и наборы камней по уровню")
         self.editor_button.clicked.connect(self._open_manual_editor)
-        self.editor_button.setStyleSheet("""
-            QPushButton {background:rgba(91,64,24,.24); color:#d8bd7a;
-                border:1px solid rgba(190,145,69,.56); border-radius:5px; padding:5px 11px;}
-            QPushButton:hover {background:rgba(122,83,30,.32); color:#f0dfb9; border-color:#d1a85d;}
-        """)
+        self.editor_button.setStyleSheet(_EDITOR_BUTTON_QSS)
         if row is not None:
             row.addWidget(self.editor_button)
 
@@ -2756,5 +2739,3 @@ class FixedInteractionBuildDialog(FastBuildDialog):
 import actpilot.profiles as base
 from actpilot.profiles import PobImportDialog, button_style
 import actpilot.build_dialog as fallback_renderer
-import actpilot.tree_graphs as per_level
-import actpilot.tree_graphs as v3

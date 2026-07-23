@@ -1129,7 +1129,7 @@ class MiniGemLinks(BaseMiniGemLinks):
     def leaveEvent(self, event):
         self._hovered = None
         self.tooltip.hide()
-        super(BaseMiniGemLinks, self).leaveEvent(event)
+        super(MiniGemLinksV3, self).leaveEvent(event)
 
     def mousePressEvent(self, event):
         self.tooltip.hide()
@@ -1154,10 +1154,6 @@ class MiniGemLinks(BaseMiniGemLinks):
 
 
 MiniGemLinksV5 = MiniGemLinks
-
-
-# Ловушка: leaveEvent v4-класса читает BaseMiniGemLinks в рантайме — имя обязано остаться на v3-классе
-BaseMiniGemLinks = MiniGemLinksV3
 
 
 BaseMiniPassiveRoute = MiniPassiveRouteV8

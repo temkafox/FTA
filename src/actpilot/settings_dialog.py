@@ -11,7 +11,9 @@ from PyQt5.QtWidgets import (
     QSlider, QVBoxLayout, QWidget,
 )
 
-from auto_update import UPDATE_DIALOG_STYLE as MESSAGE_STYLE, add_update_controls
+from actpilot.base_widgets import WindowDragHeader
+from actpilot.messagebox import MESSAGE_STYLE
+from auto_update import add_update_controls
 
 import actpilot.shared as legacy
 
@@ -98,23 +100,10 @@ class HotkeyButton(QPushButton):
         self.style().polish(self)
 
 
-class DragHeader(QFrame):
+class DragHeader(WindowDragHeader):
     def __init__(self, dialog):
         super().__init__(dialog)
-        self.dialog = dialog
-        self.offset = None
         self.setObjectName("dragHeader")
-
-    def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            self.offset = event.globalPos() - self.dialog.frameGeometry().topLeft()
-
-    def mouseMoveEvent(self, event):
-        if self.offset is not None and event.buttons() & Qt.LeftButton:
-            self.dialog.move(event.globalPos() - self.offset)
-
-    def mouseReleaseEvent(self, event):
-        self.offset = None
 
 
 class ActPilotSettingsDialog(QDialog):
@@ -123,6 +112,7 @@ class ActPilotSettingsDialog(QDialog):
         self.legacy = legacy
         self.settings = settings.copy()
         self._should_reset = False
+        self.steps_changed_games = set()
         screen = QApplication.primaryScreen()
         area = screen.availableGeometry() if screen else None
         width = min(680, int(area.width() * .88)) if area else 680
@@ -207,6 +197,11 @@ class ActPilotSettingsDialog(QDialog):
         )
         client_warning.setWordWrap(True)
         section.addWidget(client_warning)
+        edit_steps = QPushButton("Редактировать шаги…")
+        edit_steps.setObjectName("secondaryButton")
+        edit_steps.setFixedHeight(38)
+        edit_steps.clicked.connect(self._edit_steps)
+        section.addWidget(edit_steps)
         self.content.addWidget(box)
 
         box, section = self._section("2", "Поведение оверлея")
@@ -315,6 +310,15 @@ class ActPilotSettingsDialog(QDialog):
             self, "Выберите Client.txt", start, "Client log (Client.txt);;Text files (*.txt)")
         if path:
             self.client_path_input.setText(path)
+
+    def _edit_steps(self):
+        from actpilot.steps_editor import StepsEditorDialog
+
+        game = self.legacy.GAME_POE2 if self.poe2_radio.isChecked() else self.legacy.GAME_POE1
+        editor = StepsEditorDialog(game, self)
+        editor.exec_()
+        if editor.saved:
+            self.steps_changed_games.add(game)
 
     def _on_save(self):
         assignments = (

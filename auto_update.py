@@ -17,6 +17,7 @@ from PyQt5 import sip
 from PyQt5.QtCore import Qt, QThread, QTimer, pyqtSignal
 from PyQt5.QtWidgets import QApplication, QLabel, QMessageBox, QPushButton, QScrollArea
 
+from actpilot.messagebox import show_message
 from version import __version__
 
 
@@ -24,75 +25,11 @@ GITHUB_REPOSITORY = "temkafox/FTA"
 RELEASE_API = f"https://api.github.com/repos/{GITHUB_REPOSITORY}/releases/latest"
 ASSET_NAME = "ActPilot-PoE1.exe"
 
-UPDATE_DIALOG_STYLE = """
-QMessageBox {
-    background-color: #17181d;
-}
-QMessageBox QLabel {
-    color: #f2eee5;
-    background-color: transparent;
-    font-size: 13px;
-}
-QMessageBox QLabel#qt_msgbox_label {
-    min-width: 310px;
-}
-QMessageBox QPushButton {
-    min-width: 88px;
-    min-height: 30px;
-    padding: 3px 14px;
-    color: #f2eee5;
-    background-color: #292b32;
-    border: 1px solid #555966;
-    border-radius: 6px;
-}
-QMessageBox QPushButton:hover {
-    background-color: #363943;
-    border-color: #d0aa61;
-}
-QMessageBox QPushButton:default {
-    color: #17181d;
-    background-color: #d0aa61;
-    border-color: #e3bf77;
-    font-weight: 600;
-}
-"""
+_UPDATE_LABELS = {QMessageBox.Yes: "Установить", QMessageBox.No: "Позже"}
 
 
 class NoPublishedRelease(RuntimeError):
     pass
-
-
-_BUTTON_LABELS = {
-    QMessageBox.Ok: "ОК",
-    QMessageBox.Yes: "Установить",
-    QMessageBox.No: "Позже",
-}
-
-
-def _show_message(
-    parent,
-    icon: QMessageBox.Icon,
-    title: str,
-    text: str,
-    buttons: QMessageBox.StandardButtons = QMessageBox.Ok,
-    default_button: QMessageBox.StandardButton = QMessageBox.NoButton,
-) -> int:
-    """Show an updater message that remains readable under the app's dark theme."""
-    if parent is not None and sip.isdeleted(parent):
-        parent = None
-    box = QMessageBox(parent)
-    box.setWindowTitle(title)
-    box.setIcon(icon)
-    box.setText(text)
-    box.setStandardButtons(buttons)
-    for standard, label in _BUTTON_LABELS.items():
-        button = box.button(standard)
-        if button is not None:
-            button.setText(label)
-    if default_button != QMessageBox.NoButton:
-        box.setDefaultButton(default_button)
-    box.setStyleSheet(UPDATE_DIALOG_STYLE)
-    return box.exec_()
 
 
 _ACTIVE_WORKERS: set = set()
@@ -212,7 +149,7 @@ def _check_on_startup(window) -> None:
             return
         if _version_tuple(release["version"]) <= _version_tuple(__version__):
             return
-        answer = _show_message(
+        answer = show_message(
             window,
             QMessageBox.Question,
             "Доступно обновление",
@@ -220,6 +157,7 @@ def _check_on_startup(window) -> None:
             "Скачать и установить сейчас?",
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.Yes,
+            _UPDATE_LABELS,
         )
         if answer == QMessageBox.Yes:
             _download_from_dialog(window, None, release)
@@ -231,7 +169,7 @@ def _check_on_startup(window) -> None:
 
 def _check_from_dialog(dialog, button: QPushButton) -> None:
     if not getattr(sys, "frozen", False):
-        _show_message(
+        show_message(
             dialog,
             QMessageBox.Information,
             "Обновления",
@@ -248,20 +186,21 @@ def _check_from_dialog(dialog, button: QPushButton) -> None:
         button.setEnabled(True)
         button.setText("Проверить обновления")
         if _version_tuple(release["version"]) <= _version_tuple(__version__):
-            _show_message(
+            show_message(
                 dialog,
                 QMessageBox.Information,
                 "Обновления",
                 f"У вас актуальная версия {__version__}.",
             )
             return
-        answer = _show_message(
+        answer = show_message(
             dialog,
             QMessageBox.Question,
             "Доступно обновление",
             f"Доступна версия {release['version']} (установлена {__version__}).\n\nСкачать и установить?",
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.Yes,
+            _UPDATE_LABELS,
         )
         if answer == QMessageBox.Yes:
             _download_from_dialog(dialog, button, release)
@@ -291,7 +230,7 @@ def _show_error(dialog, button: QPushButton | None, error: str) -> None:
     if button is not None and not sip.isdeleted(button):
         button.setEnabled(True)
         button.setText("Проверить обновления")
-    _show_message(
+    show_message(
         dialog,
         QMessageBox.Critical,
         "Ошибка обновления",

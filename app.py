@@ -5,17 +5,17 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from auto_update import apply_pending_update, schedule_startup_check
+ROOT = Path(__file__).resolve().parent
+_source = ROOT / "src"
+if str(_source) not in sys.path:
+    sys.path.insert(0, str(_source))
+
+from auto_update import apply_pending_update, schedule_startup_check  # noqa: E402
 
 
 if apply_pending_update(sys.argv):
     raise SystemExit(0)
 
-
-ROOT = Path(__file__).resolve().parent
-_source = ROOT / "src"
-if str(_source) not in sys.path:
-    sys.path.insert(0, str(_source))
 
 from PyQt5.QtCore import Qt  # noqa: E402
 from PyQt5.QtGui import QFont  # noqa: E402
@@ -53,6 +53,15 @@ def main() -> int:
         QScrollBar::handle:horizontal:hover { background:#806b49; }
         QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width:0; }
         QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal { background:transparent; }
+        QToolTip {
+            background-color:#17181d; color:#f2eee5;
+            border:1px solid #555966; padding:4px 6px;
+        }
+        QComboBox QAbstractItemView {
+            background-color:#222228; color:#f2eee5;
+            border:1px solid #555966; outline:0;
+            selection-background-color:#66543a; selection-color:#f2eee5;
+        }
     """)
 
     window = CompactHeaderIconOverlay()

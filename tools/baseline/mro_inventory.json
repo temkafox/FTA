@@ -52,7 +52,7 @@
     },
     "_import_pob": {
      "defined_in": "actpilot.build_dialog.BuildProgressDialog",
-     "hash": "21e35a36dceccd73"
+     "hash": "658bc66271ee1004"
     },
     "_install_asset_header": {
      "defined_in": "actpilot.build_dialog.AssetFramedBuildDialog",
@@ -488,7 +488,7 @@
     },
     "_style": {
      "defined_in": "actpilot.editor.ManualBuildEditor",
-     "hash": "fce56a92bdb909bb"
+     "hash": "2e20f2e875f54773"
     },
     "_sync_gem_stage_button": {
      "defined_in": "actpilot.editor.ManualBuildEditor",
@@ -720,7 +720,7 @@
     },
     "_notify_hotkey_error": {
      "defined_in": "actpilot.overlay.Overlay",
-     "hash": "9733a303878f256a"
+     "hash": "9cd94aabb40c9240"
     },
     "_on_active_step_changed": {
      "defined_in": "actpilot.overlay.Overlay",
@@ -1007,7 +1007,7 @@
    "attributes": {
     "__init__": {
      "defined_in": "actpilot.settings_dialog.ActPilotSettingsDialog",
-     "hash": "91ac05020c51acdb"
+     "hash": "2260c058e2cd0b97"
     },
     "_browse_client_log": {
      "defined_in": "actpilot.settings_dialog.ActPilotSettingsDialog",
@@ -1039,7 +1039,7 @@
     },
     "get_settings": {
      "defined_in": "actpilot.settings_dialog.ActPilotSettingsDialog",
-     "hash": "c5dbfd2e65ca0955"
+     "hash": "cb2e3e40d4b4f3f4"
     },
     "should_reset": {
      "defined_in": "actpilot.settings_dialog.ActPilotSettingsDialog",
