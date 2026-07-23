@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import uuid
+
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
     QAbstractItemView, QDialog, QFrame, QHBoxLayout, QLabel, QListWidget,
@@ -13,8 +15,10 @@ from actpilot.messagebox import MESSAGE_STYLE
 from actpilot.persistence import load_json, save_json
 from actpilot.steps import (
     DEFAULT_STEPS, DEFAULT_STEPS_POE2, GAME_POE2, get_steps_file,
-    get_user_steps_file,
+    get_user_steps_file, normalize_steps,
 )
+
+_STEP_ID_ROLE = Qt.UserRole + 1
 
 
 class StepsEditorDialog(QDialog):
@@ -158,7 +162,7 @@ class StepsEditorDialog(QDialog):
 
     def _read_current_steps(self):
         default = DEFAULT_STEPS_POE2 if self.game == GAME_POE2 else DEFAULT_STEPS
-        return load_json(get_steps_file(self.game), default)
+        return normalize_steps(load_json(get_steps_file(self.game), default))[0]
 
     def _load_into_widgets(self, data):
         self._current_act_row = -1
@@ -177,7 +181,10 @@ class StepsEditorDialog(QDialog):
     def _flush_steps_to_act(self):
         if 0 <= self._current_act_row < self.acts_list.count():
             steps = [
-                self.steps_list.item(i).text()
+                {
+                    "id": self.steps_list.item(i).data(_STEP_ID_ROLE),
+                    "text": self.steps_list.item(i).text(),
+                }
                 for i in range(self.steps_list.count())
             ]
             self.acts_list.item(self._current_act_row).setData(Qt.UserRole, steps)
@@ -188,9 +195,10 @@ class StepsEditorDialog(QDialog):
         self._current_act_row = row
         if row < 0:
             return
-        for text in self.acts_list.item(row).data(Qt.UserRole) or []:
-            item = QListWidgetItem(text)
+        for step in self.acts_list.item(row).data(Qt.UserRole) or []:
+            item = QListWidgetItem(step.get("text", ""))
             item.setFlags(item.flags() | Qt.ItemIsEditable)
+            item.setData(_STEP_ID_ROLE, step.get("id") or uuid.uuid4().hex)
             self.steps_list.addItem(item)
 
     def _add_act(self):
@@ -213,6 +221,7 @@ class StepsEditorDialog(QDialog):
             return
         item = QListWidgetItem("Новый шаг")
         item.setFlags(item.flags() | Qt.ItemIsEditable)
+        item.setData(_STEP_ID_ROLE, uuid.uuid4().hex)
         self.steps_list.addItem(item)
         self.steps_list.setCurrentItem(item)
         self.steps_list.editItem(item)
@@ -246,7 +255,7 @@ class StepsEditorDialog(QDialog):
         box.exec_()
         if box.clickedButton() is reset_button:
             default = DEFAULT_STEPS_POE2 if self.game == GAME_POE2 else DEFAULT_STEPS
-            self._load_into_widgets(default)
+            self._load_into_widgets(normalize_steps(default)[0])
 
     def _collect(self):
         self._flush_steps_to_act()
@@ -258,11 +267,11 @@ class StepsEditorDialog(QDialog):
                 return None, "Название акта не может быть пустым."
             if name in data:
                 return None, f"Акт «{name}» указан дважды. Названия должны быть разными."
-            steps = [
-                text for text in (
-                    s.strip() for s in (item.data(Qt.UserRole) or [])
-                ) if text
-            ]
+            steps = []
+            for step in item.data(Qt.UserRole) or []:
+                text = (step.get("text") or "").strip()
+                if text:
+                    steps.append({"id": step.get("id") or uuid.uuid4().hex, "text": text})
             data[name] = steps
         if not data:
             return None, "Нужен хотя бы один акт."

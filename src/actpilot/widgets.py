@@ -761,9 +761,10 @@ class SplitLabel(QLabel):
 class StepItem(QFrame):
     clicked = pyqtSignal(object)
 
-    def __init__(self, text: str, parent=None):
+    def __init__(self, text: str, step_id=None, parent=None):
         super().__init__(parent)
         self.text = text
+        self.step_id = step_id
         self._done = False
         self._active = False
         self._split = None
@@ -935,8 +936,11 @@ class GroupWidget(QFrame):
         self.container_layout.setContentsMargins(0, 0, 0, 0)
         self.container_layout.setSpacing(2)
         
-        for step_text in steps:
-            item = StepItem(step_text)
+        for step in steps:
+            if isinstance(step, dict):
+                item = StepItem(step.get("text", ""), step.get("id"))
+            else:
+                item = StepItem(step)
             item.clicked.connect(self.step_clicked.emit)
             self.steps.append(item)
             self.container_layout.addWidget(item)
@@ -993,6 +997,7 @@ class GroupWidget(QFrame):
             "time": self._completion_time,
             "step_times": [s.split for s in self.steps],
             "step_texts": [s.text for s in self.steps],
+            "step_ids": [s.step_id for s in self.steps],
         }
 
     def set_state(self, state):
@@ -1005,9 +1010,12 @@ class GroupWidget(QFrame):
         steps_done = state.get("steps", [])
         step_times = state.get("step_times") or []
         step_texts = state.get("step_texts")
-        current_texts = [s.text for s in self.steps]
+        step_ids = state.get("step_ids")
+        current_ids = {s.step_id for s in self.steps if s.step_id}
 
-        if step_texts is not None and step_texts != current_texts:
+        if step_ids and any(sid in current_ids for sid in step_ids if sid):
+            self._apply_state_by_id(steps_done, step_times, step_ids)
+        elif step_texts is not None and step_texts != [s.text for s in self.steps]:
             self._apply_state_by_text(steps_done, step_times, step_texts)
         else:
             for i, done in enumerate(steps_done):
@@ -1019,6 +1027,25 @@ class GroupWidget(QFrame):
 
         if state.get("time") and self.is_completed():
             self.set_completion_time(state["time"])
+
+    def _apply_state_by_id(self, steps_done, step_times, step_ids):
+        """Переносит прогресс по стабильному id шага — устойчиво к переименованию
+        и перестановке. Первое совпадение id выигрывает (id уникальны)."""
+        saved = {}
+        for i, sid in enumerate(step_ids):
+            if not sid or sid in saved:
+                continue
+            done = steps_done[i] if i < len(steps_done) else False
+            split = step_times[i] if i < len(step_times) else None
+            saved[sid] = (done, split)
+        for step in self.steps:
+            record = saved.get(step.step_id)
+            if record is None:
+                continue
+            done, split = record
+            step.done = done
+            if done and split:
+                step.set_split(split)
 
     def _apply_state_by_text(self, steps_done, step_times, step_texts):
         """Переносит прогресс на новые шаги по совпадению текста, сохраняя порядок.

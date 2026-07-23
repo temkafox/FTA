@@ -2,6 +2,7 @@ import pytest
 
 from PyQt5.QtWidgets import QApplication
 
+from actpilot.steps import normalize_steps
 from actpilot.widgets import ContentArea
 
 
@@ -25,6 +26,10 @@ def make_content(qapp, data, timer=None):
         content.set_timer(timer)
     content.load(data)
     return content
+
+
+def norm(data):
+    return normalize_steps(data)[0]
 
 
 def test_insert_step_keeps_progress_by_text(qapp):
@@ -112,4 +117,65 @@ def test_act_time_restored_only_when_complete(qapp):
     dst = make_content(qapp, {"Act 1": ["a", "b", "c"]})
     dst.set_state(state)
     assert dst.groups[0]._completion_time is None
+    assert [s.done for s in dst.all_steps] == [True, True, False]
+
+
+# --- матчинг по стабильному id (переименование не ломает прогресс) ---
+
+def test_rename_step_keeps_progress_by_id(qapp):
+    steps = norm({"Act 1": ["Убиваем хиллока", "Идём в побережье", "Босс"]})
+    timer = FakeTimer(60)
+    src = make_content(qapp, steps, timer)
+    src._on_click(src.all_steps[2])  # всё done со сплитами
+    state = src.get_state()
+
+    # переименовали второй шаг, id тот же
+    renamed = {"Act 1": [dict(s) for s in steps["Act 1"]]}
+    renamed["Act 1"][1]["text"] = "Идём в ПОБЕРЕЖЬЕ (впка)"
+    dst = make_content(qapp, renamed)
+    dst.set_state(state)
+
+    done = {s.text: s.done for s in dst.all_steps}
+    assert done == {"Убиваем хиллока": True, "Идём в ПОБЕРЕЖЬЕ (впка)": True, "Босс": True}
+    assert dst.all_steps[1].split is not None  # отсечка поехала за id, не за текстом
+
+
+def test_reorder_steps_keeps_progress_by_id(qapp):
+    steps = norm({"Act 1": ["a", "b", "c"]})
+    src = make_content(qapp, steps)
+    src._on_click(src.all_steps[1])  # a, b done
+    state = src.get_state()
+
+    order = steps["Act 1"]
+    reordered = {"Act 1": [order[2], order[0], order[1]]}  # c, a, b
+    dst = make_content(qapp, reordered)
+    dst.set_state(state)
+    done = {s.text: s.done for s in dst.all_steps}
+    assert done == {"a": True, "b": True, "c": False}
+
+
+def test_rename_plus_insert_plus_delete(qapp):
+    steps = norm({"Act 1": ["a", "b", "c", "d"]})
+    src = make_content(qapp, steps)
+    src._on_click(src.all_steps[2])  # a, b, c done; d нет
+    state = src.get_state()
+
+    a, b, c, d = steps["Act 1"]
+    b = dict(b, text="b переименован")           # переименовали b (id тот же)
+    new = {"id": "new0", "text": "новый"}          # вставили новый
+    changed = {"Act 1": [a, new, b, d]}            # удалили c, порядок изменён
+    dst = make_content(qapp, changed)
+    dst.set_state(state)
+    done = {s.text: s.done for s in dst.all_steps}
+    assert done == {"a": True, "новый": False, "b переименован": True, "d": False}
+
+
+def test_id_mismatch_falls_back_to_text(qapp):
+    src = make_content(qapp, norm({"Act 1": ["a", "b", "c"]}))
+    src._on_click(src.all_steps[1])  # a, b done
+    state = src.get_state()
+
+    # свежие id (другой uuid), тексты те же — id не совпадут, работает текстовый фолбэк
+    dst = make_content(qapp, norm({"Act 1": ["a", "b", "c"]}))
+    dst.set_state(state)
     assert [s.done for s in dst.all_steps] == [True, True, False]
