@@ -1,13 +1,42 @@
 # -*- mode: python ; coding: utf-8 -*-
+import sys
 from pathlib import Path
 
 from PIL import Image
+from PyInstaller.utils.win32.versioninfo import (
+    FixedFileInfo, StringFileInfo, StringStruct, StringTable,
+    VarFileInfo, VarStruct, VSVersionInfo,
+)
 
 
 ROOT = Path(SPECPATH)
 RUNTIME = ROOT / "src" / "actpilot"
 BUILD_DIR = ROOT / "build"
 BUILD_DIR.mkdir(exist_ok=True)
+
+sys.path.insert(0, str(ROOT))
+from version import __version__
+
+_parts = tuple(int(part) for part in __version__.split("."))[:4]
+_version_numbers = _parts + (0,) * (4 - len(_parts))
+
+version_info = VSVersionInfo(
+    ffi=FixedFileInfo(filevers=_version_numbers, prodvers=_version_numbers),
+    kids=[
+        StringFileInfo([
+            StringTable("040904B0", [
+                StringStruct("CompanyName", "temkafox"),
+                StringStruct("ProductName", "ActPilot"),
+                StringStruct("FileDescription", "ActPilot - Path of Exile 1 leveling overlay"),
+                StringStruct("FileVersion", __version__),
+                StringStruct("ProductVersion", __version__),
+                StringStruct("InternalName", "ActPilot-PoE1"),
+                StringStruct("OriginalFilename", "ActPilot-PoE1.exe"),
+            ]),
+        ]),
+        VarFileInfo([VarStruct("Translation", [1033, 1200])]),
+    ],
+)
 
 png_icon = RUNTIME / "assets" / "exelogo.png"
 ico_icon = BUILD_DIR / "exelogo.ico"
@@ -58,10 +87,12 @@ exe = EXE(
     [],
     name="ActPilot-PoE1",
     icon=str(ico_icon) if ico_icon.is_file() else None,
+    version=version_info,
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    # UPX-сжатие — частый триггер антивирусных эвристик на неподписанных exe
+    upx=False,
     console=False,
     disable_windowed_traceback=False,
 )

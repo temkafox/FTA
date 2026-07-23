@@ -25,7 +25,7 @@ from actpilot.persistence import load_json, save_json
 from actpilot.regex_dialog import DEFAULT_REGEXES, RegexDialog
 from actpilot.steps import (
     DEFAULT_STEPS, DEFAULT_STEPS_POE2, GAME_POE1, GAME_POE2,
-    get_progress_file, get_steps_file,
+    get_progress_file, get_steps_file, normalize_steps, persist_steps_with_ids,
 )
 from actpilot.style import Style
 from actpilot.winapi import set_window_click_through
@@ -132,7 +132,10 @@ class Overlay(QWidget):
     def _load_steps_data(self):
         steps_file = get_steps_file(self.game)
         default = DEFAULT_STEPS_POE2 if self.game == GAME_POE2 else DEFAULT_STEPS
-        self.steps_data = load_json(steps_file, default)
+        raw = load_json(steps_file, default)
+        self.steps_data, added_ids = normalize_steps(raw)
+        if added_ids:
+            persist_steps_with_ids(self.game, steps_file, self.steps_data)
     
     def _switch_game(self, game: str):
         self.game = game

@@ -1,9 +1,10 @@
 """Шаги гайда: дефолтные шаги, файлы прогресса, раскладки PoE2, разметка."""
 
+import uuid
 from pathlib import Path
 
 from actpilot.paths import APP_DIR, DATA_DIR, get_resource_dir
-from actpilot.persistence import load_json
+from actpilot.persistence import load_json, save_json
 from actpilot.style import POE_COLORS, Style
 
 
@@ -38,6 +39,50 @@ def get_progress_file(game: str) -> Path:
     if game == GAME_POE2:
         return DATA_DIR / "progress_poe2.json"
     return DATA_DIR / "progress_poe1.json"
+
+
+def normalize_steps(raw: dict) -> tuple[dict, bool]:
+    """Приводит шаги к виду {act: [{"id","text"}]}, назначая id где его нет.
+
+    Шаг в файле — либо строка (легаси/bundled/ручная правка), либо объект
+    {"id","text"}. Возвращает (нормализованные данные, были_ли_добавлены_id).
+    Идемпотентна: существующие id не трогает."""
+    added = False
+    result = {}
+    for act, steps in (raw or {}).items():
+        normalized = []
+        for step in steps or []:
+            if isinstance(step, dict):
+                text = str(step.get("text", ""))
+                step_id = step.get("id")
+                if not step_id:
+                    step_id = uuid.uuid4().hex
+                    added = True
+            else:
+                text = str(step)
+                step_id = uuid.uuid4().hex
+                added = True
+            normalized.append({"id": step_id, "text": text})
+        result[act] = normalized
+    return result, added
+
+
+def persist_steps_with_ids(game: str, resolved_path: Path, data: dict):
+    """Фиксирует стабильные id на диске, чтобы контент и редактор их разделяли.
+
+    Пишет обратно в resolved_path; если это read-only бандл или запись упала —
+    в пользовательский файл. Best-effort."""
+    target = resolved_path
+    if resolved_path == get_bundled_steps_file(game):
+        target = get_user_steps_file(game)
+    try:
+        save_json(target, data)
+    except OSError:
+        if target != get_user_steps_file(game):
+            try:
+                save_json(get_user_steps_file(game), data)
+            except OSError:
+                pass
 
 
 def get_data_file(name: str) -> Path:
