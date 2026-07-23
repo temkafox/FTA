@@ -214,6 +214,9 @@ class ActPilotSettingsDialog(QDialog):
         self.click_through_checkbox = QCheckBox("Клики сквозь оверлей")
         self.click_through_checkbox.setChecked(settings.get("click_through", False))
         section.addWidget(self.click_through_checkbox)
+        self.show_splits_checkbox = QCheckBox("Показывать отсечки времени по шагам")
+        self.show_splits_checkbox.setChecked(settings.get("show_step_splits", True))
+        section.addWidget(self.show_splits_checkbox)
         self.opacity_slider = self._slider(section, "Прозрачность оверлея", 50, 100,
                                            int(settings.get("opacity", .95) * 100))
         self.scale_slider = self._slider(section, "Масштаб интерфейса",
@@ -364,6 +367,7 @@ class ActPilotSettingsDialog(QDialog):
                 "layout_opacity", legacy.DEFAULT_SETTINGS["layout_opacity"]),
             "game": legacy.GAME_POE2 if self.poe2_radio.isChecked() else legacy.GAME_POE1,
             "click_through": self.click_through_checkbox.isChecked(),
+            "show_step_splits": self.show_splits_checkbox.isChecked(),
             "show_hotkey_hints": not self.hide_hotkey_hints_checkbox.isChecked(),
             "ui_scale": self.scale_slider.value() / 100.0,
             "poe1_client_path": self.client_path_input.text().strip(),

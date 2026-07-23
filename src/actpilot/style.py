@@ -37,6 +37,7 @@ class Style:
     FONT_HEADER = 13
     FONT_GROUP_TIME = 11
     FONT_TIMER_BTN = 9
+    FONT_STEP_TIME = 9
 
     @classmethod
     def horizontal_pad(cls, has_background: bool) -> int:
@@ -103,7 +104,7 @@ _STYLE_NUMERIC_BASE = {
         "BG_SLICE_LEFT", "BG_SLICE_RIGHT", "BG_SLICE_TOP", "BG_SLICE_BOTTOM",
         "STEP_MIN_H", "PROGRESS_BAR_H", "GRIP_SIZE", "GRIP_INSET",
         "TIMER_SIZE", "TIMER_BTN_SIZE", "TIMER_PAD_TOP", "TIMER_PAD_BOTTOM", "TIMER_PAD_RIGHT",
-        "FONT_STEP", "FONT_HEADER", "FONT_GROUP_TIME", "FONT_TIMER_BTN",
+        "FONT_STEP", "FONT_HEADER", "FONT_GROUP_TIME", "FONT_TIMER_BTN", "FONT_STEP_TIME",
     )
 }
 

@@ -29,7 +29,7 @@ from actpilot.regex_dialog import DEFAULT_REGEXES
 from actpilot.steps import (
     GAME_POE1, MANOR_FLOOR_IDS, POE2_LAYOUTS_FILE, format_time, get_data_file,
     layout_asset_path, load_poe2_layout_catalog, load_poe2_layout_steps_all,
-    parse_step_markup,
+    parse_step_markup, parse_time,
 )
 from actpilot.style import Style
 from actpilot.winapi import set_window_click_through
@@ -269,6 +269,7 @@ DEFAULT_SETTINGS = {
     "click_through": False,
     "ui_scale": 1.0,
     "show_hotkey_hints": True,
+    "show_step_splits": True,
     "regexes": [entry.copy() for entry in DEFAULT_REGEXES],
     "show_welcome": True,
 }
@@ -746,15 +747,30 @@ class Checkbox(QLabel):
             painter.drawRoundedRect(rect, 5, 5)
 
 
+class SplitLabel(QLabel):
+    clicked = pyqtSignal()
+
+    def mousePressEvent(self, e):
+        if e.button() == Qt.LeftButton:
+            self.clicked.emit()
+            e.accept()
+            return
+        super().mousePressEvent(e)
+
+
 class StepItem(QFrame):
     clicked = pyqtSignal(object)
-    
+
     def __init__(self, text: str, parent=None):
         super().__init__(parent)
         self.text = text
         self._done = False
         self._active = False
-        
+        self._split = None
+        self._split_visible = True
+        self._duration = None
+        self._split_mode = "total"
+
         self.setMinimumHeight(Style.STEP_MIN_H)
         self.setCursor(Qt.PointingHandCursor)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
@@ -771,7 +787,13 @@ class StepItem(QFrame):
         self.label.setWordWrap(True)
         self.label.setTextFormat(Qt.RichText)
         layout.addWidget(self.label, 1)
-        
+
+        self.split_label = SplitLabel("")
+        self.split_label.setFont(QFont("Segoe UI", Style.FONT_STEP_TIME))
+        self.split_label.setStyleSheet(f"color: {Style.TIMER_COLOR}; background: transparent;")
+        self.split_label.hide()
+        layout.addWidget(self.split_label, 0, Qt.AlignVCenter)
+
         self._apply_style()
     
     def _base_text_color(self):
@@ -808,8 +830,43 @@ class StepItem(QFrame):
     @done.setter
     def done(self, val):
         self._done = val
+        if not val:
+            self.set_split(None)
         self._apply_style()
-    
+
+    @property
+    def split(self):
+        return self._split
+
+    @property
+    def duration(self):
+        return self._duration
+
+    def set_split(self, value):
+        self._split = value or None
+        if self._split is None:
+            self._duration = None
+        self._refresh_split_label()
+
+    def set_duration(self, value):
+        self._duration = value or None
+
+    def set_split_mode(self, mode):
+        self._split_mode = mode
+        self._refresh_split_label()
+
+    def set_split_visible(self, visible):
+        self._split_visible = visible
+        self._refresh_split_label()
+
+    def _refresh_split_label(self):
+        text = self._duration if self._split_mode == "stage" else self._split
+        if text and self._split_visible:
+            self.split_label.setText(text)
+            self.split_label.show()
+        else:
+            self.split_label.hide()
+
     @property
     def active(self):
         return self._active
@@ -823,6 +880,7 @@ class StepItem(QFrame):
         self.setMinimumHeight(Style.STEP_MIN_H)
         self.layout().setContentsMargins(0, Style.PAD_S, 0, Style.PAD_S)
         self.label.setFont(QFont("Segoe UI", Style.FONT_STEP))
+        self.split_label.setFont(QFont("Segoe UI", Style.FONT_STEP_TIME))
         self.check.refresh_scale()
         self._apply_style()
 
@@ -932,9 +990,10 @@ class GroupWidget(QFrame):
     def get_state(self):
         return {
             "steps": [s.done for s in self.steps],
-            "time": self._completion_time
+            "time": self._completion_time,
+            "step_times": [s.split for s in self.steps]
         }
-    
+
     def set_state(self, state):
         if isinstance(state, list):
             for i, done in enumerate(state):
@@ -946,6 +1005,9 @@ class GroupWidget(QFrame):
                     self.steps[i].done = done
             if state.get("time"):
                 self.set_completion_time(state["time"])
+            for i, t in enumerate(state.get("step_times") or []):
+                if t and i < len(self.steps) and self.steps[i].done:
+                    self.steps[i].set_split(t)
 
 
 class ContentArea(QScrollArea):
@@ -961,7 +1023,9 @@ class ContentArea(QScrollArea):
         self._first_step_done = False
         self._timer_ref = None
         self._group_start_times = {}
-        
+        self._show_splits = True
+        self._split_mode = "total"
+
         self.setWidgetResizable(True)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setStyleSheet(f"""
@@ -999,7 +1063,31 @@ class ContentArea(QScrollArea):
     
     def set_timer(self, timer: Timer):
         self._timer_ref = timer
-    
+
+    def set_show_splits(self, value):
+        self._show_splits = value
+        for s in self.all_steps:
+            s.set_split_visible(value)
+
+    def _stamp_step(self, step):
+        if self._show_splits and self._timer_ref is not None:
+            step.set_split(format_time(self._timer_ref.get_elapsed()))
+
+    def _refresh_splits(self):
+        prev = 0
+        for s in self.all_steps:
+            if s.split:
+                s.set_duration(format_time(parse_time(s.split) - prev))
+                prev = parse_time(s.split)
+            else:
+                s.set_duration(None)
+            s.set_split_mode(self._split_mode)
+
+    def _toggle_split_mode(self):
+        self._split_mode = "stage" if self._split_mode == "total" else "total"
+        for s in self.all_steps:
+            s.set_split_mode(self._split_mode)
+
     def load(self, data: dict):
         for g in self.groups:
             g.deleteLater()
@@ -1016,9 +1104,14 @@ class ContentArea(QScrollArea):
             self.groups.append(group)
             self.layout.addWidget(group)
             self.all_steps.extend(group.steps)
-        
+
         self.layout.addStretch()
-        
+
+        for s in self.all_steps:
+            s.set_split_visible(self._show_splits)
+            s.split_label.clicked.connect(self._toggle_split_mode)
+            s.set_split_mode(self._split_mode)
+
         if self.all_steps:
             self.all_steps[0].active = True
             self.current_index = 0
@@ -1037,8 +1130,11 @@ class ContentArea(QScrollArea):
         if not step.done:
             # Отметить этот и все предыдущие шаги как выполненные
             for i in range(step_index + 1):
-                self.all_steps[i].done = True
-            
+                s = self.all_steps[i]
+                if not s.done:
+                    s.done = True
+                    self._stamp_step(s)
+
             if was_first:
                 self._first_step_done = True
                 self.first_step_started.emit()
@@ -1046,24 +1142,27 @@ class ContentArea(QScrollArea):
             # Снять отметку с этого и всех последующих шагов
             for i in range(step_index, len(self.all_steps)):
                 self.all_steps[i].done = False
-        
+
         self._check_all_groups()
         self._update_active()
+        self._refresh_splits()
         self.progress_changed.emit()
-    
+
     def complete_current(self):
         if self.current_index < len(self.all_steps):
             step = self.all_steps[self.current_index]
             if not step.done:
                 was_first = not self._first_step_done
                 step.done = True
-                
+                self._stamp_step(step)
+
                 if was_first:
                     self._first_step_done = True
                     self.first_step_started.emit()
                 
                 self._check_all_groups()
                 self._update_active()
+                self._refresh_splits()
                 self.progress_changed.emit()
 
     def previous_current(self):
@@ -1075,6 +1174,7 @@ class ContentArea(QScrollArea):
         self.all_steps[index].done = False
         self._check_all_groups()
         self._update_active()
+        self._refresh_splits()
         self.progress_changed.emit()
     
     def _check_all_groups(self):
@@ -1185,6 +1285,7 @@ class ContentArea(QScrollArea):
                 g.set_state(state[g.title])
                 if any(s.done for s in g.steps):
                     self._first_step_done = True
+        self._refresh_splits()
         self._update_active()
 
 

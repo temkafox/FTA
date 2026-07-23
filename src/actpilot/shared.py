@@ -58,6 +58,9 @@ def migrate_settings(settings: dict) -> bool:
         settings.setdefault("regex_hotkey", normalize_hotkey("F6"))
         settings["hotkey_defaults_version"] = 2
         changed = True
+    if "show_step_splits" not in settings:
+        settings["show_step_splits"] = True
+        changed = True
     return changed
 
 

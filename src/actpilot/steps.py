@@ -375,6 +375,14 @@ def format_time(seconds: float) -> str:
     return f"{mins:02d}:{secs:02d}"
 
 
+def parse_time(value: str) -> int:
+    try:
+        mins, secs = value.split(":")
+        return int(mins) * 60 + int(secs)
+    except (ValueError, AttributeError):
+        return 0
+
+
 def parse_step_markup(text: str, base_color: str, done: bool = False) -> str:
     import html
     import re

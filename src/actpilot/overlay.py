@@ -257,6 +257,8 @@ class Overlay(QWidget):
         self.content = ContentArea()
         self.content.set_timer(self.timer)
         self.content.load(self.steps_data)
+        self.content.set_show_splits(
+            self.settings.get("show_step_splits", DEFAULT_SETTINGS["show_step_splits"]))
         self.content.progress_changed.connect(self._update_progress_bar)
         self.content.progress_changed.connect(self._save_progress)
         self.content.first_step_started.connect(self._on_first_step)
@@ -1613,6 +1615,8 @@ class PolishedOverlay(AssetFramedOverlay):
             self._close_layout_dialog()
             self._save_progress()
             self._switch_game(new_game)
+        self.content.set_show_splits(
+            self.settings.get("show_step_splits", legacy.DEFAULT_SETTINGS["show_step_splits"]))
         if self._build_dialog is not None:
             self._build_dialog._configure_client_monitor()
         if dialog.should_reset:

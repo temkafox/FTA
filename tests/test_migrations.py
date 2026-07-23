@@ -9,6 +9,7 @@ def test_adds_new_keys_to_old_settings():
     assert settings["regexes"]
     assert settings["hotkey_defaults_version"] == 2
     assert settings["regex_defaults_version"] == 2
+    assert settings["show_step_splits"] is True
 
 
 def test_preserves_user_hotkeys():
