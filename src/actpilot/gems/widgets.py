@@ -10,12 +10,16 @@ from PyQt5.QtGui import (
     QRadialGradient,
 )
 from PyQt5.QtWidgets import (
-    QApplication, QFrame, QHBoxLayout, QLabel, QScrollArea, QToolTip,
+    QApplication, QFrame, QHBoxLayout, QLabel, QMenu, QScrollArea, QToolTip,
     QVBoxLayout, QWidget,
 )
 
 from actpilot.data_cache import game_data
-from actpilot.gems.data import acquisition_html, badges_for, gem_art_path
+from actpilot.gems.data import (
+    GRANTED_NON_GEMS, acquisition_html, badges_for, gem_art_path, link_to_text,
+    links_to_text,
+)
+from actpilot.messagebox import MENU_QSS
 from actpilot.paths import get_resource_dir
 from actpilot.ru_text import gem_description
 from actpilot.base_widgets import GEM_COLORS, infer_gem_color
@@ -150,6 +154,7 @@ class CompactGemIcon(QWidget):
 class CompactGemChains(QScrollArea):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.shown_links = []
         self.setWidgetResizable(True)
         self.setFrameShape(QFrame.NoFrame)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -159,6 +164,25 @@ class CompactGemChains(QScrollArea):
         self.layout.setContentsMargins(14, 14, 10, 14)
         self.layout.setSpacing(14)
         self.setWidget(self.body)
+
+    def _enable_link_copy(self, row_widget, link):
+        row_widget.setContextMenuPolicy(Qt.CustomContextMenu)
+        row_widget.customContextMenuRequested.connect(
+            lambda point, widget=row_widget, item=link: self.show_link_menu(widget, item, point)
+        )
+
+    def show_link_menu(self, widget, link, point):
+        menu = QMenu(widget)
+        menu.setStyleSheet(MENU_QSS)
+        copy_one = menu.addAction("Копировать связку")
+        copy_all = menu.addAction("Копировать все связки")
+        copy_all.setEnabled(len(self.shown_links) > 1)
+        chosen = menu.exec_(widget.mapToGlobal(point))
+        if chosen is None:
+            return
+        text = link_to_text(link) if chosen is copy_one else links_to_text(self.shown_links)
+        if text:
+            QApplication.clipboard().setText(text)
 
     def set_links(self, title, links):
         while self.layout.count():
@@ -252,13 +276,6 @@ class ArtworkGemChains(CompactGemChains):
             row.addStretch()
             self.layout.addWidget(row_widget)
         self.layout.addStretch()
-
-
-# PoB can expose skills granted by ascendancy/passive nodes in the same XML
-# section as socketed gems. They are not gems and must not appear in links.
-GRANTED_NON_GEMS = {
-    "primal aegis",
-}
 
 
 class CleanGemDetailTooltip(GemDetailTooltip):
@@ -470,7 +487,7 @@ class AcquisitionGemTooltip(RussianGemTooltip):
     def show_acquisition(self, gem, class_name, global_pos):
         super().show_gem(gem, global_pos)
         self.acquisition.setText(
-            acquisition_html(gem.get("name"), class_name)
+            acquisition_html(gem.get("name"), class_name, gem.get("support"))
         )
         self.acquisition.show()
         self.adjustSize()
@@ -495,7 +512,7 @@ class AcquisitionGemIcon(RussianCopyableGemIcon):
 
     def paintEvent(self, event):
         super().paintEvent(event)
-        badges = badges_for(self.gem.get("name"), self.character_class)
+        badges = badges_for(self.gem.get("name"), self.character_class, self.gem.get("support"))
         if not badges:
             return
         painter = QPainter(self)
@@ -647,6 +664,7 @@ class PoedbGemChains(AcquisitionGemChains):
 
     def set_links(self, title, links):
         links = self._socketed_links(links)
+        self.shown_links = links
         while self.layout.count():
             item = self.layout.takeAt(0)
             if item.widget():
@@ -676,6 +694,7 @@ class PoedbGemChains(AcquisitionGemChains):
                     row.addWidget(connector)
                 row.addWidget(self.icon_class(gem, self.character_class))
             row.addStretch()
+            self._enable_link_copy(row_widget, link)
             self.layout.addWidget(row_widget)
         self.layout.addStretch()
 

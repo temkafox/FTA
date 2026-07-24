@@ -28,6 +28,23 @@ QPushButton:default {
 }
 """
 
+MENU_QSS = """
+QMenu {
+    background-color: #17181d;
+    color: #f2eee5;
+    border: 1px solid #555966;
+    padding: 4px;
+}
+QMenu::item {
+    padding: 5px 18px;
+    border-radius: 4px;
+}
+QMenu::item:selected {
+    background-color: #66543a;
+    color: #f2eee5;
+}
+"""
+
 MESSAGE_STYLE = """
 QMessageBox {
     background-color: #17181d;

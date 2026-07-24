@@ -28,16 +28,26 @@ def clamp_level(value) -> int:
     return max(LEVEL_MIN, min(LEVEL_MAX, value))
 
 
+# Очки пассивок ≈ уровень − 1 + квестовые; за кампанию их набирается 22
+QUEST_PASSIVE_POINTS = 21
+
+
 def level_from_title(title: str, fallback: int | None = None) -> int | None:
     title = title or ""
-    patterns = (
-        r"(?:level|lvl|lev|уров(?:ень|ня)?|ур\.?)[\s:_-]*(\d{1,3})",
-        r"(?:^|\D)(\d{1,3})(?:\s*(?:points?|pts?|пассив|очк)|\s*$)",
+    explicit = re.search(
+        r"(?:level|lvl|lev|уров(?:ень|ня)?|ур\.?)[\s:_-]*(\d{1,3})", title, re.IGNORECASE
     )
-    for pattern in patterns:
-        match = re.search(pattern, title, re.IGNORECASE)
-        if match:
-            return clamp_level(match.group(1))
+    if explicit:
+        return clamp_level(explicit.group(1))
+    span = re.search(r"(?<!\d)(\d{1,3})\s*[-–—]\s*(\d{1,3})(?!\d)", title)
+    if span:
+        return clamp_level(span.group(1))
+    points = re.search(r"(?<!\d)(\d{1,3})\s*(?:points?|pts?|очк\w*)", title, re.IGNORECASE)
+    if points:
+        return clamp_level(int(points.group(1)) - QUEST_PASSIVE_POINTS)
+    bare = re.fullmatch(r"\s*(\d{1,3})\s*", title)
+    if bare:
+        return clamp_level(bare.group(1))
     return clamp_level(fallback) if fallback is not None else None
 
 
@@ -85,11 +95,24 @@ def _gem_name(gem: ET.Element) -> str:
     )
 
 
+def _is_support_gem(gem: ET.Element) -> bool:
+    # Path of Building не пишет признак поддержки: он выводится из skillId/gemId,
+    # где саппорты всегда несут префикс Support / SupportGem
+    explicit = gem.get("support")
+    if explicit is not None:
+        return explicit.lower() == "true"
+    if (gem.get("skillId") or "").startswith("Support"):
+        return True
+    return "SupportGem" in (gem.get("gemId") or "")
+
+
 def _parse_skill_set(skill_set: ET.Element, fallback_level: int) -> dict:
     title = skill_set.get("title") or skill_set.get("label") or "Набор камней"
     links = []
     for index, skill in enumerate(skill_set.findall("Skill"), 1):
         if skill.get("enabled", "true").lower() == "false":
+            continue
+        if (skill.get("source") or "").strip():
             continue
         gems = []
         for gem in skill.findall("Gem"):
@@ -98,7 +121,7 @@ def _parse_skill_set(skill_set: ET.Element, fallback_level: int) -> dict:
             gems.append(
                 {
                     "name": _gem_name(gem),
-                    "support": gem.get("support", "false").lower() == "true",
+                    "support": _is_support_gem(gem),
                     "level": gem.get("level"),
                     "quality": gem.get("quality"),
                 }
@@ -109,6 +132,7 @@ def _parse_skill_set(skill_set: ET.Element, fallback_level: int) -> dict:
         links.append({"label": label, "gems": gems})
     return {
         "level": level_from_title(title, fallback_level),
+        "level_guessed": level_from_title(title) is None,
         "title": title,
         "links": links,
     }
@@ -136,12 +160,15 @@ def parse_pob(source: str) -> dict:
     tree = root.find("Tree")
     if tree is not None:
         specs = tree.findall("Spec")
+        active_spec = tree.get("activeSpec", "").strip()
         for index, spec in enumerate(specs, 1):
             title = spec.get("title") or f"Дерево {index}"
             fallback = build_level if len(specs) == 1 else min(100, max(1, index * 10))
             trees.append(
                 {
                     "level": level_from_title(title, fallback),
+                    "level_guessed": level_from_title(title) is None,
+                    "active": active_spec == str(index),
                     "title": title,
                     "tree_version": spec.get("treeVersion", ""),
                     "nodes": _node_ids(spec),
@@ -153,10 +180,13 @@ def parse_pob(source: str) -> dict:
     skills = root.find("Skills")
     if skills is not None:
         sets = skills.findall("SkillSet")
+        active_set = skills.get("activeSkillSet", "").strip()
         if sets:
             for index, skill_set in enumerate(sets, 1):
                 fallback = build_level if len(sets) == 1 else min(100, max(1, index * 10))
-                gem_sets.append(_parse_skill_set(skill_set, fallback))
+                parsed = _parse_skill_set(skill_set, fallback)
+                parsed["active"] = active_set == (skill_set.get("id") or "").strip()
+                gem_sets.append(parsed)
         else:
             synthetic = ET.Element("SkillSet", {"title": "Основные связки"})
             for skill in skills.findall("Skill"):

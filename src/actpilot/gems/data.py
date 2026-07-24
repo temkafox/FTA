@@ -22,8 +22,23 @@ def normalized_class(value):
     return CLASS_ALIASES.get((value or "").strip().casefold(), (value or "").strip())
 
 
-def acquisition_for(gem_name, class_name):
-    record = DATA.get((gem_name or "").casefold(), {})
+def _acquisition_record(gem_name, support=None):
+    """Path of Building пишет имя саппорта без суффикса, справочник хранит его с суффиксом."""
+    key = (gem_name or "").strip().casefold()
+    if not key:
+        return {}
+    candidates = [f"{key} support", key] if support else [key, f"{key} support"]
+    if key.endswith(" support"):
+        candidates.append(key[: -len(" support")])
+    for candidate in candidates:
+        record = DATA.get(candidate)
+        if record:
+            return record
+    return {}
+
+
+def acquisition_for(gem_name, class_name, support=None):
+    record = _acquisition_record(gem_name, support)
     ways = record.get("classes", {}).get(normalized_class(class_name), {})
     return {
         "quest": list(ways.get("quest", [])),
@@ -31,13 +46,13 @@ def acquisition_for(gem_name, class_name):
     }
 
 
-def badges_for(gem_name, class_name):
-    ways = acquisition_for(gem_name, class_name)
+def badges_for(gem_name, class_name, support=None):
+    ways = acquisition_for(gem_name, class_name, support)
     return ("Q" if ways["quest"] else "") + ("B" if ways["vendor"] else "")
 
 
-def acquisition_html(gem_name, class_name):
-    ways = acquisition_for(gem_name, class_name)
+def acquisition_html(gem_name, class_name, support=None):
+    ways = acquisition_for(gem_name, class_name, support)
     lines = []
     if ways["quest"]:
         first = ways["quest"][0]
@@ -74,6 +89,70 @@ def effective_gem_level(name, character_level, imported_level=None):
         if int(gem_level) <= cap and int(requirement) <= int(character_level)
     ]
     return max(available) if available else None
+
+
+# PoB держит умения от предметов и пассивов в той же секции, что и связки камней
+GRANTED_NON_GEMS = {
+    "primal aegis",
+}
+
+
+def required_level(name):
+    record = GEM_LEVELS.get((name or "").strip().casefold(), {})
+    try:
+        return int(record.get("requirements", {}).get("1"))
+    except (TypeError, ValueError):
+        return None
+
+
+GEM_CATALOG = game_data("gem_catalog.json")
+RU_GEM_NAMES = game_data("ru_descriptions.json", {"gems": {}}).get("gems", {})
+
+
+def is_support_gem(name):
+    """Тип камня по имени: импорт PoB берёт его из skillId, ручной ввод — отсюда.
+
+    Триггерные камни вроде Spellslinger дают и умение, и поддержку; здесь они
+    считаются поддержкой, в импорте PoB — активными.
+    """
+    key = (name or "").strip().casefold()
+    if not key:
+        return False
+    if key.endswith(" support"):
+        return True
+    # У неоднозначных имён (Barrage) поддержка лежит в каталоге отдельной записью
+    if f"{key} support" in GEM_CATALOG:
+        return False
+    description = (GEM_CATALOG.get(key, {}).get("description") or "").strip().lower()
+    if description.startswith("support"):
+        return True
+    return f"{key} support" in RU_GEM_NAMES or f"{key} support" in DATA
+
+
+def link_to_text(link):
+    names = [str(gem.get("name", "")).strip() for gem in (link or {}).get("gems", [])]
+    return ", ".join(name for name in names if name)
+
+
+def links_to_text(links):
+    lines = [link_to_text(link) for link in links or []]
+    return "\n".join(line for line in lines if line)
+
+
+def locked_gems(links, character_level):
+    """Камни набора, недоступные на этом уровне: [(имя, требуемый уровень), ...]."""
+    locked = []
+    for link in links or []:
+        for gem in link.get("gems", []):
+            name = gem.get("name", "")
+            if (name or "").casefold() in GRANTED_NON_GEMS:
+                continue
+            if effective_gem_level(name, character_level, gem.get("level")) is not None:
+                continue
+            requirement = required_level(name)
+            if requirement is not None:
+                locked.append((name, requirement))
+    return sorted(locked, key=lambda item: item[1])
 
 
 def links_at_level(links, character_level):

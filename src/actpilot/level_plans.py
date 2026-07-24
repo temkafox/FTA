@@ -32,7 +32,11 @@ def stage_at_level(stages, level):
         if clamp_level(stage.get("level", 1)) <= level
     ]
     if eligible:
-        return max(eligible, key=lambda item: (item[0], item[1]))[2]
+        top = max(item[0] for item in eligible)
+        tied = [item for item in eligible if item[0] == top]
+        # При равных уровнях PoB сам говорит, какой набор считает активным
+        active = next((item[2] for item in tied if item[2].get("active")), None)
+        return active if active is not None else max(tied, key=lambda item: item[1])[2]
     ranged = []
     for index, stage in enumerate(stages):
         bounds = range_bounds(stage)

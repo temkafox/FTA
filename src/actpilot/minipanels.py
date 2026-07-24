@@ -6,16 +6,21 @@ import math
 
 from PyQt5.QtCore import QPointF, QRectF, Qt, pyqtSignal
 from PyQt5.QtGui import QColor, QCursor, QFont, QPainter, QPainterPath, QPen, QPixmap
-from PyQt5.QtWidgets import QApplication, QLabel, QSizePolicy, QToolTip, QWidget
+from PyQt5.QtWidgets import (
+    QApplication, QLabel, QMenu, QSizePolicy, QToolTip, QWidget,
+)
 
 from actpilot.data_cache import game_data
-from actpilot.gems.data import badges_for, gem_art_path
+from actpilot.gems.data import (
+    badges_for, gem_art_path, link_to_text, links_at_level, links_to_text,
+    required_level,
+)
 from actpilot.gems.widgets import (
     GRANTED_NON_GEMS, ICON_DIR, ICON_INDEX, AcquisitionGemTooltip,
 )
+from actpilot.messagebox import MENU_QSS
 from actpilot.tree import CachedZoomSafeTreeCanvas
-from actpilot.builds import stage_for_level
-from actpilot.level_plans import quest_aware_passive_plan
+from actpilot.level_plans import quest_aware_passive_plan, stage_at_level
 from actpilot.build_model import load_tree
 from actpilot.build_model import manual_passive_plan
 from actpilot.base_widgets import GEM_COLORS, infer_gem_color
@@ -808,8 +813,9 @@ class MiniGemLinks(QWidget):
         return result
 
     def set_build_level(self, build, level):
-        stage = stage_for_level((build or {}).get("gem_sets", []), level)
-        self._links = self._clean_links(stage.get("links", [])) if stage else []
+        stage = stage_at_level((build or {}).get("gem_sets", []), level)
+        links = links_at_level(stage.get("links", []), level) if stage else []
+        self._links = self._clean_links(links)
         self._items = []
         self._hovered = None
         if not self._links:
@@ -939,7 +945,7 @@ class MiniGemLinks(BaseMiniGemLinks):
 
     def set_build_level(self, build, level):
         stages = (build or {}).get("gem_sets", [])
-        active = stage_for_level(stages, level)
+        active = stage_at_level(stages, level)
         self._range_label = self._range_for(stages, active)
         super().set_build_level(build, level)
         if self._links:
@@ -1019,21 +1025,9 @@ MiniGemLinksV3 = MiniGemLinks
 GEM_COLOURS = game_data("gem_colors.json")
 
 
-GEM_LEVELS = game_data("gem_levels.json")
-
-
 def gem_colour(name):
     key = (name or "").strip().casefold()
     return GEM_COLOURS.get(key) or infer_gem_color(name)
-
-
-def required_level(name):
-    record = GEM_LEVELS.get((name or "").strip().casefold(), {})
-    requirements = record.get("requirements", {})
-    try:
-        return int(requirements.get("1"))
-    except (TypeError, ValueError):
-        return None
 
 
 class MiniGemTooltip(AcquisitionGemTooltip):
@@ -1053,7 +1047,7 @@ class MiniGemTooltip(AcquisitionGemTooltip):
         super().show_acquisition(gem, class_name, global_pos)
         name = gem.get("name", "")
         level = required_level(name)
-        badges = badges_for(name, class_name)
+        badges = badges_for(name, class_name, gem.get("support"))
         ways = " / ".join(badges) if badges else "—"
         level_text = str(level) if level is not None else "неизвестен"
         self.requirement.setText(
@@ -1151,6 +1145,39 @@ class MiniGemLinks(BaseMiniGemLinks):
         if key not in self._pixmaps or self._pixmaps[key].isNull():
             self._pixmaps[key] = QPixmap(str(path))
         return self._pixmaps[key]
+
+    def _row_at(self, point):
+        for row in self._layout_items():
+            for _, rect in row:
+                if rect.adjusted(-2, -2, 2, 2).contains(point):
+                    return [gem for gem, _ in row]
+        return None
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.RightButton:
+            self._show_copy_menu(event)
+            return
+        super().mousePressEvent(event)
+
+    def _show_copy_menu(self, event):
+        self.tooltip.hide()
+        self._hovered = None
+        row = self._row_at(event.pos())
+        menu = QMenu(self)
+        menu.setStyleSheet(MENU_QSS)
+        copy_one = menu.addAction("Копировать связку")
+        copy_one.setEnabled(row is not None)
+        copy_all = menu.addAction("Копировать все связки")
+        copy_all.setEnabled(len(self._links) > 1)
+        chosen = menu.exec_(event.globalPos())
+        if chosen is None:
+            return
+        if chosen is copy_one:
+            text = link_to_text({"gems": row})
+        else:
+            text = links_to_text([{"gems": gems} for gems in self._links])
+        if text:
+            QApplication.clipboard().setText(text)
 
 
 MiniGemLinksV5 = MiniGemLinks

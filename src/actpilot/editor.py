@@ -5,9 +5,9 @@ from __future__ import annotations
 import copy
 
 from PyQt5.QtCore import QEvent, QObject, QPoint, QPointF, Qt, QTimer, pyqtSignal
-from PyQt5.QtGui import QColor, QFont, QPainter, QPen
+from PyQt5.QtGui import QColor, QFont, QKeySequence, QPainter, QPen
 from PyQt5.QtWidgets import (
-    QAbstractItemView, QCheckBox, QComboBox, QDialog, QDialogButtonBox, QHBoxLayout,
+    QAbstractItemView, QApplication, QComboBox, QDialog, QDialogButtonBox, QHBoxLayout,
     QInputDialog, QLabel, QListWidget, QMessageBox, QPushButton, QSpinBox, QSplitter,
     QTabWidget, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget,
 )
@@ -16,12 +16,13 @@ import actpilot.shared as legacy
 from actpilot.messagebox import BUTTON_QSS, show_message
 from actpilot.build_model import (
     ASCENDANCIES, CLASS_START_INDEX, SNAPSHOT_KEYS,
-    ascendancy_budget, ascendancy_start_id, class_start_id, load_tree,
-    normalize_passive_stages, passive_budget,
+    ascendancy_budget, ascendancy_start_id, class_start_id, duplicate_link, load_tree,
+    move_gem, normalize_passive_stages, passive_budget, reorder_links,
 )
 from actpilot.build_model import build_from_state_v4 as build_from_state
 from actpilot.build_model import state_from_build_v4 as state_from_build
 from actpilot.data_cache import game_data
+from actpilot.gems.data import is_support_gem, link_to_text
 from actpilot.paths import get_resource_dir
 from actpilot.ru_text import localized_node
 from actpilot.tree import ExplicitProgressionTreeCanvas
@@ -33,6 +34,116 @@ ROOT = get_resource_dir()
 
 def _button(primary=False):
     return legacy.Style.button_qss(primary)
+
+
+class DropTargetList(QListWidget):
+    """Список, который сам ничего не двигает: порядок задаёт модель билда."""
+
+    def _drop_row(self, event):
+        index = self.indexAt(event.pos())
+        if not index.isValid():
+            return self.count()
+        row = index.row()
+        if self.dropIndicatorPosition() == QAbstractItemView.BelowItem:
+            row += 1
+        return row
+
+    @staticmethod
+    def _decline(event):
+        # Строки перерисовываются из состояния билда, поэтому свой ход Qt не нужен
+        event.setDropAction(Qt.IgnoreAction)
+        event.accept()
+
+
+class LinkList(DropTargetList):
+    links_reordered = pyqtSignal(int, int)
+    gem_dropped = pyqtSignal(int, int)
+    copy_requested = pyqtSignal()
+    paste_requested = pyqtSignal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setDragEnabled(True)
+        self.setAcceptDrops(True)
+        self.setDropIndicatorShown(True)
+        self.setDragDropMode(QAbstractItemView.DragDrop)
+        self.setDefaultDropAction(Qt.MoveAction)
+
+    def _accepts(self, event):
+        return event.source() is self or isinstance(event.source(), GemList)
+
+    def dragEnterEvent(self, event):
+        if not self._accepts(event):
+            return event.ignore()
+        super().dragEnterEvent(event)
+        event.acceptProposedAction()
+
+    def dragMoveEvent(self, event):
+        if not self._accepts(event):
+            return event.ignore()
+        # Даём Qt посчитать позицию индикатора: по ней определяется место вставки
+        super().dragMoveEvent(event)
+        event.acceptProposedAction()
+
+    def dropEvent(self, event):
+        source = event.source()
+        if source is self:
+            row = self.currentRow()
+            target = self._drop_row(event)
+            self._decline(event)
+            if row >= 0:
+                self.links_reordered.emit(row, target)
+            return
+        if isinstance(source, GemList):
+            index = self.indexAt(event.pos())
+            self._decline(event)
+            if index.isValid() and source.currentRow() >= 0:
+                self.gem_dropped.emit(source.currentRow(), index.row())
+            return
+        event.ignore()
+
+    def keyPressEvent(self, event):
+        if event.matches(QKeySequence.Copy):
+            self.copy_requested.emit()
+            return
+        if event.matches(QKeySequence.Paste):
+            self.paste_requested.emit()
+            return
+        super().keyPressEvent(event)
+
+
+class GemList(DropTargetList):
+    gems_reordered = pyqtSignal(int, int)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setDragEnabled(True)
+        self.setAcceptDrops(True)
+        self.setDropIndicatorShown(True)
+        self.setDragDropMode(QAbstractItemView.DragDrop)
+        self.setDefaultDropAction(Qt.MoveAction)
+
+    def dragEnterEvent(self, event):
+        if event.source() is not self:
+            return event.ignore()
+        super().dragEnterEvent(event)
+        event.acceptProposedAction()
+
+    def dragMoveEvent(self, event):
+        if event.source() is not self:
+            return event.ignore()
+        super().dragMoveEvent(event)
+        event.acceptProposedAction()
+
+    def dropEvent(self, event):
+        if event.source() is not self:
+            event.ignore()
+            return
+        row = self.currentRow()
+        target = self._drop_row(event)
+        self._decline(event)
+        if row >= 0:
+            self.gems_reordered.emit(row, target)
 
 
 class ManualTreeCanvas(ExplicitProgressionTreeCanvas):
@@ -248,7 +359,6 @@ class ManualBuildEditor(QDialog):
         self.gem_combo.setEditable(True)
         catalog = game_data("gem_catalog.json")
         self.gem_combo.addItems(sorted(item.get("name", key) for key, item in catalog.items()))
-        self.support_check = QCheckBox("поддержка")
         add = QPushButton("Добавить")
         remove = QPushButton("Удалить камень")
         add.setStyleSheet(_button(True))
@@ -256,7 +366,6 @@ class ManualBuildEditor(QDialog):
         add.clicked.connect(self._add_gem)
         remove.clicked.connect(self._remove_gem)
         picker.addWidget(self.gem_combo, 1)
-        picker.addWidget(self.support_check)
         picker.addWidget(add)
         picker.addWidget(remove)
         right_layout.addLayout(picker)
@@ -540,7 +649,7 @@ class ManualBuildEditor(QDialog):
             return self._flash("Сначала создайте и выберите связку")
         link.setdefault("gems", []).append({
             "name": name,
-            "support": self.support_check.isChecked(),
+            "support": is_support_gem(name),
             "level": "20",
             "quality": "0",
         })
@@ -580,22 +689,6 @@ class ManualBuildEditor(ManualBuildEditorV1):
         super().__init__(overlay, parent)
         loaded = state_from_build(self.profile.get("build"), self.profile.get("level", 1))
         self.state["allocation_order"] = loaded.get("allocation_order", [])
-        self.gem_combo.currentTextChanged.connect(self._infer_support)
-        self._infer_support(self.gem_combo.currentText())
-
-    def _infer_support(self, name):
-        key = (name or "").casefold()
-        support = False
-        try:
-            poedb = game_data("poedb_gems_ru.json")
-            source = (poedb.get(key) or {}).get("source", "")
-            support = source.casefold().endswith("_support")
-            if not source:
-                icons = game_data("gem_icons.json")
-                support = "support" in ((icons.get(key) or {}).get("source", "").casefold())
-        except (OSError, ValueError):
-            pass
-        self.support_check.setChecked(support)
 
     def _toggle_passive(self, node_id):
         before = node_id in self.state["passives"]
@@ -644,7 +737,7 @@ class ManualBuildEditor(ManualBuildEditorV1):
             return self._flash("Сначала создайте и выберите связку")
         link.setdefault("gems", []).append({
             "name": name,
-            "support": self.support_check.isChecked(),
+            "support": is_support_gem(name),
             "level": "20",
             "quality": "0",
         })
@@ -762,6 +855,9 @@ class ZoomSafeManualTreeCanvas(ZoomScaledNodeMixin, StableManualTreeCanvas):
 
 
 class ManualBuildEditor(ManualBuildEditorV4):
+    # Переживает закрытие окна: связку копируют в одном сеансе, вставляют в другом
+    _link_buffer = None
+
     def __init__(self, overlay, parent=None):
         super().__init__(overlay, parent)
         old_tree = self.tree
@@ -816,33 +912,48 @@ class ManualBuildEditor(ManualBuildEditorV4):
         left_layout = QVBoxLayout(left)
         left_layout.setContentsMargins(0, 0, 5, 0)
         left_layout.addWidget(QLabel("Связки"))
-        self.link_list = QListWidget()
+        self.link_list = LinkList()
         self.link_list.currentRowChanged.connect(self._link_changed)
+        self.link_list.links_reordered.connect(self._links_reordered)
+        self.link_list.gem_dropped.connect(self._gem_dropped)
+        self.link_list.copy_requested.connect(self._copy_link)
+        self.link_list.paste_requested.connect(self._paste_link)
         left_layout.addWidget(self.link_list, 1)
         link_row = QHBoxLayout()
         add_link = QPushButton("+ Новая связка")
+        duplicate = QPushButton("Дублировать")
         remove_link = QPushButton("Удалить связку")
         add_link.setStyleSheet(_button(True))
+        duplicate.setStyleSheet(_button())
         remove_link.setStyleSheet(_button())
         add_link.clicked.connect(self._new_link)
+        duplicate.clicked.connect(self._duplicate_link)
         remove_link.clicked.connect(self._delete_link)
         link_row.addWidget(add_link)
+        link_row.addWidget(duplicate)
         link_row.addWidget(remove_link)
         left_layout.addLayout(link_row)
+        drag_hint = QLabel(
+            "Связки и камни можно перетаскивать мышью, камень — на другую связку. "
+            "Ctrl+C и Ctrl+V копируют связку, в том числе на другой уровень."
+        )
+        drag_hint.setWordWrap(True)
+        drag_hint.setStyleSheet("color:#8f887a; padding-top:4px;")
+        left_layout.addWidget(drag_hint)
         splitter.addWidget(left)
 
         right = QWidget()
         right_layout = QVBoxLayout(right)
         right_layout.setContentsMargins(5, 0, 0, 0)
         right_layout.addWidget(QLabel("Камни выбранной связки"))
-        self.gem_list = QListWidget()
+        self.gem_list = GemList()
+        self.gem_list.gems_reordered.connect(self._gems_reordered)
         right_layout.addWidget(self.gem_list, 1)
         picker = QHBoxLayout()
         self.gem_combo = QComboBox()
         self.gem_combo.setEditable(True)
         catalog = game_data("gem_catalog.json")
         self.gem_combo.addItems(sorted(item.get("name", key) for key, item in catalog.items()))
-        self.support_check = QCheckBox("камень поддержки")
         add_gem = QPushButton("Добавить камень")
         remove_gem = QPushButton("Удалить")
         add_gem.setStyleSheet(_button(True))
@@ -850,7 +961,6 @@ class ManualBuildEditor(ManualBuildEditorV4):
         add_gem.clicked.connect(self._add_gem)
         remove_gem.clicked.connect(self._remove_gem)
         picker.addWidget(self.gem_combo, 1)
-        picker.addWidget(self.support_check)
         picker.addWidget(add_gem)
         picker.addWidget(remove_gem)
         right_layout.addLayout(picker)
@@ -938,6 +1048,53 @@ class ManualBuildEditor(ManualBuildEditorV4):
         stage.setdefault("links", []).append({"label": f"Связка {len(stage['links']) + 1}", "gems": []})
         self._show_gems_for_level(self.gem_level_picker.value(), len(stage["links"]) - 1)
 
+    def _duplicate_link(self):
+        row = self.link_list.currentRow()
+        if row < 0:
+            return self._flash("Выберите связку")
+        stage = self._ensure_editable_stage()
+        position = duplicate_link(stage.setdefault("links", []), row)
+        self._show_gems_for_level(self.gem_level_picker.value(), max(0, position))
+
+    def _copy_link(self):
+        link = self._current_link()
+        if not link:
+            return self._flash("Выберите связку")
+        type(self)._link_buffer = copy.deepcopy(link)
+        QApplication.clipboard().setText(link_to_text(link))
+        self._flash("Связка скопирована")
+
+    def _paste_link(self):
+        if not self._link_buffer:
+            return self._flash("Сначала скопируйте связку")
+        stage = self._ensure_editable_stage()
+        links = stage.setdefault("links", [])
+        links.append(copy.deepcopy(self._link_buffer))
+        self._show_gems_for_level(self.gem_level_picker.value(), len(links) - 1)
+        self._flash(f"Связка вставлена на уровне {self.gem_level_picker.value()}")
+
+    def _links_reordered(self, source, target):
+        stage = self._ensure_editable_stage()
+        position = reorder_links(stage.setdefault("links", []), source, target)
+        self._show_gems_for_level(self.gem_level_picker.value(), max(0, position))
+
+    def _gem_dropped(self, gem_index, to_link):
+        from_link = self.link_list.currentRow()
+        if from_link < 0 or from_link == to_link:
+            return
+        stage = self._ensure_editable_stage()
+        if move_gem(stage.setdefault("links", []), from_link, gem_index, to_link) < 0:
+            return
+        self._show_gems_for_level(self.gem_level_picker.value(), to_link)
+
+    def _gems_reordered(self, source, target):
+        row = self.link_list.currentRow()
+        if row < 0:
+            return
+        stage = self._ensure_editable_stage()
+        move_gem(stage.setdefault("links", []), row, source, row, target)
+        self._show_gems_for_level(self.gem_level_picker.value(), row)
+
     def _delete_link(self):
         row = self.link_list.currentRow()
         stage = self._ensure_editable_stage()
@@ -955,7 +1112,7 @@ class ManualBuildEditor(ManualBuildEditorV4):
         if not name:
             return
         stage["links"][row].setdefault("gems", []).append({
-            "name": name, "support": self.support_check.isChecked(),
+            "name": name, "support": is_support_gem(name),
             "level": "20", "quality": "0",
         })
         self._show_gems_for_level(self.gem_level_picker.value(), row)

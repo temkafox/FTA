@@ -22,11 +22,11 @@ import actpilot.shared as legacy
 
 from actpilot.editor import ManualBuildEditor
 
-from actpilot.build_model import manual_passive_plan
+from actpilot.build_model import manual_passive_plan, unknown_tree_nodes
 from actpilot.builds import PobImportError, clamp_level, parse_pob, stage_for_level
 from actpilot.clientlog import class_matches
 from actpilot.data_cache import tree_graph
-from actpilot.gems.data import links_at_level
+from actpilot.gems.data import links_at_level, locked_gems
 from actpilot.gems.widgets import (
     AcquisitionGemChains, ArtworkGemChains, CleanArtworkGemChains, CompactGemChains,
     CopyableGemChains, FallbackPoedbGemChains as PoedbGemChains, RussianOverlayGemChains,
@@ -328,13 +328,18 @@ class BuildProgressDialog(QDialog):
             profile["level"] = clamp_level(build["character_level"])
         self.overlay.save_profiles()
         self.refresh_level()
-        show_message(
-            self,
-            QMessageBox.Information,
-            "PoB импортирован",
-            f"Деревьев: {len(build.get('trees', []))}\n"
+        lines = [
+            f"Деревьев: {len(build.get('trees', []))}",
             f"Наборов камней: {len(build.get('gem_sets', []))}",
-        )
+        ]
+        missing, version = unknown_tree_nodes(build)
+        if missing:
+            for_version = f" версии {version}" if version else ""
+            lines.append(
+                f"\nБилд собран для дерева{for_version}: {missing} узлов нет "
+                "во встроенном дереве, они не будут показаны."
+            )
+        show_message(self, QMessageBox.Information, "PoB импортирован", "\n".join(lines))
 
 
 
@@ -2018,13 +2023,19 @@ class MasteryAndQuestBuildDialog(StrictNearestBuildDialog):
         if not stage:
             self.gem_links.set_links("Связки не найдены", [])
             return
-        self.gem_links.set_links(
-            stage.get("title", "Связки"),
-            links_at_level(stage.get("links", []), level),
-        )
-        self.status.setText(
-            "Q — награда за квест · B — купить у продавца · наведите на камень для деталей"
-        )
+        title = stage.get("title", "Связки")
+        if stage.get("level_guessed"):
+            title = f"{title} · уровень в PoB не указан"
+        self.gem_links.set_links(title, links_at_level(stage.get("links", []), level))
+        hint = "Q — награда за квест · B — купить у продавца · наведите на камень для деталей"
+        locked = locked_gems(stage.get("links", []), level)
+        if locked:
+            name, requirement = locked[0]
+            hint = (
+                f"Ещё закрыто камней: {len(locked)} · ближайший «{name}» "
+                f"с {requirement} уровня\n{hint}"
+            )
+        self.status.setText(hint)
 
     def _render_tree(self, build, level):
         if not self._v32_ready:

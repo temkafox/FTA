@@ -37,6 +37,71 @@ def load_tree():
     return game_data("skilltree.json")
 
 
+# Узлы кластерных самоцветов Path of Building генерирует сам, в дереве игры их нет
+CLUSTER_NODE_MIN = 65536
+
+
+def unknown_tree_nodes(build):
+    """Сколько узлов билда отсутствует в дереве и для какой версии дерева он собран."""
+    nodes = load_tree().get("nodes", {})
+    stages = (build or {}).get("trees", [])
+    missing = set()
+    for stage in stages:
+        for node in stage.get("nodes", []):
+            try:
+                node_id = int(node)
+            except (TypeError, ValueError):
+                continue
+            if node_id < CLUSTER_NODE_MIN and str(node_id) not in nodes:
+                missing.add(node_id)
+    version = next(
+        (stage.get("tree_version", "") for stage in stages if stage.get("tree_version")), ""
+    )
+    return len(missing), version.replace("_", ".")
+
+
+def duplicate_link(links, index):
+    """Вставляет копию связки сразу за оригиналом и возвращает позицию копии."""
+    if not 0 <= index < len(links or []):
+        return -1
+    links.insert(index + 1, copy.deepcopy(links[index]))
+    return index + 1
+
+
+def reorder_links(links, source, target):
+    """Переносит связку на новую позицию и возвращает её итоговый индекс.
+
+    target — позиция до изъятия связки, как её сообщает drag and drop.
+    """
+    if not 0 <= source < len(links or []):
+        return -1
+    link = links.pop(source)
+    if target > source:
+        target -= 1
+    target = max(0, min(target, len(links)))
+    links.insert(target, link)
+    return target
+
+
+def move_gem(links, from_link, gem_index, to_link, to_position=None):
+    """Переносит камень внутри связки или в другую связку; возвращает новую позицию."""
+    links = links or []
+    if not (0 <= from_link < len(links) and 0 <= to_link < len(links)):
+        return -1
+    source_gems = links[from_link].setdefault("gems", [])
+    if not 0 <= gem_index < len(source_gems):
+        return -1
+    gem = source_gems.pop(gem_index)
+    target_gems = links[to_link].setdefault("gems", [])
+    if to_position is None:
+        to_position = len(target_gems)
+    elif from_link == to_link and to_position > gem_index:
+        to_position -= 1
+    to_position = max(0, min(to_position, len(target_gems)))
+    target_gems.insert(to_position, gem)
+    return to_position
+
+
 def class_start_id(nodes, class_name):
     wanted = CLASS_START_INDEX.get(class_name, CLASS_START_INDEX["Witch"])
     return next(
