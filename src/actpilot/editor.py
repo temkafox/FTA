@@ -36,8 +36,28 @@ def _button(primary=False):
     return legacy.Style.button_qss(primary)
 
 
-class DropTargetList(QListWidget):
-    """Список, который сам ничего не двигает: порядок задаёт модель билда."""
+def decline_drop(event):
+    # Списки и дерево перерисовываются из состояния билда, свой ход Qt не нужен
+    event.setDropAction(Qt.IgnoreAction)
+    event.accept()
+
+
+def enable_drag_and_drop(view):
+    view.setDragEnabled(True)
+    view.setAcceptDrops(True)
+    view.setDropIndicatorShown(True)
+    view.setDragDropMode(QAbstractItemView.DragDrop)
+    view.setDefaultDropAction(Qt.MoveAction)
+
+
+class GemList(QListWidget):
+    """Камни выбранной связки: свой порядок и перетаскивание на дерево связок."""
+
+    gems_reordered = pyqtSignal(int, int)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        enable_drag_and_drop(self)
 
     def _drop_row(self, event):
         index = self.indexAt(event.pos())
@@ -48,26 +68,57 @@ class DropTargetList(QListWidget):
             row += 1
         return row
 
-    @staticmethod
-    def _decline(event):
-        # Строки перерисовываются из состояния билда, поэтому свой ход Qt не нужен
-        event.setDropAction(Qt.IgnoreAction)
-        event.accept()
+    def dragEnterEvent(self, event):
+        if event.source() is not self:
+            return event.ignore()
+        super().dragEnterEvent(event)
+        event.acceptProposedAction()
+
+    def dragMoveEvent(self, event):
+        if event.source() is not self:
+            return event.ignore()
+        # Даём Qt посчитать позицию индикатора: по ней определяется место вставки
+        super().dragMoveEvent(event)
+        event.acceptProposedAction()
+
+    def dropEvent(self, event):
+        if event.source() is not self:
+            event.ignore()
+            return
+        row = self.currentRow()
+        target = self._drop_row(event)
+        decline_drop(event)
+        if row >= 0:
+            self.gems_reordered.emit(row, target)
 
 
-class LinkList(DropTargetList):
-    links_reordered = pyqtSignal(int, int)
+class GemStageTree(QTreeWidget):
+    """Этапы и связки: порядок связок внутри этапа и приём камня на связку."""
+
+    link_moved = pyqtSignal(int, int)
     gem_dropped = pyqtSignal(int, int)
+    rejected = pyqtSignal(str)
     copy_requested = pyqtSignal()
     paste_requested = pyqtSignal()
 
+    OTHER_STAGE_LINK = "Связку можно переставить только внутри её этапа, в другой перенесите через Ctrl+V"
+    OTHER_STAGE_GEM = "Камень можно перенести только на связку того же этапа"
+
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setDragEnabled(True)
-        self.setAcceptDrops(True)
-        self.setDropIndicatorShown(True)
-        self.setDragDropMode(QAbstractItemView.DragDrop)
-        self.setDefaultDropAction(Qt.MoveAction)
+        enable_drag_and_drop(self)
+
+    @staticmethod
+    def node_data(item):
+        data = item.data(0, Qt.UserRole) if item is not None else None
+        return tuple(data) if data else (-1, -1)
+
+    @staticmethod
+    def insert_position(target_link, below):
+        """Позиция вставки до изъятия связки; -1, если цель не связка."""
+        if target_link < 0:
+            return -1
+        return target_link + 1 if below else target_link
 
     def _accepts(self, event):
         return event.source() is self or isinstance(event.source(), GemList)
@@ -81,26 +132,31 @@ class LinkList(DropTargetList):
     def dragMoveEvent(self, event):
         if not self._accepts(event):
             return event.ignore()
-        # Даём Qt посчитать позицию индикатора: по ней определяется место вставки
         super().dragMoveEvent(event)
         event.acceptProposedAction()
 
     def dropEvent(self, event):
         source = event.source()
+        if not self._accepts(event):
+            event.ignore()
+            return
+        stage, link = self.node_data(self.itemAt(event.pos()))
+        below = self.dropIndicatorPosition() == QAbstractItemView.BelowItem
+        current_stage, current_link = self.node_data(self.currentItem())
+        decline_drop(event)
         if source is self:
-            row = self.currentRow()
-            target = self._drop_row(event)
-            self._decline(event)
-            if row >= 0:
-                self.links_reordered.emit(row, target)
+            if link < 0 or stage != current_stage:
+                self.rejected.emit(self.OTHER_STAGE_LINK)
+                return
+            target = self.insert_position(link, below)
+            if target >= 0 and target != current_link:
+                self.link_moved.emit(current_link, target)
             return
-        if isinstance(source, GemList):
-            index = self.indexAt(event.pos())
-            self._decline(event)
-            if index.isValid() and source.currentRow() >= 0:
-                self.gem_dropped.emit(source.currentRow(), index.row())
+        if link < 0 or stage != current_stage:
+            self.rejected.emit(self.OTHER_STAGE_GEM)
             return
-        event.ignore()
+        if source.currentRow() >= 0 and link != current_link:
+            self.gem_dropped.emit(source.currentRow(), link)
 
     def keyPressEvent(self, event):
         if event.matches(QKeySequence.Copy):
@@ -110,40 +166,6 @@ class LinkList(DropTargetList):
             self.paste_requested.emit()
             return
         super().keyPressEvent(event)
-
-
-class GemList(DropTargetList):
-    gems_reordered = pyqtSignal(int, int)
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setDragEnabled(True)
-        self.setAcceptDrops(True)
-        self.setDropIndicatorShown(True)
-        self.setDragDropMode(QAbstractItemView.DragDrop)
-        self.setDefaultDropAction(Qt.MoveAction)
-
-    def dragEnterEvent(self, event):
-        if event.source() is not self:
-            return event.ignore()
-        super().dragEnterEvent(event)
-        event.acceptProposedAction()
-
-    def dragMoveEvent(self, event):
-        if event.source() is not self:
-            return event.ignore()
-        super().dragMoveEvent(event)
-        event.acceptProposedAction()
-
-    def dropEvent(self, event):
-        if event.source() is not self:
-            event.ignore()
-            return
-        row = self.currentRow()
-        target = self._drop_row(event)
-        self._decline(event)
-        if row >= 0:
-            self.gems_reordered.emit(row, target)
 
 
 class ManualTreeCanvas(ExplicitProgressionTreeCanvas):
@@ -912,12 +934,8 @@ class ManualBuildEditor(ManualBuildEditorV4):
         left_layout = QVBoxLayout(left)
         left_layout.setContentsMargins(0, 0, 5, 0)
         left_layout.addWidget(QLabel("Связки"))
-        self.link_list = LinkList()
+        self.link_list = QListWidget()
         self.link_list.currentRowChanged.connect(self._link_changed)
-        self.link_list.links_reordered.connect(self._links_reordered)
-        self.link_list.gem_dropped.connect(self._gem_dropped)
-        self.link_list.copy_requested.connect(self._copy_link)
-        self.link_list.paste_requested.connect(self._paste_link)
         left_layout.addWidget(self.link_list, 1)
         link_row = QHBoxLayout()
         add_link = QPushButton("+ Новая связка")
@@ -934,8 +952,8 @@ class ManualBuildEditor(ManualBuildEditorV4):
         link_row.addWidget(remove_link)
         left_layout.addLayout(link_row)
         drag_hint = QLabel(
-            "Связки и камни можно перетаскивать мышью, камень — на другую связку. "
-            "Ctrl+C и Ctrl+V копируют связку, в том числе на другой уровень."
+            "Связки и камни перетаскиваются мышью, камень можно бросить на другую "
+            "связку своего этапа. Ctrl+C и Ctrl+V копируют связку, в том числе в другой этап."
         )
         drag_hint.setWordWrap(True)
         drag_hint.setStyleSheet("color:#8f887a; padding-top:4px;")
@@ -1754,7 +1772,7 @@ class ManualBuildEditor(ManualBuildEditorV10):
         self.link_list.hide()
         self.link_list.setMaximumSize(0, 0)
 
-        self.gem_stage_tree = QTreeWidget(parent)
+        self.gem_stage_tree = GemStageTree(parent)
         self.gem_stage_tree.setHeaderHidden(True)
         self.gem_stage_tree.setRootIsDecorated(False)
         self.gem_stage_tree.setIndentation(16)
@@ -1766,6 +1784,11 @@ class ManualBuildEditor(ManualBuildEditorV10):
             QTreeWidget::item:selected { background: #173d2b; color: white; }
         """)
         self.gem_stage_tree.currentItemChanged.connect(self._gem_overview_changed)
+        self.gem_stage_tree.link_moved.connect(self._links_reordered)
+        self.gem_stage_tree.gem_dropped.connect(self._gem_dropped)
+        self.gem_stage_tree.copy_requested.connect(self._copy_link)
+        self.gem_stage_tree.paste_requested.connect(self._paste_link)
+        self.gem_stage_tree.rejected.connect(self._flash)
         layout.insertWidget(index, self.gem_stage_tree, 1)
 
     def _range_title(self, index):
@@ -1801,6 +1824,7 @@ class ManualBuildEditor(ManualBuildEditorV10):
         for stage_index, stage in enumerate(stages):
             header = QTreeWidgetItem([self._range_title(stage_index)])
             header.setData(0, Qt.UserRole, (stage_index, -1))
+            header.setFlags(header.flags() & ~Qt.ItemIsDragEnabled)
             font = header.font(0)
             font.setBold(True)
             header.setFont(0, font)
@@ -1810,6 +1834,7 @@ class ManualBuildEditor(ManualBuildEditorV10):
             if not links:
                 empty = QTreeWidgetItem(["Пустой этап"])
                 empty.setData(0, Qt.UserRole, (stage_index, -1))
+                empty.setFlags(empty.flags() & ~Qt.ItemIsDragEnabled)
                 header.addChild(empty)
                 if stage_index == selected_stage:
                     wanted = header

@@ -134,17 +134,171 @@ class FakeDropEvent:
         return self._point
 
 
-def test_drop_row_maps_point_to_insert_position(app):
+def test_gem_drop_row_maps_point_to_insert_position(app):
     from PyQt5.QtCore import QPoint
 
-    from actpilot.editor import LinkList
+    from actpilot.editor import GemList
 
-    widget = LinkList()
-    widget.addItems(["Связка 1", "Связка 2", "Связка 3"])
+    widget = GemList()
+    widget.addItems(["Камень 1", "Камень 2", "Камень 3"])
     widget.resize(220, 300)
     first = widget.visualItemRect(widget.item(0))
     assert widget._drop_row(FakeDropEvent(first.center())) == 0
     assert widget._drop_row(FakeDropEvent(QPoint(10, 290))) == 3
+
+
+def test_tree_insert_position():
+    from actpilot.editor import GemStageTree
+
+    assert GemStageTree.insert_position(1, False) == 1
+    assert GemStageTree.insert_position(1, True) == 2
+    assert GemStageTree.insert_position(-1, False) == -1
+
+
+def test_gem_tab_drag_surface_is_the_visible_tree(editor):
+    """Связки живут в дереве: список связок спрятан, перетаскивать нужно дерево."""
+    editor.tabs.setCurrentIndex(1)
+    editor.show()
+
+    assert editor.link_list.isHidden()
+    tree = editor.gem_stage_tree
+    assert tree.isVisible()
+    assert tree.dragEnabled() and tree.acceptDrops()
+    assert editor.gem_list.isVisible()
+    assert editor.gem_list.dragEnabled() and editor.gem_list.acceptDrops()
+
+
+def tree_texts(editor):
+    tree = editor.gem_stage_tree
+    header = tree.topLevelItem(0)
+    return [header.child(row).text(0) for row in range(header.childCount())]
+
+
+def test_tree_shows_reordered_links(editor):
+    assert tree_texts(editor) == ["Freezing Pulse — Arcane Surge", "Frostbolt"]
+
+    editor._links_reordered(1, 0)
+
+    assert tree_texts(editor) == ["Frostbolt", "Freezing Pulse — Arcane Surge"]
+
+
+def test_tree_shows_moved_gem(editor):
+    editor.gem_stage_tree.setCurrentItem(
+        editor.gem_stage_tree.topLevelItem(0).child(0)
+    )
+    editor._gem_dropped(1, 1)
+
+    assert tree_texts(editor) == ["Freezing Pulse", "Frostbolt — Arcane Surge"]
+
+
+def test_tree_headers_are_not_draggable(editor):
+    from PyQt5.QtCore import Qt
+
+    header = editor.gem_stage_tree.topLevelItem(0)
+    assert not header.flags() & Qt.ItemIsDragEnabled
+    assert header.child(0).flags() & Qt.ItemIsDragEnabled
+
+
+class FakeTreeDrop:
+    """Событие drop: настоящее подделать нельзя — у него не задать source()."""
+
+    def __init__(self, source, point):
+        self._source = source
+        self._point = point
+        self.action = None
+        self.ignored = False
+
+    def source(self):
+        return self._source
+
+    def pos(self):
+        return self._point
+
+    def setDropAction(self, action):
+        self.action = action
+
+    def accept(self):
+        pass
+
+    def ignore(self):
+        self.ignored = True
+
+
+def shown_tree(editor):
+    editor.tabs.setCurrentIndex(1)
+    editor.show()
+    return editor.gem_stage_tree
+
+
+def center_of(tree, item):
+    return tree.visualItemRect(item).center()
+
+
+def test_drop_of_link_onto_another_link_reorders(editor):
+    from PyQt5.QtCore import Qt
+
+    tree = shown_tree(editor)
+    header = tree.topLevelItem(0)
+    tree.setCurrentItem(header.child(0))
+    moves = []
+    tree.link_moved.connect(lambda source, target: moves.append((source, target)))
+
+    event = FakeTreeDrop(tree, center_of(tree, header.child(1)))
+    tree.dropEvent(event)
+
+    assert moves == [(0, 1)]
+    assert event.action == Qt.IgnoreAction
+
+
+def test_drop_of_link_onto_stage_header_is_rejected(editor):
+    tree = shown_tree(editor)
+    header = tree.topLevelItem(0)
+    tree.setCurrentItem(header.child(0))
+    refusals = []
+    tree.rejected.connect(refusals.append)
+
+    tree.dropEvent(FakeTreeDrop(tree, center_of(tree, header)))
+
+    assert refusals == [tree.OTHER_STAGE_LINK]
+
+
+def test_drop_of_gem_onto_link_moves_it(editor):
+    tree = shown_tree(editor)
+    header = tree.topLevelItem(0)
+    tree.setCurrentItem(header.child(0))
+    editor.gem_list.setCurrentRow(1)
+    drops = []
+    tree.gem_dropped.connect(lambda gem, link: drops.append((gem, link)))
+
+    tree.dropEvent(FakeTreeDrop(editor.gem_list, center_of(tree, header.child(1))))
+
+    assert drops == [(1, 1)]
+
+
+def test_drop_from_foreign_widget_is_ignored(editor):
+    tree = shown_tree(editor)
+    header = tree.topLevelItem(0)
+    tree.setCurrentItem(header.child(0))
+
+    event = FakeTreeDrop(editor.link_list, center_of(tree, header.child(1)))
+    tree.dropEvent(event)
+
+    assert event.ignored
+
+
+def test_tree_copies_and_pastes_link_by_hotkeys(editor):
+    from PyQt5.QtCore import Qt
+    from PyQt5.QtGui import QKeyEvent
+
+    tree = editor.gem_stage_tree
+    tree.setCurrentItem(tree.topLevelItem(0).child(1))
+    tree.keyPressEvent(QKeyEvent(QKeyEvent.KeyPress, Qt.Key_C, Qt.ControlModifier))
+    assert QApplication.clipboard().text() == "Frostbolt"
+
+    tree.keyPressEvent(QKeyEvent(QKeyEvent.KeyPress, Qt.Key_V, Qt.ControlModifier))
+    assert tree_texts(editor) == [
+        "Freezing Pulse — Arcane Surge", "Frostbolt", "Frostbolt",
+    ]
 
 
 def test_paste_without_copy_reports(editor):
