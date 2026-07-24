@@ -1,5 +1,8 @@
 # ActPilot
 
+[![Версия](https://img.shields.io/github/v/release/temkafox/FTA?label=версия&style=flat-square)](https://github.com/temkafox/FTA/releases/latest)
+[![Скачиваний](https://img.shields.io/github/downloads/temkafox/FTA/total?label=скачиваний&color=2f6f3f&style=flat-square)](https://github.com/temkafox/FTA/releases)
+
 ActPilot — оверлей поверх Path of Exile 1 для прокачки персонажа: держит перед глазами маршрут по актам, таймер прохождения, ближайшие пассивы и связки камней из вашего билда. Уровень персонажа подхватывается из игрового лога, поэтому список актуален без ручных переключений.
 
 ## Скачать
