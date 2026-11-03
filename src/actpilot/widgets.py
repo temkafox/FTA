@@ -270,6 +270,7 @@ DEFAULT_SETTINGS = {
     "ui_scale": 1.0,
     "show_hotkey_hints": True,
     "show_step_splits": True,
+    "show_campaign_extras": True,
     "regexes": [entry.copy() for entry in DEFAULT_REGEXES],
     "show_welcome": True,
 }
@@ -890,6 +891,9 @@ class StepItem(QFrame):
             self.clicked.emit(self)
 
 
+EXTRA_KIND_LABELS = {"recipe": "Рецепт", "secret": "Тайник", "optional": "По желанию"}
+
+
 class GroupWidget(QFrame):
     step_clicked = pyqtSignal(object)
     
@@ -944,8 +948,65 @@ class GroupWidget(QFrame):
             item.clicked.connect(self.step_clicked.emit)
             self.steps.append(item)
             self.container_layout.addWidget(item)
-        
+
+        self.extras_block = None
+        self.extras_toggle = None
+        self.extras_list = None
+        self._extra_count = 0
         layout.addWidget(self.container)
+
+    def set_extras(self, items):
+        """Необязательное по акту: свёрнутый список под шагами, вне прогресса и F3."""
+        if self.extras_block is not None:
+            self.container_layout.removeWidget(self.extras_block)
+            self.extras_block.deleteLater()
+            self.extras_block = self.extras_toggle = self.extras_list = None
+        self._extra_count = len(items or [])
+        if not items:
+            return
+        self.extras_block = QFrame()
+        self.extras_block.setStyleSheet("background: transparent;")
+        block_layout = QVBoxLayout(self.extras_block)
+        block_layout.setContentsMargins(0, Style.PAD_XS, 0, 0)
+        block_layout.setSpacing(2)
+        self.extras_toggle = QLabel()
+        self.extras_toggle.setCursor(Qt.PointingHandCursor)
+        self.extras_toggle.mousePressEvent = lambda e: self.toggle_extras()
+        block_layout.addWidget(self.extras_toggle)
+        self.extras_list = QFrame()
+        self.extras_list.setStyleSheet("background: transparent;")
+        list_layout = QVBoxLayout(self.extras_list)
+        list_layout.setContentsMargins(Style.PAD_M, 0, 0, 0)
+        list_layout.setSpacing(2)
+        for item in items:
+            kind = EXTRA_KIND_LABELS.get(item.get("kind"), "")
+            label = QLabel(f"{kind}: {item.get('text', '')}" if kind else item.get("text", ""))
+            label.setWordWrap(True)
+            list_layout.addWidget(label)
+        self.extras_list.hide()
+        block_layout.addWidget(self.extras_list)
+        self.container_layout.addWidget(self.extras_block)
+        self._style_extras()
+
+    def toggle_extras(self):
+        if self.extras_list is not None:
+            self.extras_list.setVisible(self.extras_list.isHidden())
+            self._style_extras()
+
+    def set_extras_visible(self, visible):
+        if self.extras_block is not None:
+            self.extras_block.setVisible(visible)
+
+    def _style_extras(self):
+        if self.extras_toggle is None:
+            return
+        arrow = "▸" if self.extras_list.isHidden() else "▾"
+        self.extras_toggle.setText(f"{arrow} Дополнительно · {self._extra_count}")
+        self.extras_toggle.setFont(QFont("Segoe UI", Style.FONT_STEP_TIME, QFont.DemiBold))
+        self.extras_toggle.setStyleSheet(f"color: {Style.TEXT_MUTED}; background: transparent;")
+        for label in self.extras_list.findChildren(QLabel):
+            label.setFont(QFont("Segoe UI", Style.FONT_STEP_TIME))
+            label.setStyleSheet(f"color: {Style.TEXT_SECONDARY}; background: transparent;")
     
     def toggle(self):
         self._collapsed = not self._collapsed
@@ -980,6 +1041,7 @@ class GroupWidget(QFrame):
         self.time_label.setFont(QFont("Segoe UI", Style.FONT_GROUP_TIME))
         for step in self.steps:
             step.refresh_scale()
+        self._style_extras()
     
     def is_completed(self) -> bool:
         return all(s.done for s in self.steps)
@@ -1083,6 +1145,8 @@ class ContentArea(QScrollArea):
         self._group_start_times = {}
         self._show_splits = True
         self._split_mode = "total"
+        self._extras = {}
+        self._show_extras = True
 
         self.setWidgetResizable(True)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -1127,6 +1191,17 @@ class ContentArea(QScrollArea):
         for s in self.all_steps:
             s.set_split_visible(value)
 
+    def set_extras(self, extras: dict):
+        self._extras = extras or {}
+        for group in self.groups:
+            group.set_extras(self._extras.get(group.title, []))
+            group.set_extras_visible(self._show_extras)
+
+    def set_show_extras(self, value):
+        self._show_extras = value
+        for group in self.groups:
+            group.set_extras_visible(value)
+
     def _stamp_step(self, step):
         if self._timer_ref is not None:
             step.set_split(format_time(self._timer_ref.get_elapsed()))
@@ -1159,6 +1234,8 @@ class ContentArea(QScrollArea):
         for name, steps in data.items():
             group = GroupWidget(name, steps)
             group.step_clicked.connect(self._on_click)
+            group.set_extras(self._extras.get(name, []))
+            group.set_extras_visible(self._show_extras)
             self.groups.append(group)
             self.layout.addWidget(group)
             self.all_steps.extend(group.steps)

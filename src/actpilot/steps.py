@@ -4,6 +4,7 @@ import hashlib
 import uuid
 from pathlib import Path
 
+from actpilot.data_cache import game_data
 from actpilot.paths import APP_DIR, DATA_DIR, get_resource_dir
 from actpilot.persistence import load_json, save_json
 from actpilot.style import POE_COLORS, Style
@@ -129,6 +130,13 @@ DEFAULT_STEPS = load_json(get_bundled_steps_file(GAME_POE1), {})
 
 
 DEFAULT_STEPS_POE2 = load_json(get_bundled_steps_file(GAME_POE2), {})
+
+
+def campaign_extras(game: str) -> dict:
+    """Необязательное по актам: рецепты верстака, тайники, прочее; есть только для PoE1."""
+    if game != GAME_POE1:
+        return {}
+    return game_data("campaign_extras.json", {}).get("acts", {})
 
 
 # Пользовательский steps_*.json — копия бандла с первого запуска: при смене бандла сюда добавляются отпечатки прежних актов

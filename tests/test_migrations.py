@@ -10,6 +10,13 @@ def test_adds_new_keys_to_old_settings():
     assert settings["hotkey_defaults_version"] == 2
     assert settings["regex_defaults_version"] == 2
     assert settings["show_step_splits"] is True
+    assert settings["show_campaign_extras"] is True
+
+
+def test_keeps_disabled_campaign_extras():
+    settings = {"show_campaign_extras": False}
+    migrate_settings(settings)
+    assert settings["show_campaign_extras"] is False
 
 
 def test_preserves_user_hotkeys():

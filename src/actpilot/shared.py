@@ -46,6 +46,9 @@ def migrate_settings(settings: dict) -> bool:
     if "show_step_splits" not in settings:
         settings["show_step_splits"] = True
         changed = True
+    if "show_campaign_extras" not in settings:
+        settings["show_campaign_extras"] = True
+        changed = True
     return changed
 
 

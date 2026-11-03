@@ -25,7 +25,7 @@ from actpilot.persistence import load_json, save_json
 from actpilot.regex_dialog import DEFAULT_REGEXES, RegexDialog
 from actpilot.steps import (
     DEFAULT_STEPS, DEFAULT_STEPS_POE2, GAME_POE1, GAME_POE2,
-    get_progress_file, get_steps_file, normalize_steps, persist_steps_with_ids,
+    campaign_extras, get_progress_file, get_steps_file, normalize_steps, persist_steps_with_ids,
     upgrade_default_steps,
 )
 from actpilot.style import Style
@@ -142,6 +142,7 @@ class Overlay(QWidget):
     def _switch_game(self, game: str):
         self.game = game
         self._load_steps_data()
+        self.content.set_extras(campaign_extras(game))
         self.content.load(self.steps_data)
         self.timer.reset()
         self._load_progress()
@@ -257,9 +258,12 @@ class Overlay(QWidget):
         
         self.content = ContentArea()
         self.content.set_timer(self.timer)
+        self.content.set_extras(campaign_extras(self.game))
         self.content.load(self.steps_data)
         self.content.set_show_splits(
             self.settings.get("show_step_splits", DEFAULT_SETTINGS["show_step_splits"]))
+        self.content.set_show_extras(
+            self.settings.get("show_campaign_extras", DEFAULT_SETTINGS["show_campaign_extras"]))
         self.content.progress_changed.connect(self._update_progress_bar)
         self.content.progress_changed.connect(self._save_progress)
         self.content.first_step_started.connect(self._on_first_step)
@@ -1609,6 +1613,8 @@ class PolishedOverlay(AssetFramedOverlay):
             self._reload_steps()
         self.content.set_show_splits(
             self.settings.get("show_step_splits", legacy.DEFAULT_SETTINGS["show_step_splits"]))
+        self.content.set_show_extras(
+            self.settings.get("show_campaign_extras", legacy.DEFAULT_SETTINGS["show_campaign_extras"]))
         if self._build_dialog is not None:
             self._build_dialog._configure_client_monitor()
         if dialog.should_reset:

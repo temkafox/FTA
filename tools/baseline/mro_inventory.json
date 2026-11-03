@@ -1156,7 +1156,7 @@
    "attributes": {
     "__init__": {
      "defined_in": "actpilot.settings_dialog.ActPilotSettingsDialog",
-     "hash": "a46513fd64a0b518"
+     "hash": "5806d25e541d4fe0"
     },
     "_browse_client_log": {
      "defined_in": "actpilot.settings_dialog.ActPilotSettingsDialog",
@@ -1192,7 +1192,7 @@
     },
     "get_settings": {
      "defined_in": "actpilot.settings_dialog.ActPilotSettingsDialog",
-     "hash": "cb2e3e40d4b4f3f4"
+     "hash": "a95ecd4edf339268"
     },
     "should_reset": {
      "defined_in": "actpilot.settings_dialog.ActPilotSettingsDialog",
