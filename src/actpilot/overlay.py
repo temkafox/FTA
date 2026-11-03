@@ -44,7 +44,7 @@ from actpilot.clientlog import class_matches
 from actpilot.clientmonitor import ClientLevelMonitor
 from actpilot.minipanels import MiniPassiveRoute
 from actpilot.editor import ManualBuildEditor
-from actpilot.minipanels import MiniGemLinksV5 as MiniGemLinks
+from actpilot.minipanels import MiniGemLinksV6 as MiniGemLinks
 
 # Живой рантайм-патч app.py (settings_release.Poe1SettingsDialog = UpdateSettingsDialog)
 # материализован: _settings живёт здесь, поэтому имя резолвится в этом неймспейсе.
@@ -1739,7 +1739,7 @@ class FixedInteractionOverlay(FastTreeOverlay):
         if self.game != legacy.GAME_POE1:
             return
         if self._build_dialog is None:
-            self._build_dialog = FixedInteractionBuildDialog(self)
+            self._build_dialog = GemPlanBuildDialog(self)
         else:
             self._build_dialog.reload()
         self._build_dialog.sync_window_opacity()
@@ -2072,6 +2072,7 @@ class MiniTreeAndGemsOverlay(MiniTreeOverlay_v59):
         layout.setSpacing(0)
         self.mini_gems = MiniGemLinks(self._mini_gem_panel)
         layout.addWidget(self.mini_gems)
+        self.content.active_step_changed.connect(self._refresh_mini_gems)
         self._refresh_mini_gems()
 
     def _profile_signature(self):
@@ -2090,6 +2091,7 @@ class MiniTreeAndGemsOverlay(MiniTreeOverlay_v59):
         if self.mini_gems is None or self._mini_gem_panel is None:
             return
         profile = self.active_profile()
+        self.mini_gems.set_campaign_act(self.content.get_active_step_info()[0])
         self.mini_gems.set_build_level(
             profile.get("build") or {}, int(profile.get("level", 1))
         )
@@ -2291,6 +2293,7 @@ from actpilot.build_dialog import (
     FixedInteractionBuildDialog,
     FixedProgressionBuildDialog,
     FullStageBuildDialog,
+    GemPlanBuildDialog,
     ImmediateFocusBuildDialog,
     IntegratedTreeBuildDialog,
     LevelMappedBuildDialog,

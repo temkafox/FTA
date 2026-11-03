@@ -75,17 +75,18 @@ def build_report() -> dict:
     from actpilot.overlay import CompactHeaderIconOverlay
     from actpilot.settings_dialog import ActPilotSettingsDialog
     from actpilot.editor import ManualBuildEditor
-    from actpilot.minipanels import MiniPassiveRoute
+    from actpilot.minipanels import MiniGemLinksV6, MiniPassiveRoute
     from actpilot.clientmonitor import ClientLevelMonitor
-    from actpilot.build_dialog import FixedInteractionBuildDialog
+    from actpilot.build_dialog import GemPlanBuildDialog
 
     roots = {
         "overlay": CompactHeaderIconOverlay,
         "settings_dialog": ActPilotSettingsDialog,
         "editor": ManualBuildEditor,
         "mini_route": MiniPassiveRoute,
+        "mini_gems": MiniGemLinksV6,
         "client_monitor": ClientLevelMonitor,
-        "build_dialog": FixedInteractionBuildDialog,
+        "build_dialog": GemPlanBuildDialog,
     }
 
     return {"roots": {name: class_inventory(cls) for name, cls in roots.items()}}

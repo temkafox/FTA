@@ -12,9 +12,9 @@ from PyQt5.QtWidgets import (
 
 from actpilot.data_cache import game_data
 from actpilot.gems.data import (
-    badges_for, gem_art_path, link_to_text, links_at_level, links_to_text,
-    required_level,
+    gem_art_path, link_to_text, links_at_level, links_to_text, required_level,
 )
+from actpilot.gems.plan import act_items, build_gem_plan, campaign_act, plan_badges
 from actpilot.gems.widgets import (
     GRANTED_NON_GEMS, ICON_DIR, ICON_INDEX, AcquisitionGemTooltip,
 )
@@ -1047,7 +1047,7 @@ class MiniGemTooltip(AcquisitionGemTooltip):
         super().show_acquisition(gem, class_name, global_pos)
         name = gem.get("name", "")
         level = required_level(name)
-        badges = badges_for(name, class_name, gem.get("support"))
+        badges = plan_badges(gem, class_name)
         ways = " / ".join(badges) if badges else "—"
         level_text = str(level) if level is not None else "неизвестен"
         self.requirement.setText(
@@ -1181,6 +1181,81 @@ class MiniGemLinks(BaseMiniGemLinks):
 
 
 MiniGemLinksV5 = MiniGemLinks
+
+
+BaseMiniGemLinks = MiniGemLinksV5
+
+
+class MiniGemLinks(BaseMiniGemLinks):
+    PLAN_HEADER_H = 16.0
+    PLAN_GAP = 4.0
+    PLAN_PER_ROW = 8
+    BADGE = 9.0
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._step_act = ""
+        self._plan_items = []
+        self._plan_rects = []
+        self._plan_label = ""
+
+    def set_campaign_act(self, step_act):
+        self._step_act = step_act or ""
+
+    def set_build_level(self, build, level):
+        act = campaign_act(self._step_act, level)
+        self._plan_items = act_items(build_gem_plan(build) if build else None, act)
+        self._plan_label = f"Акт {act} · камни" if self._plan_items else ""
+        super().set_build_level(build, level)
+        if not self._links or not self._plan_items:
+            return
+        rows = math.ceil(len(self._plan_items) / self.PLAN_PER_ROW)
+        columns = min(len(self._plan_items), self.PLAN_PER_ROW)
+        width = int(self.MARGIN * 2 + self.ICON + (columns - 1) * self.STEP_X)
+        extra = self.PLAN_GAP + self.PLAN_HEADER_H + (rows - 1) * self.STEP_Y + self.ICON
+        self.setFixedSize(max(self.width(), width), int(self.height() + extra))
+
+    def _layout_items(self):
+        rows = super()._layout_items()
+        self._plan_rects = []
+        if not self._plan_items or not rows:
+            return rows
+        top = max(rect.bottom() for row in rows for _, rect in row) + self.PLAN_GAP + self.PLAN_HEADER_H
+        for index, (gem, letter) in enumerate(self._plan_items):
+            row, column = divmod(index, self.PLAN_PER_ROW)
+            rect = QRectF(self.MARGIN + column * self.STEP_X, top + row * self.STEP_Y, self.ICON, self.ICON)
+            self._plan_rects.append((gem, letter, rect))
+            self._items.append((gem, rect))
+        return rows
+
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        if not self._plan_rects:
+            return
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setRenderHint(QPainter.SmoothPixmapTransform)
+        header_top = self._plan_rects[0][2].top() - self.PLAN_HEADER_H
+        painter.setPen(QPen(QColor(199, 151, 56, 110), 1.0))
+        painter.drawLine(QPointF(self.MARGIN, header_top + 1), QPointF(self.width() - self.MARGIN, header_top + 1))
+        painter.setFont(QFont("Segoe UI", 8, QFont.DemiBold))
+        painter.setPen(QColor("#d7b86a"))
+        painter.drawText(QRectF(0, header_top, self.width(), self.PLAN_HEADER_H), Qt.AlignCenter, self._plan_label)
+        painter.setFont(QFont("Segoe UI", 6, QFont.Bold))
+        for gem, letter, rect in self._plan_rects:
+            pixmap = self._gem_pixmap(gem)
+            if not pixmap.isNull():
+                painter.drawPixmap(rect, pixmap, QRectF(pixmap.rect()))
+            badge = QRectF(rect.right() - self.BADGE + 2, rect.bottom() - self.BADGE + 2, self.BADGE, self.BADGE)
+            painter.setPen(QPen(QColor("#071009"), 1))
+            painter.setBrush(QColor("#32df72") if letter == "Q" else QColor("#e1ae35"))
+            painter.drawRoundedRect(badge, 2.5, 2.5)
+            painter.setPen(QColor("#071009"))
+            painter.drawText(badge, Qt.AlignCenter, letter)
+        painter.end()
+
+
+MiniGemLinksV6 = MiniGemLinks
 
 
 BaseMiniPassiveRoute = MiniPassiveRouteV8

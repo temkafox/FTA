@@ -16,9 +16,9 @@ from PyQt5.QtWidgets import (
 
 from actpilot.data_cache import game_data
 from actpilot.gems.data import (
-    GRANTED_NON_GEMS, acquisition_html, badges_for, gem_art_path, link_to_text,
-    links_to_text,
+    GRANTED_NON_GEMS, gem_art_path, link_to_text, links_to_text,
 )
+from actpilot.gems.plan import annotate_links, plan_acquisition_html, plan_badges
 from actpilot.messagebox import MENU_QSS
 from actpilot.paths import get_resource_dir
 from actpilot.ru_text import gem_description
@@ -486,9 +486,7 @@ class AcquisitionGemTooltip(RussianGemTooltip):
 
     def show_acquisition(self, gem, class_name, global_pos):
         super().show_gem(gem, global_pos)
-        self.acquisition.setText(
-            acquisition_html(gem.get("name"), class_name, gem.get("support"))
-        )
+        self.acquisition.setText(plan_acquisition_html(gem, class_name))
         self.acquisition.show()
         self.adjustSize()
         screen = QApplication.screenAt(global_pos)
@@ -512,7 +510,7 @@ class AcquisitionGemIcon(RussianCopyableGemIcon):
 
     def paintEvent(self, event):
         super().paintEvent(event)
-        badges = badges_for(self.gem.get("name"), self.character_class, self.gem.get("support"))
+        badges = plan_badges(self.gem, self.character_class)
         if not badges:
             return
         painter = QPainter(self)
@@ -709,6 +707,18 @@ class FallbackPoedbGemIcon(PoedbGemIcon):
 
 class FallbackPoedbGemChains(PoedbGemChains):
     icon_class = FallbackPoedbGemIcon
+
+
+class PlannedGemChains(FallbackPoedbGemChains):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.plan = None
+
+    def set_plan(self, plan):
+        self.plan = plan
+
+    def set_links(self, title, links):
+        super().set_links(title, annotate_links(links, self.plan))
 
 
 class LevelGemIcon(CompactGemIcon):

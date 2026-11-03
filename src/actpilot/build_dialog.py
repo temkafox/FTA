@@ -27,9 +27,12 @@ from actpilot.builds import PobImportError, clamp_level, parse_pob, stage_for_le
 from actpilot.clientlog import class_matches
 from actpilot.data_cache import tree_graph
 from actpilot.gems.data import links_at_level, locked_gems
+from actpilot.gems.plan import build_gem_plan, campaign_act
+from actpilot.gems.plan_view import GemPlanView
 from actpilot.gems.widgets import (
     AcquisitionGemChains, ArtworkGemChains, CleanArtworkGemChains, CompactGemChains,
-    CopyableGemChains, FallbackPoedbGemChains as PoedbGemChains, RussianOverlayGemChains,
+    CopyableGemChains, FallbackPoedbGemChains as PoedbGemChains, PlannedGemChains,
+    RussianOverlayGemChains,
 )
 from actpilot.tree import (
     CachedZoomSafeTreeCanvas as ZoomSafeTreeCanvas, CompleteTooltipTreeCanvas,
@@ -2027,7 +2030,7 @@ class MasteryAndQuestBuildDialog(StrictNearestBuildDialog):
         if stage.get("level_guessed"):
             title = f"{title} · уровень в PoB не указан"
         self.gem_links.set_links(title, links_at_level(stage.get("links", []), level))
-        hint = "Q — награда за квест · B — купить у продавца · наведите на камень для деталей"
+        hint = "Q — брать наградой за квест · B — купить · весь план — на вкладке «План камней»"
         locked = locked_gems(stage.get("links", []), level)
         if locked:
             name, requirement = locked[0]
@@ -2744,6 +2747,46 @@ class FixedInteractionBuildDialog(FastBuildDialog):
     def showEvent(self, event):
         self.sync_window_opacity()
         super().showEvent(event)
+
+
+
+class GemPlanBuildDialog(FixedInteractionBuildDialog):
+    def __init__(self, overlay):
+        self._gem_plan_ready = False
+        self._gem_plan = None
+        super().__init__(overlay)
+
+        old_gems = self.gem_links
+        gem_layout = old_gems.parentWidget().layout()
+        index = gem_layout.indexOf(old_gems)
+        gem_layout.removeWidget(old_gems)
+        old_gems.deleteLater()
+        self.gem_links = PlannedGemChains()
+        self.gem_links.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.gem_links.body.setStyleSheet("background:rgba(2,4,4,0.38);")
+        gem_layout.insertWidget(index, self.gem_links, 1)
+
+        self.gem_plan_view = GemPlanView()
+        self.left_tabs.addTab(self.gem_plan_view, "План камней")
+        self.left_tabs.tabBar().show()
+        self.overlay.content.active_step_changed.connect(self._refresh_gem_plan)
+        self._gem_plan_ready = True
+        self.reload()
+
+    def _render_gems(self, build, level):
+        if not self._gem_plan_ready:
+            return super()._render_gems(build, level)
+        self._gem_plan = build_gem_plan(build) if build else None
+        self.gem_links.set_plan(self._gem_plan)
+        super()._render_gems(build, level)
+        self._refresh_gem_plan()
+
+    def _refresh_gem_plan(self):
+        if not self._gem_plan_ready:
+            return
+        act_title, _, _ = self.overlay.content.get_active_step_info()
+        level = int(self.overlay.active_profile().get("level", 1))
+        self.gem_plan_view.set_plan(self._gem_plan, campaign_act(act_title, level))
 
 
 

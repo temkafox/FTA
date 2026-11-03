@@ -3,8 +3,8 @@
   "build_dialog": {
    "attributes": {
     "__init__": {
-     "defined_in": "actpilot.build_dialog.FixedInteractionBuildDialog",
-     "hash": "92800720ca15251a"
+     "defined_in": "actpilot.build_dialog.GemPlanBuildDialog",
+     "hash": "503533725de72801"
     },
     "_apply_actpilot_window_style": {
      "defined_in": "actpilot.build_dialog.CompactBuildDialog",
@@ -74,6 +74,10 @@
      "defined_in": "actpilot.build_dialog.EnhancedBuildProgressDialog",
      "hash": "93032f06d650663d"
     },
+    "_refresh_gem_plan": {
+     "defined_in": "actpilot.build_dialog.GemPlanBuildDialog",
+     "hash": "3f16659797f4cf1a"
+    },
     "_refresh_step_context": {
      "defined_in": "actpilot.build_dialog.EnhancedBuildProgressDialog",
      "hash": "e6043a76d0ab7e28"
@@ -87,8 +91,8 @@
      "hash": "65f341f862c50b65"
     },
     "_render_gems": {
-     "defined_in": "actpilot.build_dialog.MasteryAndQuestBuildDialog",
-     "hash": "6a96b1c08837656a"
+     "defined_in": "actpilot.build_dialog.GemPlanBuildDialog",
+     "hash": "87ef08b887f472fd"
     },
     "_render_tree": {
      "defined_in": "actpilot.build_dialog.ExactManualBuildDialog",
@@ -132,6 +136,7 @@
     }
    },
    "mro": [
+    "actpilot.build_dialog.GemPlanBuildDialog",
     "actpilot.build_dialog.FixedInteractionBuildDialog",
     "actpilot.build_dialog.FastBuildDialog",
     "actpilot.build_dialog.ReliableClientBuildDialog",
@@ -561,6 +566,122 @@
     "actpilot.editor.ManualBuildEditor"
    ]
   },
+  "mini_gems": {
+   "attributes": {
+    "BADGE": {
+     "defined_in": "actpilot.minipanels.MiniGemLinks",
+     "hash": null
+    },
+    "HEADER_H": {
+     "defined_in": "actpilot.minipanels.MiniGemLinks",
+     "hash": null
+    },
+    "ICON": {
+     "defined_in": "actpilot.minipanels.MiniGemLinks",
+     "hash": null
+    },
+    "MARGIN": {
+     "defined_in": "actpilot.minipanels.MiniGemLinks",
+     "hash": null
+    },
+    "PLAN_GAP": {
+     "defined_in": "actpilot.minipanels.MiniGemLinks",
+     "hash": null
+    },
+    "PLAN_HEADER_H": {
+     "defined_in": "actpilot.minipanels.MiniGemLinks",
+     "hash": null
+    },
+    "PLAN_PER_ROW": {
+     "defined_in": "actpilot.minipanels.MiniGemLinks",
+     "hash": null
+    },
+    "STEP_X": {
+     "defined_in": "actpilot.minipanels.MiniGemLinks",
+     "hash": null
+    },
+    "STEP_Y": {
+     "defined_in": "actpilot.minipanels.MiniGemLinks",
+     "hash": null
+    },
+    "__init__": {
+     "defined_in": "actpilot.minipanels.MiniGemLinks",
+     "hash": "35f7f205e5e2b6c2"
+    },
+    "_clean_links": {
+     "defined_in": "actpilot.minipanels.MiniGemLinks",
+     "hash": "fc4e04ca578a28de"
+    },
+    "_fallback_files": {
+     "defined_in": "actpilot.minipanels.MiniGemLinks",
+     "hash": null
+    },
+    "_fallbacks": {
+     "defined_in": "actpilot.minipanels.MiniGemLinks",
+     "hash": null
+    },
+    "_gem_at": {
+     "defined_in": "actpilot.minipanels.MiniGemLinks",
+     "hash": "8b3987b991207a3c"
+    },
+    "_gem_pixmap": {
+     "defined_in": "actpilot.minipanels.MiniGemLinks",
+     "hash": "b696a72075c5e5a9"
+    },
+    "_layout_items": {
+     "defined_in": "actpilot.minipanels.MiniGemLinks",
+     "hash": "d34bb9a1cef9d9bc"
+    },
+    "_range_for": {
+     "defined_in": "actpilot.minipanels.MiniGemLinks",
+     "hash": "abf2707f160a7614"
+    },
+    "_row_at": {
+     "defined_in": "actpilot.minipanels.MiniGemLinks",
+     "hash": "6031f221ed894779"
+    },
+    "_show_copy_menu": {
+     "defined_in": "actpilot.minipanels.MiniGemLinks",
+     "hash": "b7c823b62a1100d0"
+    },
+    "leaveEvent": {
+     "defined_in": "actpilot.minipanels.MiniGemLinks",
+     "hash": "53756ca99022f5af"
+    },
+    "mouseMoveEvent": {
+     "defined_in": "actpilot.minipanels.MiniGemLinks",
+     "hash": "84d82fb6e69563e2"
+    },
+    "mousePressEvent": {
+     "defined_in": "actpilot.minipanels.MiniGemLinks",
+     "hash": "520a23f4e7c0eed0"
+    },
+    "paintEvent": {
+     "defined_in": "actpilot.minipanels.MiniGemLinks",
+     "hash": "404e6230fa4ff0f0"
+    },
+    "set_build_level": {
+     "defined_in": "actpilot.minipanels.MiniGemLinks",
+     "hash": "b53f464eb5a0ac0c"
+    },
+    "set_campaign_act": {
+     "defined_in": "actpilot.minipanels.MiniGemLinks",
+     "hash": "7607bd57a9b2185f"
+    },
+    "tooltip": {
+     "defined_in": "actpilot.minipanels.MiniGemLinks",
+     "hash": null
+    }
+   },
+   "mro": [
+    "actpilot.minipanels.MiniGemLinks",
+    "actpilot.minipanels.MiniGemLinks",
+    "actpilot.minipanels.MiniGemLinks",
+    "actpilot.minipanels.MiniGemLinks",
+    "actpilot.minipanels.MiniGemLinks",
+    "actpilot.minipanels.MiniGemLinks"
+   ]
+  },
   "mini_route": {
    "attributes": {
     "VIEW_H": {
@@ -812,7 +933,7 @@
     },
     "_refresh_mini_gems": {
      "defined_in": "actpilot.overlay.MiniTreeAndGemsOverlay",
-     "hash": "d7668750cfb20147"
+     "hash": "8660138c36c0e899"
     },
     "_refresh_mini_tree": {
      "defined_in": "actpilot.overlay.MiniTreeAndGemsOverlay",
