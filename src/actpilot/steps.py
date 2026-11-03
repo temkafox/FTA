@@ -1,5 +1,6 @@
 """Шаги гайда: дефолтные шаги, файлы прогресса, раскладки PoE2, разметка."""
 
+import hashlib
 import uuid
 from pathlib import Path
 
@@ -128,6 +129,50 @@ DEFAULT_STEPS = load_json(get_bundled_steps_file(GAME_POE1), {})
 
 
 DEFAULT_STEPS_POE2 = load_json(get_bundled_steps_file(GAME_POE2), {})
+
+
+# Пользовательский steps_*.json — копия бандла с первого запуска: при смене бандла сюда добавляются отпечатки прежних актов
+PREVIOUS_DEFAULT_ACTS = {
+    GAME_POE1: {
+        "Act 1": {"59f242e9e2b5f07b"},
+        "Act 2": {"116bb4388ddd6fbc"},
+        "Act 3": {"9118a369dc8d07c0"},
+        "Act 4": {"d06c97236f59100a"},
+        "Act 5": {"7b67a8f51ac13404"},
+        "Act 6": {"866cca48cba3963f"},
+        "Act 7": {"60fc1439b5e8e5cd"},
+        "Act 8": {"393d9ff6bdd860f0"},
+        "Act 9": {"5e15a9467797be40"},
+        "Act 10": {"1b7b6d37485cf902"},
+    },
+}
+
+
+def act_fingerprint(texts: list) -> str:
+    return hashlib.sha256("\n".join(texts).encode("utf-8")).hexdigest()[:16]
+
+
+def upgrade_default_steps(game: str, data: dict, defaults=None, previous=None) -> bool:
+    """Заменяет акты, которые пользователь не правил, новой встроенной версией."""
+    if defaults is None:
+        defaults = DEFAULT_STEPS_POE2 if game == GAME_POE2 else DEFAULT_STEPS
+    previous = PREVIOUS_DEFAULT_ACTS.get(game, {}) if previous is None else previous
+    changed = False
+    for act, fresh in defaults.items():
+        steps = data.get(act)
+        if not steps:
+            continue
+        texts = [step["text"] for step in steps]
+        fresh_texts = [item if isinstance(item, str) else str(item.get("text", "")) for item in fresh]
+        if texts == fresh_texts or act_fingerprint(texts) not in previous.get(act, ()):
+            continue
+        # Прогресс — отмеченный префикс шагов: id по позиции оставляют игрока на том же месте акта
+        data[act] = [
+            {"id": steps[index]["id"] if index < len(steps) else uuid.uuid4().hex, "text": text}
+            for index, text in enumerate(fresh_texts)
+        ]
+        changed = True
+    return changed
 
 
 def format_time(seconds: float) -> str:
