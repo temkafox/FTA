@@ -101,3 +101,15 @@ def class_matches(build_class: str, ascendancy: str, logged_class: str) -> bool:
         if logged == key or logged in CLASS_ALIASES.get(key, set()):
             return True
     return False
+
+
+def log_event_applies(profile: dict, character_name: str, character_class: str) -> bool:
+    """Относится ли левелап из лога к профилю: привязанный персонаж, иначе совпадение имени или класса билда."""
+    bound = str(profile.get("log_character_name", "")).strip()
+    if bound:
+        return character_name.casefold() == bound.casefold()
+    build = profile.get("build") or {}
+    same_name = str(profile.get("name", "")).strip().casefold() == character_name.casefold()
+    return same_name or class_matches(
+        str(build.get("class", "")), str(build.get("ascendancy", "")), character_class
+    )

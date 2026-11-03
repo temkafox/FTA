@@ -24,7 +24,7 @@ from actpilot.editor import ManualBuildEditor
 
 from actpilot.build_model import manual_passive_plan, unknown_tree_nodes
 from actpilot.builds import PobImportError, clamp_level, parse_pob, stage_for_level
-from actpilot.clientlog import class_matches
+from actpilot.clientlog import class_matches, log_event_applies
 from actpilot.data_cache import tree_graph
 from actpilot.gems.data import links_at_level, locked_gems
 from actpilot.gems.plan import build_gem_plan, campaign_act
@@ -2787,6 +2787,68 @@ class GemPlanBuildDialog(FixedInteractionBuildDialog):
         act_title, _, _ = self.overlay.content.get_active_step_info()
         level = int(self.overlay.active_profile().get("level", 1))
         self.gem_plan_view.set_plan(self._gem_plan, campaign_act(act_title, level))
+
+
+
+class CharacterRebindBuildDialog(GemPlanBuildDialog):
+    def __init__(self, overlay):
+        self._rebind_ready = False
+        self._seen_character = None
+        super().__init__(overlay)
+        self.rebind_button = QPushButton()
+        self.rebind_button.setCursor(Qt.PointingHandCursor)
+        self.rebind_button.setStyleSheet(button_style())
+        self.rebind_button.clicked.connect(self._rebind_to_seen_character)
+        self.rebind_button.hide()
+        layout = self.layout()
+        layout.insertWidget(layout.indexOf(self.log_status) + 1, self.rebind_button)
+        self._rebind_ready = True
+        self._sync_rebind_prompt()
+
+    def _on_level_seen(self, character_name, character_class, level):
+        self._seen_character = (character_name, character_class, clamp_level(level))
+        if log_event_applies(self.overlay.active_profile(), character_name, character_class):
+            super()._on_level_seen(character_name, character_class, level)
+        self._sync_rebind_prompt()
+
+    def _sync_rebind_prompt(self):
+        if not self._rebind_ready:
+            return
+        profile = self.overlay.active_profile()
+        seen = self._seen_character
+        if not seen or log_event_applies(profile, seen[0], seen[1]):
+            self.rebind_button.hide()
+            return
+        name, character_class, level = seen
+        bound = str(profile.get("log_character_name", "")).strip()
+        reason = f"профиль следит за «{bound}»" if bound else "класс не совпадает с билдом профиля"
+        self.log_status.setText(f"Client.txt: в игре «{name}» ({character_class}), уровень {level} — {reason}")
+        self.rebind_button.setText(f"Следить за «{name}» в этом профиле")
+        self.rebind_button.show()
+
+    def _rebind_to_seen_character(self):
+        if not self._seen_character:
+            return
+        name, character_class, level = self._seen_character
+        profile = self.overlay.active_profile()
+        profile["log_character_name"] = name
+        profile["level"] = level
+        self.overlay.save_profiles()
+        self.refresh_level()
+        if hasattr(self.overlay, "_refresh_mini_tree"):
+            self.overlay._refresh_mini_tree(force=True)
+        self.log_status.setText(f"Client.txt: {name} ({character_class}) · уровень {level}")
+        self.rebind_button.hide()
+
+    def reload(self):
+        result = super().reload()
+        self._sync_rebind_prompt()
+        return result
+
+    def refresh_level(self):
+        result = super().refresh_level()
+        self._sync_rebind_prompt()
+        return result
 
 
 

@@ -3,8 +3,8 @@
   "build_dialog": {
    "attributes": {
     "__init__": {
-     "defined_in": "actpilot.build_dialog.GemPlanBuildDialog",
-     "hash": "503533725de72801"
+     "defined_in": "actpilot.build_dialog.CharacterRebindBuildDialog",
+     "hash": "58a91a8065f71b86"
     },
     "_apply_actpilot_window_style": {
      "defined_in": "actpilot.build_dialog.CompactBuildDialog",
@@ -63,8 +63,8 @@
      "hash": "f215a5107a29beda"
     },
     "_on_level_seen": {
-     "defined_in": "actpilot.build_dialog.ReliableClientBuildDialog",
-     "hash": "a857f504364b3ccc"
+     "defined_in": "actpilot.build_dialog.CharacterRebindBuildDialog",
+     "hash": "fb7f83174cfa4a22"
     },
     "_open_manual_editor": {
      "defined_in": "actpilot.build_dialog.ClearGemEditorBuildDialog",
@@ -73,6 +73,10 @@
     "_profile_changed": {
      "defined_in": "actpilot.build_dialog.EnhancedBuildProgressDialog",
      "hash": "93032f06d650663d"
+    },
+    "_rebind_to_seen_character": {
+     "defined_in": "actpilot.build_dialog.CharacterRebindBuildDialog",
+     "hash": "6f8c525116861219"
     },
     "_refresh_gem_plan": {
      "defined_in": "actpilot.build_dialog.GemPlanBuildDialog",
@@ -106,6 +110,10 @@
      "defined_in": "actpilot.build_dialog.CompactBuildDialog",
      "hash": "aa075a78faca76f1"
     },
+    "_sync_rebind_prompt": {
+     "defined_in": "actpilot.build_dialog.CharacterRebindBuildDialog",
+     "hash": "f0d8250ecf014156"
+    },
     "closeEvent": {
      "defined_in": "actpilot.build_dialog.FastBuildDialog",
      "hash": "f78e18b4b2f8e5e7"
@@ -115,12 +123,12 @@
      "hash": "5ee590eea9a09357"
     },
     "refresh_level": {
-     "defined_in": "actpilot.build_dialog.FastBuildDialog",
-     "hash": "b85aa8c433d37856"
+     "defined_in": "actpilot.build_dialog.CharacterRebindBuildDialog",
+     "hash": "9cc893a6e5c329ef"
     },
     "reload": {
-     "defined_in": "actpilot.build_dialog.FixedInteractionBuildDialog",
-     "hash": "b4933fc8a67a60ae"
+     "defined_in": "actpilot.build_dialog.CharacterRebindBuildDialog",
+     "hash": "727fd7c1eff767aa"
     },
     "resizeEvent": {
      "defined_in": "actpilot.build_dialog.AssetFramedBuildDialog",
@@ -136,6 +144,7 @@
     }
    },
    "mro": [
+    "actpilot.build_dialog.CharacterRebindBuildDialog",
     "actpilot.build_dialog.GemPlanBuildDialog",
     "actpilot.build_dialog.FixedInteractionBuildDialog",
     "actpilot.build_dialog.FastBuildDialog",

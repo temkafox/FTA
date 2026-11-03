@@ -47,3 +47,16 @@ def test_class_matches_ru_alias():
     assert clientlog.class_matches("Witch", "Necromancer", "некромант")
     assert not clientlog.class_matches("Witch", "Necromancer", "Дикарь")
     assert not clientlog.class_matches("Witch", "Necromancer", "")
+
+
+def test_log_event_applies_to_bound_character_only():
+    profile = {"name": "ййй", "log_character_name": "Old", "build": {"class": "Witch"}}
+    assert clientlog.log_event_applies(profile, "old", "Witch")
+    assert not clientlog.log_event_applies(profile, "New", "Witch")
+
+
+def test_log_event_applies_by_name_or_build_class_when_unbound():
+    profile = {"name": "Иона", "build": {"class": "Witch", "ascendancy": "Necromancer"}}
+    assert clientlog.log_event_applies(profile, "Иона", "Duelist")
+    assert clientlog.log_event_applies(profile, "Другой", "Некромант")
+    assert not clientlog.log_event_applies(profile, "Другой", "Duelist")

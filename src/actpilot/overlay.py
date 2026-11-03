@@ -1745,7 +1745,7 @@ class FixedInteractionOverlay(FastTreeOverlay):
         if self.game != legacy.GAME_POE1:
             return
         if self._build_dialog is None:
-            self._build_dialog = GemPlanBuildDialog(self)
+            self._build_dialog = CharacterRebindBuildDialog(self)
         else:
             self._build_dialog.reload()
         self._build_dialog.sync_window_opacity()
@@ -2280,6 +2280,7 @@ from actpilot.build_dialog import (
     AssetFramedBuildDialog,
     BookOnlyBuildDialog,
     BuildProgressDialog,
+    CharacterRebindBuildDialog,
     CleanArtworkBuildDialog,
     CleanBuildDialog,
     ClearGemEditorBuildDialog,
