@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111116">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>ActPilot</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+
+  <header class="top">
+    <div class="bar">
+      <div class="timer" id="timer">00:00</div>
+      <div class="lvl">
+        <button class="lvl-btn" data-step="-1" aria-label="Уровень ниже">−</button>
+        <span class="lvl-num" id="lvlNum">1</span>
+        <button class="lvl-btn" data-step="1" aria-label="Уровень выше">+</button>
+      </div>
+      <button class="icon-btn" id="menuBtn" aria-label="Меню">⋯</button>
+    </div>
+    <div class="progress"><span id="progressFill"></span></div>
+    <div class="acts" id="acts"></div>
+  </header>
+
+  <main class="view" id="viewRoute">
+    <ol class="steps" id="steps"></ol>
+  </main>
+
+  <section class="view" id="viewTree" hidden>
+    <div class="tree-bar">
+      <button class="chip" id="pobBtn">Импорт PoB</button>
+      <span class="tree-count" id="treeCount"></span>
+      <button class="icon-btn" id="fitBtn" aria-label="Вписать в экран">⤢</button>
+    </div>
+    <canvas id="canvas"></canvas>
+    <div class="legend">
+      <span><i class="dot taken"></i>взято</span>
+      <span><i class="dot next"></i>следующие</span>
+      <span><i class="dot dim"></i>остальное</span>
+    </div>
+  </section>
+
+  <nav class="tabs">
+    <button data-tab="route" class="active">Маршрут</button>
+    <button data-tab="tree">Дерево</button>
+  </nav>
+</div>
+
+<div class="sheet" id="nodeSheet" hidden>
+  <div class="sheet-head">
+    <strong id="nodeName"></strong>
+    <button class="icon-btn" id="nodeClose" aria-label="Закрыть">×</button>
+  </div>
+  <div class="sheet-body" id="nodeStats"></div>
+</div>
+
+<div class="modal" id="pobModal" hidden>
+  <div class="card">
+    <h2>Импорт билда</h2>
+    <p class="hint">В Path of Building нажмите <b>Export Build</b> и вставьте код сюда.</p>
+    <textarea id="pobInput" rows="6" placeholder="eJxVkMFuwyAMhl9m4bRDS0o7…" spellcheck="false"></textarea>
+    <p class="error" id="pobError" hidden></p>
+    <div class="card-actions">
+      <button class="chip" id="pobCancel">Отмена</button>
+      <button class="chip primary" id="pobApply">Импортировать</button>
+    </div>
+    <button class="link danger" id="pobClear">Удалить билд</button>
+  </div>
+</div>
+
+<div class="modal" id="menuModal" hidden>
+  <div class="card">
+    <h2>Меню</h2>
+    <button class="row-btn" id="resetProgress">Сбросить прогресс актов</button>
+    <button class="row-btn" id="resetTimer">Сбросить таймер</button>
+    <button class="row-btn" id="menuClose">Закрыть</button>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
