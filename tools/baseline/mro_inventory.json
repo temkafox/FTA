@@ -100,7 +100,7 @@
     },
     "_render_tree": {
      "defined_in": "actpilot.build_dialog.ExactManualBuildDialog",
-     "hash": "718fd1f71bcd9248"
+     "hash": "f6f1c3c012383f27"
     },
     "_scroll": {
      "defined_in": "actpilot.build_dialog.BuildProgressDialog",
@@ -733,10 +733,6 @@
      "defined_in": "actpilot.minipanels.MiniPassiveRoute",
      "hash": "9077a4b68deac070"
     },
-    "_graph": {
-     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
-     "hash": null
-    },
     "_node": {
      "defined_in": "actpilot.minipanels.MiniPassiveRoute",
      "hash": "d4d537cb53424dc5"
@@ -757,13 +753,9 @@
      "defined_in": "actpilot.minipanels.MiniPassiveRoute",
      "hash": "a9498e0b9ee574d6"
     },
-    "_tree_graph": {
-     "defined_in": "actpilot.minipanels.MiniPassiveRoute",
-     "hash": "ba82f53b252172cf"
-    },
     "_world_position": {
      "defined_in": "actpilot.minipanels.MiniPassiveRoute",
-     "hash": "bd7e0d0183f695da"
+     "hash": "a1b4f352d61e3c1e"
     },
     "activated": {
      "defined_in": "actpilot.minipanels.MiniPassiveRoute",

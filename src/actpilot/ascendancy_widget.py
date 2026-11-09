@@ -10,6 +10,7 @@ from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
 
 from actpilot.ascendancy_plan import ascendancy_plan
 from actpilot.data_cache import game_data
+from actpilot.tree_geometry import node_point
 from actpilot.tree import PoePassiveTooltip
 
 
@@ -129,20 +130,11 @@ class AscendancyProgressWidget(QWidget):
         tree = game_data("skilltree.json")
         self.nodes = tree.get("nodes", {})
         groups = tree.get("groups", {})
-        radii = tree.get("constants", {}).get("orbitRadii", [])
-        counts = tree.get("constants", {}).get("skillsPerOrbit", [])
-        self.positions = {}
-        for node_id, node in self.nodes.items():
-            group = groups.get(str(node.get("group")), {})
-            orbit = int(node.get("orbit", 0))
-            index = int(node.get("orbitIndex", 0))
-            radius = radii[orbit] if orbit < len(radii) else 0
-            count = counts[orbit] if orbit < len(counts) else 1
-            angle = 2 * math.pi * index / max(1, count)
-            self.positions[str(node_id)] = QPointF(
-                float(group.get("x", 0)) + radius * math.sin(angle),
-                float(group.get("y", 0)) - radius * math.cos(angle),
-            )
+        constants = tree.get("constants", {})
+        self.positions = {
+            str(node_id): QPointF(*node_point(node, groups, constants))
+            for node_id, node in self.nodes.items()
+        }
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(8, 10, 8, 8)

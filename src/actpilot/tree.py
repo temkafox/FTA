@@ -17,6 +17,8 @@ from PyQt5.QtWidgets import (
 
 from actpilot.paths import get_resource_dir
 from actpilot.ascendancy_plan import ascendancy_plan
+from actpilot.style import Style
+from actpilot.tree_geometry import is_structural, node_point, orbit_angle, orbit_point
 
 
 ROOT = get_resource_dir() / "data" / "poe1"
@@ -58,18 +60,10 @@ class PassiveTreeCanvas(QWidget):
             return
         self.nodes = data.get("nodes", {})
         groups = data.get("groups", {})
-        radii = data.get("constants", {}).get("orbitRadii", [])
-        counts = data.get("constants", {}).get("skillsPerOrbit", [])
+        constants = data.get("constants", {})
         for node_id, node in self.nodes.items():
-            group = groups.get(str(node.get("group")), {})
-            orbit = int(node.get("orbit", 0))
-            index = int(node.get("orbitIndex", 0))
-            radius = radii[orbit] if orbit < len(radii) else 0
-            count = counts[orbit] if orbit < len(counts) else 1
-            angle = 2 * math.pi * index / max(1, count)
-            x = float(group.get("x", 0)) + radius * math.sin(angle)
-            y = float(group.get("y", 0)) - radius * math.cos(angle)
-            self.positions[str(node_id)] = QPointF(x, y)
+            if not is_structural(node, groups):
+                self.positions[str(node_id)] = QPointF(*node_point(node, groups, constants))
         seen = set()
         for node_id, node in self.nodes.items():
             for other in node.get("out", []):
@@ -704,8 +698,8 @@ class OrbitalPassiveTreeCanvas(MasteryAwareTreeCanvas):
             and first_group in self.group_centers
         ):
             count = max(1, self.orbit_counts[first_orbit])
-            start = 2 * math.pi * int(first_node.get("orbitIndex", 0)) / count
-            end = 2 * math.pi * int(second_node.get("orbitIndex", 0)) / count
+            start = orbit_angle(int(first_node.get("orbitIndex", 0)), count)
+            end = orbit_angle(int(second_node.get("orbitIndex", 0)), count)
             delta = (end - start + math.pi) % (2 * math.pi) - math.pi
             radius = self.orbit_radii[first_orbit]
             center = self.group_centers[first_group]
@@ -1317,21 +1311,9 @@ class RestoredAscendancyTreeCanvas(NativeAscendancyTreeCanvas):
             return
         groups = data.get("groups", {})
         constants = data.get("constants", {})
-        radii = constants.get("orbitRadii", [])
-        counts = constants.get("skillsPerOrbit", [])
         for node_id, node in data.get("nodes", {}).items():
-            if not node.get("ascendancyName"):
-                continue
-            group = groups.get(str(node.get("group")), {})
-            orbit = int(node.get("orbit", 0))
-            index = int(node.get("orbitIndex", 0))
-            radius = radii[orbit] if orbit < len(radii) else 0
-            count = counts[orbit] if orbit < len(counts) else 1
-            angle = 2 * math.pi * index / max(1, count)
-            self.positions[str(node_id)] = QPointF(
-                float(group.get("x", 0)) + radius * math.sin(angle),
-                float(group.get("y", 0)) - radius * math.cos(angle),
-            )
+            if node.get("ascendancyName"):
+                self.positions[str(node_id)] = QPointF(*node_point(node, groups, constants))
 
 
 # Импорт после определения OpaqueMasteryTooltip: tooltips_ru_v3 тянет его обратно из этого модуля
@@ -1366,15 +1348,61 @@ class SeparateMasteryTreeCanvas(OfficialRussianTreeCanvas):
         ]
         self.completed_masteries = set()
         self.next_mastery = None
+        self.refund_nodes = set()
+        self.tree_nodes = self.nodes
+        self.tree_points = dict(self.positions)
+        self.cluster_overlay = {}
 
     def set_mastery_progression(self, completed, next_node=None):
         self.completed_masteries = {str(node) for node in completed}
         self.next_mastery = str(next_node) if next_node is not None else None
         self.update()
 
+    def set_refund_nodes(self, nodes):
+        self.refund_nodes = {str(node) for node in nodes}
+        self.update()
+
+    def set_cluster_overlay(self, overlay):
+        if overlay is self.cluster_overlay:
+            return
+        changed = set(self.cluster_overlay) | set(overlay)
+        self.cluster_overlay = overlay
+        self.nodes = {**self.tree_nodes, **overlay} if overlay else self.tree_nodes
+        for node_id in changed:
+            node = overlay.get(node_id)
+            center = self.group_centers.get(str(node.get("group"))) if node else None
+            if center is not None:
+                self.positions[node_id] = QPointF(*orbit_point(
+                    center.x(), center.y(), int(node.get("orbit", 0)), int(node.get("orbitIndex", 0)),
+                    self.orbit_radii, self.orbit_counts,
+                ))
+            elif node is None and node_id in self.tree_points:
+                self.positions[node_id] = self.tree_points[node_id]
+            else:
+                self.positions.pop(node_id, None)
+        edges = {edge for edge in self.edges if edge[0] not in changed and edge[1] not in changed}
+        for node_id in changed & set(self.positions):
+            node = self.nodes.get(node_id, {})
+            for other in node.get("out", []) + node.get("in", []):
+                other = str(other)
+                neighbour = self.nodes.get(other, {})
+                if (
+                    other != node_id and other in self.positions
+                    and not neighbour.get("isMastery") and not neighbour.get("ascendancyName")
+                ):
+                    edges.add(tuple(sorted((node_id, other))))
+        self.edges = sorted(edges)
+        self.update()
+
+    def immediate_focus_nodes(self):
+        if not self.upcoming_order and self.refund_nodes:
+            return set(self.refund_nodes)
+        return super().immediate_focus_nodes()
+
     def _draw_route_node(self, painter, node_id):
         super()._draw_route_node(painter, node_id)
-        if node_id not in self.mastery_ids:
+        refund = node_id in self.refund_nodes
+        if node_id not in self.mastery_ids and not refund:
             return
         point = self.positions.get(node_id)
         if point is None:
@@ -1382,7 +1410,9 @@ class SeparateMasteryTreeCanvas(OfficialRussianTreeCanvas):
         screen = self._screen(point)
         size = self._node_size(self.nodes.get(node_id, {}))
         rect = QRectF(screen.x() - size / 2, screen.y() - size / 2, size, size)
-        if node_id in self.completed_masteries:
+        if refund:
+            color, width, padding = QColor(Style.DANGER), 2.6, 3.0
+        elif node_id in self.completed_masteries:
             color, width, padding = QColor("#32e567"), 2.2, 2.0
         elif node_id == self.next_mastery:
             color, width, padding = QColor("#fff0ad"), 2.8, 3.5
@@ -1484,6 +1514,14 @@ class ExplicitProgressionTreeCanvas(SeparateMasteryTreeCanvas):
             ):
                 painter.drawPath(self._edge_path(first, second))
 
+        held = self.refund_nodes | self.completed_nodes
+        painter.setPen(QPen(QColor(Style.DANGER), 1.9))
+        for first, second in self.edges:
+            if first in held and second in held and (
+                first in self.refund_nodes or second in self.refund_nodes
+            ):
+                painter.drawPath(self._edge_path(first, second))
+
         for node_id in self.positions:
             self._draw_route_node(painter, node_id)
         self._paint_native_ascendancy(painter)
@@ -1562,16 +1600,9 @@ class CachedZoomSafeTreeCanvas(ZoomSafeTreeCanvas):
         for node_id, node in self.nodes.items():
             key = str(node_id)
             node["_id"] = key
-            group = groups.get(str(node.get("group")), {})
-            orbit = int(node.get("orbit", 0))
-            index = int(node.get("orbitIndex", 0))
-            radius = radii[orbit] if orbit < len(radii) else 0
-            count = counts[orbit] if orbit < len(counts) else 1
-            angle = 2 * math.pi * index / max(1, count)
-            self.positions[key] = QPointF(
-                float(group.get("x", 0)) + radius * math.sin(angle),
-                float(group.get("y", 0)) - radius * math.cos(angle),
-            )
+            if is_structural(node, groups):
+                continue
+            self.positions[key] = QPointF(*node_point(node, groups, constants))
             if node.get("ascendancyName") or node.get("isAscendancyStart"):
                 ascendancy_ids.add(key)
 
@@ -1580,7 +1611,7 @@ class CachedZoomSafeTreeCanvas(ZoomSafeTreeCanvas):
         edges = set()
         for node_id, node in self.nodes.items():
             first = str(node_id)
-            if first in ascendancy_ids or node.get("isMastery"):
+            if first in ascendancy_ids or first not in self.positions or node.get("isMastery"):
                 continue
             for other in node.get("out", []) + node.get("in", []):
                 second = str(other)
@@ -1620,6 +1651,10 @@ class CachedZoomSafeTreeCanvas(ZoomSafeTreeCanvas):
         }
         self.completed_masteries = set()
         self.next_mastery = None
+        self.refund_nodes = set()
+        self.tree_nodes = self.nodes
+        self.tree_points = dict(self.positions)
+        self.cluster_overlay = {}
         self.progression_edges = set()
         self.ascendancy = {
             "name": "Ассенданси", "nodes": [], "edges": [], "completed": [], "next": [],

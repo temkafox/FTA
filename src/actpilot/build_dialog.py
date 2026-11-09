@@ -53,7 +53,8 @@ from actpilot.level_plans import visible_book_passive_plan
 from actpilot.level_plans import semantic_book_passive_plan
 from actpilot.level_plans import corrected_semantic_plan
 from actpilot.level_plans import ordinary_nearest_plan as nearest_connected_plan
-from actpilot.level_plans import mastery_separated_plan
+from actpilot.level_plans import pob_passive_plan
+from actpilot.tree_model import view_overlay
 from actpilot.progression import nodes_at_level
 from actpilot.stage_logic import previous_stage
 from actpilot.gem_cards import DescribedGemLinksView, leveling_stage, ROOT as _SKILLTREE_ROOT
@@ -2043,24 +2044,29 @@ class MasteryAndQuestBuildDialog(StrictNearestBuildDialog):
     def _render_tree(self, build, level):
         if not self._v32_ready:
             return fallback_renderer.LocalizedOverlayBuildDialog._render_tree(self, build, level)
+        self.tree_canvas.set_refund_nodes([])
         if not build:
+            self.tree_canvas.set_cluster_overlay({})
             self.tree_stage_label.setText("Импортируйте PoB")
             self.tree_canvas.set_quest_progression([], [], [], {}, {})
             self.tree_canvas.set_mastery_progression([])
             self.tree_canvas.set_ascendancy_build(None, level)
             return
-        plan = mastery_separated_plan(
-            build.get("trees", []), level, TREE_GRAPH,
-            self.tree_canvas.positions, self.tree_canvas.nodes,
-        )
+        plan = pob_passive_plan(build, level)
         target = plan.get("target")
         if not target:
+            self.tree_canvas.set_cluster_overlay({})
             self.tree_stage_label.setText("Дерево в PoB не найдено")
             self.tree_canvas.set_quest_progression([], [], [], {}, {})
             self.tree_canvas.set_mastery_progression([])
             self.tree_canvas.set_ascendancy_build(build, level)
             return
 
+        respec = plan.get("respec")
+        refund = respec["refund"] if respec else []
+        self.tree_canvas.set_cluster_overlay(
+            view_overlay(list(plan["planned"]) + list(plan["completed"]) + list(refund))
+        )
         is_mastery = lambda node: self.tree_canvas.nodes.get(str(node), {}).get("isMastery")
         completed_mastery = [node for node in plan["completed"] if is_mastery(node)]
         completed_regular = [node for node in plan["completed"] if not is_mastery(node)]
@@ -2076,6 +2082,7 @@ class MasteryAndQuestBuildDialog(StrictNearestBuildDialog):
         )
         self.tree_canvas.set_masteries(target.get("masteries", ""))
         self.tree_canvas.set_mastery_progression(completed_mastery, next_mastery)
+        self.tree_canvas.set_refund_nodes(refund)
         self.tree_canvas.set_ascendancy_build(build, level)
         self.ascendancy_button.setEnabled(bool(self.tree_canvas.ascendancy.get("nodes")))
         if self._tree_initialized:
@@ -2091,9 +2098,14 @@ class MasteryAndQuestBuildDialog(StrictNearestBuildDialog):
             if first else "этап завершён"
         )
         kind = "следующее мастерство" if next_mastery is not None else "следующая нода"
-        self.tree_stage_label.setText(
-            f"Уровень персонажа {level} · {kind}: {first_name}"
-        )
+        text = f"Уровень персонажа {level} · {kind}: {first_name}"
+        if respec:
+            when = "сейчас" if respec["level"] == level else f"на {respec['level']} ур."
+            text = (
+                f"{html.escape(text)} · <span style=\"color:{legacy.Style.DANGER}\">"
+                f"респек {when} — снять нод: {len(respec['refund'])} (красная обводка)</span>"
+            )
+        self.tree_stage_label.setText(text)
         focus_key = (level, first_key)
         if focus_key != self._focused_stage_key:
             self._focused_stage_key = focus_key
@@ -2572,6 +2584,8 @@ class ExactManualBuildDialog(EditableBuildDialog):
 
         plan = manual_passive_plan(build, level)
         target = plan["target"]
+        self.tree_canvas.set_refund_nodes([])
+        self.tree_canvas.set_cluster_overlay({})
         is_mastery = lambda node: self.tree_canvas.nodes.get(str(node), {}).get("isMastery")
         completed_mastery = [node for node in plan["completed"] if is_mastery(node)]
         completed_regular = [node for node in plan["completed"] if not is_mastery(node)]

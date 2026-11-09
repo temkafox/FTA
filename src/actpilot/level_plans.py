@@ -5,12 +5,16 @@ from __future__ import annotations
 import math
 import re
 import xml.etree.ElementTree as ET
+from functools import lru_cache
 
 from actpilot.builds import clamp_level, decode_pob_xml
+from actpilot.data_cache import game_data
 from actpilot.progression import connected_addition_order
+from actpilot.tree_model import build_tree
 
 
 RANGE = re.compile(r"(?<!\d)(\d{1,3})\s*[-–—]\s*(\d{1,3})(?!\d)")
+MASTERY_PAIR = re.compile(r"\{\s*(\d+)\s*,\s*(\d+)\s*\}")
 
 
 def range_bounds(stage):
@@ -335,81 +339,214 @@ def passive_point_events(kill_all_bandits=True, max_level=140):
     return events
 
 
+@lru_cache(maxsize=1)
+def _class_start_ids():
+    nodes = game_data("skilltree.json").get("nodes", {})
+    return frozenset(
+        str(node_id) for node_id, node in nodes.items()
+        if node.get("classStartIndex") is not None
+    )
+
+
+def _point_cost(nodes, starts):
+    return sum(1 for node in nodes if node not in starts)
+
+
+def _point_event(events, index, floor):
+    if index >= len(events):
+        return None
+    event = events[index]
+    if event["level"] >= floor:
+        return event
+    return {
+        "level": floor,
+        "marker": f"{floor}Р",
+        "source": f"респек на {floor} уровне",
+        "kind": "respec",
+    }
+
+
+def _reachable_order(held, candidates, graph):
+    reached = set(held)
+    remaining = list(candidates)
+    ordered = []
+    while True:
+        index = next(
+            (index for index, node in enumerate(remaining) if graph.get(node, set()) & reached),
+            None,
+        )
+        if index is None:
+            return ordered
+        node = remaining.pop(index)
+        ordered.append(node)
+        reached.add(node)
+
+
+def _respec_order(target, kept, starts, graph):
+    rank = {node: index for index, node in enumerate(target)}
+    allocated = {node for node in target if node in starts}
+    remaining = [node for node in target if node not in allocated]
+    ordered = []
+    while remaining:
+        # Взятые ноды первыми, но только через фронт: иначе на месте снятой связки остаётся остров
+        frontier = [node for node in remaining if graph.get(node, set()) & allocated]
+        chosen = min(frontier or remaining, key=lambda node: (node not in kept, rank[node]))
+        remaining.remove(chosen)
+        ordered.append(chosen)
+        allocated.add(chosen)
+    return ordered
+
+
+def _merged_masteries(current, following):
+    taken = {node for node, _ in MASTERY_PAIR.findall(current or "")}
+    extra = [
+        f"{{{node},{effect}}}" for node, effect in MASTERY_PAIR.findall(following or "")
+        if node not in taken
+    ]
+    return ",".join(part for part in [current or "", *extra] if part)
+
+
 def quest_aware_passive_plan(stages, level, graph, kill_all_bandits=True):
     level = clamp_level(level)
     indexed = list(enumerate(stages))
     real = [stage for _, stage in indexed if not _is_tree_divider(stage)]
     seeds = [stage for _, stage in indexed if _is_tree_divider(stage) and stage.get("nodes")]
-    previous = list(seeds[0].get("nodes", [])) if seeds else []
+    previous = [str(node) for node in seeds[0].get("nodes", [])] if seeds else []
+    if not real:
+        return {
+            "target": None, "planned": previous, "completed": previous,
+            "upcoming": [], "node_levels": {}, "node_markers": {},
+            "node_sources": {}, "respec": None,
+        }
+
+    starts = _class_start_ids()
     events = passive_point_events(kill_all_bandits)
-    event_index = 0
+    floor = 1
     segments = []
 
+    def point_level(segment, node):
+        event = segment["node_events"].get(node)
+        return event["level"] if event else 0
+
     for stage in real:
-        target = list(stage.get("nodes", []))
-        target_keys = {str(node) for node in target}
-        base = [node for node in previous if str(node) in target_keys]
-        additions = connected_addition_order(base, target, graph)
+        target = list(dict.fromkeys(str(node) for node in stage.get("nodes", [])))
+        target_keys = set(target)
+        respec_level = None
+        refund = []
+        pre_events = {}
+        if any(node not in target_keys and node not in starts for node in previous):
+            # Респек делается на уровне этапа из PoB, до него предыдущее дерево остаётся целым
+            respec_level = clamp_level(stage.get("level", 1))
+            held = list(previous)
+            if segments:
+                last = segments[-1]
+                held = last["base"] + [
+                    node for node in last["additions"]
+                    if point_level(last, node) < respec_level
+                ]
+            held_keys = set(held)
+            refund = [node for node in held if node not in target_keys and node not in starts]
+            spent = _point_cost(held, starts)
+            candidates = [node for node in target if node not in held_keys]
+            for offset, node in enumerate(_reachable_order(held, candidates, graph)):
+                event = _point_event(events, spent + offset, floor)
+                if event is None or event["level"] >= respec_level:
+                    break
+                pre_events[node] = event
+            kept = (held_keys & target_keys) | set(pre_events)
+            base = [node for node in target if node in starts]
+            additions = _respec_order(target, kept, starts, graph)
+            floor = max(floor, respec_level)
+        else:
+            base = [node for node in previous if node in target_keys]
+            base += [node for node in target if node in starts and node not in base]
+            additions = connected_addition_order(base, target, graph)
+        spent = _point_cost(base, starts)
         node_events = {}
-        for node in additions:
-            if event_index >= len(events):
+        for offset, node in enumerate(additions):
+            event = _point_event(events, spent + offset, floor)
+            if event is None:
                 break
-            node_events[str(node)] = events[event_index]
-            event_index += 1
+            node_events[node] = event
         segments.append(
             {
-                "target": stage,
-                "planned": target,
+                "stage": stage,
+                "target": target,
                 "base": base,
                 "additions": additions,
                 "node_events": node_events,
+                "respec_level": respec_level,
+                "refund": refund,
+                "pre_events": pre_events,
             }
         )
         previous = target
 
-    if not segments:
-        return {
-            "target": None, "planned": previous, "completed": previous,
-            "upcoming": [], "node_levels": {}, "node_markers": {},
-            "node_sources": {},
-        }
-
-    def is_future(segment, node):
-        event = segment["node_events"].get(str(node))
-        return event is not None and event["level"] > level
-
-    active = next(
-        (segment for segment in segments if any(is_future(segment, node) for node in segment["additions"])),
-        segments[-1],
+    first = max(
+        (
+            index for index, segment in enumerate(segments)
+            if segment["respec_level"] is not None and segment["respec_level"] <= level
+        ),
+        default=0,
     )
-    completed_additions = []
-    upcoming = []
-    for node in active["additions"]:
-        event = active["node_events"].get(str(node))
-        if event is None or event["level"] <= level:
-            completed_additions.append(node)
-        else:
-            upcoming.append(node)
-    completed = list(active["base"]) + completed_additions
-    if not upcoming:
-        completed = list(active["planned"])
-    node_levels = {
-        node: event["level"] for node, event in active["node_events"].items()
-    }
-    node_markers = {
-        node: event["marker"] for node, event in active["node_events"].items()
-    }
-    node_sources = {
-        node: event["source"] for node, event in active["node_events"].items()
-    }
+    for index in range(first, len(segments)):
+        active = segments[index]
+        following = segments[index + 1] if index + 1 < len(segments) else None
+        horizon = following["respec_level"] if following else None
+        upcoming = [
+            node for node in active["additions"]
+            if level < point_level(active, node)
+            and (horizon is None or point_level(active, node) < horizon)
+        ]
+        if upcoming or horizon is not None or following is None:
+            break
+
+    stage = active["stage"]
+    completed = active["base"] + [
+        node for node in active["additions"] if point_level(active, node) <= level
+    ]
+    planned = [
+        node for node in active["target"]
+        if horizon is None or point_level(active, node) < horizon
+    ]
+    node_events = dict(active["node_events"])
+    respec = None
+    if horizon is not None and not upcoming:
+        allocated = set(completed)
+        pre = following["pre_events"]
+        completed += [node for node, event in pre.items() if event["level"] <= level]
+        upcoming = [node for node, event in pre.items() if event["level"] > level]
+        planned = completed + upcoming
+        node_events.update(pre)
+        stage = dict(
+            stage,
+            masteries=_merged_masteries(
+                stage.get("masteries", ""), following["stage"].get("masteries", ""),
+            ),
+        )
+        removed = [node for node in following["refund"] if node in allocated]
+        if removed:
+            respec = {
+                "level": horizon,
+                "title": following["stage"].get("title", ""),
+                "refund": removed,
+            }
+    current = segments[first]
+    if current["respec_level"] == level and current["refund"]:
+        respec = {
+            "level": level,
+            "title": current["stage"].get("title", ""),
+            "refund": list(current["refund"]),
+        }
     return {
-        "target": active["target"],
-        "planned": active["planned"],
+        "target": stage,
+        "planned": planned,
         "completed": completed,
         "upcoming": upcoming,
-        "node_levels": node_levels,
-        "node_markers": node_markers,
-        "node_sources": node_sources,
+        "node_levels": {node: event["level"] for node, event in node_events.items()},
+        "node_markers": {node: event["marker"] for node, event in node_events.items()},
+        "node_sources": {node: event["source"] for node, event in node_events.items()},
+        "respec": respec,
     }
 
 
@@ -680,3 +817,9 @@ def mastery_separated_plan(stages, level, graph, positions, node_data):
     return quest_aware_passive_plan(
         filtered_stages, level, graph, kill_all_bandits=False,
     )
+
+
+def pob_passive_plan(build, level):
+    stages = (build or {}).get("trees", [])
+    tree = build_tree(stages)
+    return mastery_separated_plan(stages, level, tree.graph, tree.points, tree.nodes)

@@ -20,7 +20,9 @@ from actpilot.gems.widgets import (
 )
 from actpilot.messagebox import MENU_QSS
 from actpilot.tree import CachedZoomSafeTreeCanvas
-from actpilot.level_plans import quest_aware_passive_plan, stage_at_level
+from actpilot.level_plans import pob_passive_plan, stage_at_level
+from actpilot.tree_geometry import node_point
+from actpilot.tree_model import base_tree, view_overlay
 from actpilot.build_model import load_tree
 from actpilot.build_model import manual_passive_plan
 from actpilot.base_widgets import GEM_COLORS, infer_gem_color
@@ -75,20 +77,9 @@ class MiniPassiveRoute(QWidget):
         return first in {str(value) for value in other.get("out", []) + other.get("in", [])}
 
     def _world_position(self, node_id):
-        node = self._node(node_id)
-        group = self._data.get("groups", {}).get(str(node.get("group")), {})
-        constants = self._data.get("constants", {})
-        radii = constants.get("orbitRadii", [])
-        counts = constants.get("skillsPerOrbit", [])
-        orbit = int(node.get("orbit", 0))
-        index = int(node.get("orbitIndex", 0))
-        radius = radii[orbit] if orbit < len(radii) else 0
-        count = counts[orbit] if orbit < len(counts) else 1
-        angle = 2 * math.pi * index / max(1, count)
-        return QPointF(
-            float(group.get("x", 0)) + radius * math.sin(angle),
-            float(group.get("y", 0)) - radius * math.cos(angle),
-        )
+        return QPointF(*node_point(
+            self._node(node_id), self._data.get("groups", {}), self._data.get("constants", {}),
+        ))
 
     def _pick_nodes(self, completed, upcoming):
         completed = [str(node) for node in completed if str(node) in self._nodes]
@@ -672,27 +663,14 @@ BaseMiniPassiveRoute = MiniPassiveRouteV7
 
 
 class MiniPassiveRoute(BaseMiniPassiveRoute):
-    _graph = None
-
-    def _tree_graph(self):
-        if self.__class__._graph is None:
-            graph = {str(node_id): set() for node_id in self._nodes}
-            for node_id, node in self._nodes.items():
-                first = str(node_id)
-                for value in node.get("out", []) + node.get("in", []):
-                    second = str(value)
-                    if second in graph:
-                        graph[first].add(second)
-                        graph[second].add(first)
-            self.__class__._graph = graph
-        return self.__class__._graph
-
     def set_build_level(self, build, level):
+        self._nodes = base_tree().nodes
         if not build or build.get("format") == "actpilot-manual-v1":
             return super().set_build_level(build, level)
-        plan = quest_aware_passive_plan(
-            build.get("trees", []), level, self._tree_graph(), False,
-        )
+        plan = pob_passive_plan(build, level)
+        overlay = view_overlay(list(plan.get("planned", [])) + list(plan.get("completed", [])))
+        if overlay:
+            self._nodes = {**self._nodes, **overlay}
         if not plan.get("target"):
             self._visible_nodes = []
             self._completed = set()
