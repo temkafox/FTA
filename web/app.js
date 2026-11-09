@@ -15,6 +15,7 @@ const defaults = () => ({
   started: null,  // мс начала таймера
   build: null,    // исходный код PoB
   tab: 'route',
+  openExtras: {}, // акт -> раскрыта ли секция «Дополнительно»
 });
 
 let state = defaults();
@@ -128,6 +129,58 @@ function renderSteps() {
     }
     host.append(li);
   });
+
+  if (act.extras && act.extras.length) host.append(buildExtras(act));
+}
+
+function buildExtras(act) {
+  const open = Boolean(state.openExtras && state.openExtras[state.act]);
+  const item = document.createElement('li');
+  item.className = 'extras';
+
+  const head = document.createElement('button');
+  head.className = 'extras-head';
+  head.setAttribute('aria-expanded', String(open));
+
+  const label = document.createElement('span');
+  label.className = 'extras-label';
+  label.textContent = 'Дополнительно';
+
+  const count = document.createElement('span');
+  count.className = 'extras-count';
+  count.textContent = act.extras.length;
+
+  const chevron = document.createElement('span');
+  chevron.className = 'chev';
+  chevron.textContent = '›';
+
+  head.append(label, count, chevron);
+  item.append(head);
+
+  const list = document.createElement('ul');
+  list.className = 'extras-list';
+  list.hidden = !open;
+  item.classList.toggle('open', open);
+  for (const text of act.extras) {
+    const row = document.createElement('li');
+    row.textContent = text;
+    list.append(row);
+  }
+  item.append(list);
+  return item;
+}
+
+function toggleExtras() {
+  if (!state.openExtras) state.openExtras = {};
+  const open = !state.openExtras[state.act];
+  state.openExtras[state.act] = open;
+  const item = document.querySelector('.extras');
+  if (item) {
+    item.classList.toggle('open', open);
+    item.querySelector('.extras-head').setAttribute('aria-expanded', String(open));
+    item.querySelector('.extras-list').hidden = !open;
+  }
+  save();
 }
 
 function firstOpenAct() {
@@ -546,6 +599,10 @@ function bind() {
   });
 
   $('#steps').addEventListener('click', (event) => {
+    if (event.target.closest('.extras-head')) {
+      toggleExtras();
+      return;
+    }
     const li = event.target.closest('.step');
     if (li) toggleStep(li.dataset.id);
   });

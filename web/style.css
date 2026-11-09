@@ -244,6 +244,77 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 .step.now .text { color: #fff; }
 
+/* дополнительное по акту: рецепты верстака, тайники */
+.extras {
+  background: #0f0f14;
+  border-top: 1px solid var(--border);
+}
+
+.extras-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 15px 16px;
+  color: var(--text-2);
+}
+
+.extras-label {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+}
+
+.extras-count {
+  min-width: 22px;
+  height: 21px;
+  padding: 0 7px;
+  border-radius: 11px;
+  background: var(--bg-3);
+  color: var(--text-2);
+  font-size: 12px;
+  line-height: 21px;
+  text-align: center;
+}
+
+.extras .chev {
+  margin-left: auto;
+  font-size: 19px;
+  line-height: 1;
+  color: var(--text-3);
+  transition: transform .18s ease;
+}
+
+.extras.open .chev { transform: rotate(90deg); }
+
+.extras-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.extras-list li {
+  position: relative;
+  padding-left: 14px;
+  font-size: 15px;
+  line-height: 1.4;
+  color: var(--text-2);
+}
+
+.extras-list li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(224, 185, 111, .6);
+}
+
 /* ─────────── дерево ─────────── */
 #viewTree { display: flex; flex-direction: column; overflow: hidden; }
 
