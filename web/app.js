@@ -91,6 +91,7 @@ function renderProgress() {
   const total = totalSteps();
   const pct = total ? (doneCount() / total) * 100 : 0;
   $('#progressFill').style.width = `${pct}%`;
+  updateNextButton();
 }
 
 function renderSteps() {
@@ -134,6 +135,20 @@ function firstOpenAct() {
   return index < 0 ? acts.length - 1 : index;
 }
 
+function nextStepId() {
+  const act = acts[state.act];
+  if (!act) return null;
+  const step = act.steps.find(item => !state.done[item.id]);
+  return step ? step.id : null;
+}
+
+function updateNextButton() {
+  const id = nextStepId();
+  $('#nextWrap').hidden = state.tab !== 'route';
+  $('#nextBtn').disabled = !id;
+  $('#nextBtn').textContent = id ? 'Следующий шаг' : 'Акт пройден';
+}
+
 function toggleStep(id) {
   const now = Date.now();
   if (state.done[id]) {
@@ -153,6 +168,7 @@ function toggleStep(id) {
   renderActs();
   renderSteps();
   renderProgress();
+  updateNextButton();
 }
 
 /* ───────────── уровень ───────────── */
@@ -503,6 +519,7 @@ function setTab(tab) {
   document.querySelectorAll('.tabs button').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
   $('#viewRoute').hidden = tab !== 'route';
   $('#viewTree').hidden = tab !== 'tree';
+  updateNextButton();
   if (tab === 'tree') {
     tree.load().then(() => {
       tree.resize();
@@ -531,6 +548,14 @@ function bind() {
   $('#steps').addEventListener('click', (event) => {
     const li = event.target.closest('.step');
     if (li) toggleStep(li.dataset.id);
+  });
+
+  $('#nextBtn').addEventListener('click', () => {
+    const id = nextStepId();
+    if (!id) return;
+    toggleStep(id);
+    const now = document.querySelector('.step.now');
+    if (now) now.scrollIntoView({ block: 'center', behavior: 'smooth' });
   });
 
   document.querySelectorAll('.lvl-btn').forEach(btn => {
