@@ -15,6 +15,7 @@ WEB_DATA = ROOT / "web" / "data"
 STEPS_FILE = SRC / "steps.json"
 EXTRAS_FILE = SRC / "data" / "poe1" / "campaign_extras.json"
 TREE_FILE = SRC / "data" / "poe1" / "skilltree.json"
+GEMS_FILE = SRC / "data" / "poe1" / "gem_acquisition.json"
 
 ACT_LABELS = [f"Акт {index}" for index in range(1, 11)]
 
@@ -104,10 +105,40 @@ def tree_payload() -> dict:
     }
 
 
+def gems_payload() -> dict:
+    """Только то, что нужно веб-плану: квесты с наградами/вендорами и имена камней."""
+    data = json.loads(GEMS_FILE.read_text(encoding="utf-8"))
+    gems = data.get("gems", {})
+    known = set(gems)
+    for kinds in (data.get("start_gems") or {}).values():
+        known.update(value for value in kinds.values() if value)
+    quests = []
+    for quest in data.get("quests", []):
+        offers = []
+        for offer in quest.get("offers", []):
+            offers.append(
+                {
+                    "npc": offer.get("npc", ""),
+                    "rewards": offer.get("rewards", {}),
+                    "vendor": offer.get("vendor", {}),
+                }
+            )
+        quests.append({"act": quest.get("act"), "name": quest.get("name", ""), "offers": offers})
+    names = {key: (record.get("name") or key) for key, record in gems.items()}
+    return {
+        "classes": data.get("classes", []),
+        "start_gems": data.get("start_gems", {}),
+        "quests": quests,
+        "known": sorted(known),
+        "names": names,
+    }
+
+
 def main() -> int:
     WEB_DATA.mkdir(parents=True, exist_ok=True)
     steps = steps_payload()
     tree = tree_payload()
+    gems = gems_payload()
 
     (WEB_DATA / "steps.json").write_text(
         json.dumps(steps, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"
@@ -115,12 +146,18 @@ def main() -> int:
     (WEB_DATA / "tree.json").write_text(
         json.dumps(tree, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"
     )
+    (WEB_DATA / "gems.json").write_text(
+        json.dumps(gems, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"
+    )
 
     steps_size = (WEB_DATA / "steps.json").stat().st_size
     tree_size = (WEB_DATA / "tree.json").stat().st_size
+    gems_size = (WEB_DATA / "gems.json").stat().st_size
     print(f"steps.json: {steps_size / 1024:.0f} KB, {len(steps['acts'])} актов, "
           f"{sum(len(act['steps']) for act in steps['acts'])} шагов")
     print(f"tree.json: {tree_size / 1024:.0f} KB, {len(tree['nodes'])} нод, {len(tree['groups'])} групп")
+    print(f"gems.json: {gems_size / 1024:.0f} KB, {len(gems['quests'])} квестов, "
+          f"{len(gems['known'])} ключей камней")
     return 0
 
 

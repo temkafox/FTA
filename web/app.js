@@ -535,6 +535,7 @@ function parseBuildXml(xmlText) {
   const buildNode = root.querySelector('Build');
   const class_ = buildNode ? buildNode.getAttribute('className') || '' : '';
   const ascendancy = buildNode ? buildNode.getAttribute('ascendClassName') || '' : '';
+  const buildLevel = buildNode ? Number(buildNode.getAttribute('level') || 1) : 1;
   const specs = [];
   for (const spec of root.querySelectorAll('Tree > Spec')) {
     const nodes = (spec.getAttribute('nodes') || '')
@@ -542,13 +543,54 @@ function parseBuildXml(xmlText) {
       .map(value => value.trim())
       .filter(Boolean);
     const title = spec.getAttribute('title') || '';
-    const explicit = title.match(/(?:level|lvl|уров\w*)[\s:_-]*(\d{1,3})/i) || title.match(/(\d{1,3})\s*[-–—]\s*(\d{1,3})/);
-    const level = explicit ? Number(explicit[1]) : 1;
-    specs.push({ level: Math.max(1, Math.min(100, level)), nodes, title });
+    specs.push({ level: levelFromTitle(title, 1), nodes, title });
   }
   specs.sort((a, b) => a.level - b.level);
   if (!specs.length) throw new Error('В билде нет дерева пассивов');
-  return { class: class_, ascendancy, specs };
+  return { class: class_, ascendancy, specs, gemSets: parseGemSets(root, buildLevel) };
+}
+
+function levelFromTitle(title, fallback) {
+  const explicit = title.match(/(?:level|lvl|lev|уров(?:ень|ня)?|ур\.?)[\s:_-]*(\d{1,3})/i)
+    || title.match(/(?<!\d)(\d{1,3})\s*[-–—]\s*(\d{1,3})(?!\d)/)
+    || title.match(/(?<!\d)(\d{1,3})\s*(?:points?|pts?|очк\w*)/i)
+    || title.match(/^\s*(\d{1,3})\s*$/);
+  if (!explicit) return Math.max(1, Math.min(100, Number(fallback) || 1));
+  const value = explicit[1];
+  return Math.max(1, Math.min(100, Number(value) || 1));
+}
+
+function gemIsSupport(gem) {
+  const explicit = gem.getAttribute('support');
+  if (explicit !== null) return explicit.toLowerCase() === 'true';
+  if ((gem.getAttribute('skillId') || '').startsWith('Support')) return true;
+  return (gem.getAttribute('gemId') || '').includes('SupportGem');
+}
+
+function parseGemSets(root, buildLevel) {
+  const sets = [];
+  const containers = root.querySelectorAll('Skills > SkillSet');
+  const groups = containers.length ? [...containers] : [root.querySelector('Skills')].filter(Boolean);
+  for (const set of groups) {
+    const title = set.getAttribute('title') || set.getAttribute('label') || 'Набор камней';
+    const level = containers.length ? levelFromTitle(title, buildLevel) : Math.max(1, buildLevel || 1);
+    const links = [];
+    for (const skill of set.querySelectorAll('Skill')) {
+      if ((skill.getAttribute('enabled') || 'true').toLowerCase() === 'false') continue;
+      if ((skill.getAttribute('source') || '').trim()) continue;
+      const gems_ = [];
+      for (const gem of skill.querySelectorAll('Gem')) {
+        if ((gem.getAttribute('enabled') || 'true').toLowerCase() === 'false') continue;
+        const name = gem.getAttribute('nameSpec') || gem.getAttribute('name') || '';
+        if (!name.trim()) continue;
+        gems_.push({ name: name.trim(), support: gemIsSupport(gem), level: gem.getAttribute('level') });
+      }
+      if (!gems_.length) continue;
+      links.push({ label: skill.getAttribute('label') || skill.getAttribute('slot') || 'Связка', gems: gems_ });
+    }
+    if (links.length) sets.push({ level, title, links });
+  }
+  return sets;
 }
 
 function parseBuild(code) {
@@ -564,6 +606,254 @@ async function loadBuild(code) {
   save();
 }
 
+/* ───────────── план камней ───────────── */
+
+const ACT_END_LEVEL = { 1: 12, 2: 22, 3: 33, 4: 40, 5: 45, 6: 50, 7: 55, 8: 60, 9: 64, 10: 68 };
+const PURCHASE_LEAD = 10;
+const GRANTED_NON_GEMS = new Set(['primal aegis']);
+
+const gemsData = { ready: false, data: null, known: new Set(), plan: null, error: null };
+
+async function ensureGemsData() {
+  if (gemsData.ready) return;
+  const response = await fetch('data/gems.json');
+  gemsData.data = await response.json();
+  gemsData.known = new Set(gemsData.data.known);
+  gemsData.ready = true;
+}
+
+function normalizedClass(value) {
+  const wanted = (value || '').trim().toLowerCase();
+  const found = (gemsData.data?.classes || []).find(name => name.toLowerCase() === wanted);
+  return found || null;
+}
+
+function gemKey(name, support) {
+  const key = (name || '').trim().toLowerCase();
+  if (!key) return '';
+  const candidates = key.endsWith(' support')
+    ? [key, key.slice(0, -' support'.length)]
+    : (support ? [`${key} support`, key] : [key, `${key} support`]);
+  return candidates.find(candidate => gemsData.known.has(candidate)) || key;
+}
+
+function gemLabel(key, fallback) {
+  return (gemsData.data && gemsData.data.names[key]) || fallback || key;
+}
+
+function requiredGems(sets) {
+  const needed = new Map();
+  const ordered = [...sets].sort((a, b) => a.level - b.level);
+  for (const set of ordered) {
+    const counts = new Map();
+    for (const link of set.links) {
+      for (const gem of link.gems) {
+        const name = (gem.name || '').trim();
+        if (!name || GRANTED_NON_GEMS.has(name.toLowerCase())) continue;
+        const key = gemKey(name, gem.support);
+        counts.set(key, (counts.get(key) || 0) + 1);
+        if (!needed.has(key)) {
+          needed.set(key, { key, name, support: Boolean(gem.support), level: set.level, count: 0 });
+        }
+      }
+    }
+    for (const [key, count] of counts) {
+      const item = needed.get(key);
+      item.count = Math.max(item.count, count);
+    }
+  }
+  return [...needed.values()];
+}
+
+function planGems(needed, className) {
+  const data = gemsData.data;
+  const owned = new Map(needed.map(item => [item.key, 0]));
+  const actions = new Map(needed.map(item => [item.key, []]));
+  const starts = [];
+
+  const startKeys = data.start_gems[className] || {};
+  for (const kind of ['start', 'chest']) {
+    const key = startKeys[kind];
+    if (key && owned.has(key) && !owned.get(key)) {
+      owned.set(key, 1);
+      actions.get(key).push({ kind, act: 1, count: 1 });
+      starts.push({ key, kind, name: gemLabel(key) });
+    }
+  }
+
+  const lastVendor = new Map();
+  data.quests.forEach((quest, index) => {
+    for (const offer of quest.offers) {
+      for (const [key, info] of Object.entries(offer.vendor)) {
+        if ((info.classes || []).includes(className)) lastVendor.set(key, index);
+      }
+    }
+  });
+
+  const steps = [];
+  data.quests.forEach((quest, index) => {
+    const act = quest.act;
+    const step = { act, quest: quest.name, rewards: [], purchases: [] };
+
+    /* награда: один нужный камень за предложение */
+    for (const offer of quest.offers) {
+      for (const item of needed) {
+        if (owned.get(item.key)) continue;
+        if (!(offer.rewards[item.key] || []).includes(className)) continue;
+        owned.set(item.key, 1);
+        const entry = {
+          kind: 'reward', act, quest: quest.name, npc: offer.npc,
+          key: item.key, name: item.name, support: item.support, count: 1,
+        };
+        actions.get(item.key).push(entry);
+        step.rewards.push(entry);
+        break;
+      }
+    }
+
+    /* покупка: недостающие копии, отложенные — у последнего вендора */
+    for (const offer of quest.offers) {
+      for (const item of needed) {
+        const missing = item.count - owned.get(item.key);
+        const info = offer.vendor[item.key];
+        if (missing <= 0 || !info || !(info.classes || []).includes(className)) continue;
+        const deferred = (ACT_END_LEVEL[act] || ACT_END_LEVEL[10]) < item.level - PURCHASE_LEAD;
+        if (deferred && lastVendor.get(item.key) !== index) continue;
+        owned.set(item.key, owned.get(item.key) + missing);
+        const entry = {
+          kind: 'buy', act, quest: quest.name, npc: info.npc || offer.npc, deferred,
+          key: item.key, name: item.name, support: item.support, count: missing, neededLevel: item.level,
+          duplicate: owned.get(item.key) - missing > 0,
+        };
+        actions.get(item.key).push(entry);
+        step.purchases.push(entry);
+      }
+    }
+    if (step.rewards.length || step.purchases.length) steps.push(step);
+  });
+
+  const unavailable = [];
+  for (const item of needed) {
+    if (owned.get(item.key) >= item.count) continue;
+    const base = item.name.includes(' of ') ? item.name.split(' of ')[0] : null;
+    const reason = base && gemsData.known.has(gemKey(base)) ? 'divine_font' : 'trade';
+    unavailable.push({ key: item.key, name: item.name, support: item.support, reason, base });
+  }
+  return { class: className, steps, unavailable, starts, total: needed.length };
+}
+
+function refreshGems() {
+  if (state.tab !== 'gems') return;
+  renderGems();
+}
+
+async function renderGems() {
+  const host = $('#gemsList');
+  const counter = $('#gemsCount');
+  try {
+    await ensureGemsData();
+  } catch (error) {
+    host.innerHTML = '<p class="gems-empty">Не удалось загрузить данные камней.</p>';
+    return;
+  }
+
+  if (!build || !build.gemSets || !build.gemSets.length) {
+    counter.textContent = '';
+    host.innerHTML = '<p class="gems-empty">Импортируйте билд: «Импорт PoB» — план камней строится по связкам из Path of Building.</p>';
+    return;
+  }
+
+  const className = normalizedClass(build.class);
+  if (!className) {
+    counter.textContent = '';
+    host.innerHTML = `<p class="gems-empty">Класс «${escapeHtml(build.class || '—')}» не найден в справочнике камней.</p>`;
+    return;
+  }
+
+  const plan = planGems(requiredGems(build.gemSets), className);
+  gemsData.plan = plan;
+  counter.textContent = `${className} · ${plan.total} камней`;
+
+  const fragment = document.createDocumentFragment();
+  if (plan.starts.length) {
+    const block = document.createElement('div');
+    block.className = 'gem-step starts';
+    block.append(headRow('Старт', 'Акт 1 · Twilight Strand'));
+    for (const item of plan.starts) {
+      block.append(gemRow({ badge: 'Q', name: item.name, note: item.kind === 'chest' ? 'с сундука' : 'стартовый камень класса' }));
+    }
+    fragment.append(block);
+  }
+
+  for (const step of plan.steps) {
+    const block = document.createElement('div');
+    block.className = 'gem-step';
+    block.append(headRow(`Акт ${step.act}`, step.quest));
+    for (const entry of step.rewards) {
+      block.append(gemRow({ badge: 'Q', name: entry.name, note: '' }));
+    }
+    for (const entry of step.purchases) {
+      let note = entry.duplicate ? 'ещё копия' : '';
+      if (entry.npc) note += `${note ? ' · ' : ''}у ${entry.npc}`;
+      if (entry.count > 1) note += ` · ×${entry.count}`;
+      if (entry.deferred) note += ` · нужен с ур. ${entry.neededLevel}`;
+      block.append(gemRow({ badge: 'B', name: entry.name, note }));
+    }
+    fragment.append(block);
+  }
+
+  if (plan.unavailable.length) {
+    const block = document.createElement('div');
+    block.className = 'gem-step unavailable';
+    block.append(headRow('Остальное', 'нет награды и ранней покупки'));
+    for (const item of plan.unavailable) {
+      const note = item.reason === 'divine_font'
+        ? `Divine Font в Лабиринте (из ${item.base}) или трейд`
+        : 'только дроп или трейд';
+      block.append(gemRow({ badge: '·', name: item.name, note }));
+    }
+    fragment.append(block);
+  }
+
+  if (!plan.steps.length && !plan.unavailable.length) {
+    fragment.append(Object.assign(document.createElement('p'), {
+      className: 'gems-empty',
+      textContent: 'В этом билде нет камней, требующих плана.',
+    }));
+  }
+
+  host.replaceChildren(fragment);
+}
+
+function headRow(title, subtitle) {
+  const head = document.createElement('div');
+  head.className = 'gem-step-head';
+  const pill = document.createElement('span');
+  pill.className = 'act-pill';
+  pill.textContent = title;
+  const text = document.createElement('span');
+  text.className = 'gem-step-quest';
+  text.textContent = subtitle || '';
+  head.append(pill, text);
+  return head;
+}
+
+function gemRow({ badge, name, note }) {
+  const row = document.createElement('div');
+  row.className = `gem-row ${badge === 'Q' ? 'reward' : badge === 'B' ? 'buy' : ''}`;
+  const mark = document.createElement('span');
+  mark.className = 'gem-badge';
+  mark.textContent = badge;
+  const label = document.createElement('span');
+  label.className = 'gem-name';
+  label.textContent = name;
+  const text = document.createElement('span');
+  text.className = 'gem-note';
+  text.textContent = note || '';
+  row.append(mark, label, text);
+  return row;
+}
+
 /* ───────────── вкладки, модалки, жесты ───────────── */
 
 function setTab(tab) {
@@ -572,6 +862,7 @@ function setTab(tab) {
   document.querySelectorAll('.tabs button').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
   $('#viewRoute').hidden = tab !== 'route';
   $('#viewTree').hidden = tab !== 'tree';
+  $('#viewGems').hidden = tab !== 'gems';
   updateNextButton();
   if (tab === 'tree') {
     tree.load().then(() => {
@@ -585,6 +876,7 @@ function setTab(tab) {
       }
     });
   }
+  if (tab === 'gems') renderGems();
 }
 
 function bind() {
@@ -646,6 +938,11 @@ function bind() {
     $('#pobError').hidden = true;
     $('#pobModal').hidden = false;
   });
+  $('#gemsPobBtn').addEventListener('click', () => {
+    $('#pobInput').value = state.build || '';
+    $('#pobError').hidden = true;
+    $('#pobModal').hidden = false;
+  });
   $('#pobCancel').addEventListener('click', () => { $('#pobModal').hidden = true; });
   $('#pobApply').addEventListener('click', async () => {
     const button = $('#pobApply');
@@ -656,6 +953,7 @@ function bind() {
       tree.applyPlan();
       tree.focus();
       tree.focusedCode = build.code;
+      refreshGems();
     } catch (error) {
       $('#pobError').textContent = error.message || 'Не удалось прочитать билд';
       $('#pobError').hidden = false;
@@ -671,6 +969,7 @@ function bind() {
     tree.applyPlan();
     tree.focusedCode = null;
     tree.fit();
+    refreshGems();
     $('#pobModal').hidden = true;
   });
 
