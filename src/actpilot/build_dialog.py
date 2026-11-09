@@ -2099,6 +2099,9 @@ class MasteryAndQuestBuildDialog(StrictNearestBuildDialog):
         )
         kind = "следующее мастерство" if next_mastery is not None else "следующая нода"
         text = f"Уровень персонажа {level} · {kind}: {first_name}"
+        unreachable = plan.get("unreachable", [])
+        if first is None and unreachable:
+            text = f"Уровень персонажа {level} · не использовано нод: {len(unreachable)} — не хватает очков"
         if respec:
             when = "сейчас" if respec["level"] == level else f"на {respec['level']} ур."
             text = (

@@ -159,3 +159,13 @@ def test_canvas_draws_and_focuses_refund_nodes(qapp):
     assert canvas.refund_nodes == {"57264", "33296"}
     assert canvas.immediate_focus_nodes() == {"57264", "33296"}
     assert not canvas.grab().isNull()
+
+
+def test_nodes_beyond_last_level_are_unreachable_not_upcoming():
+    chain = [START] + [f"c{index}" for index in range(1, 131)]
+    graph = make_graph(*zip(chain, chain[1:]))
+    plan = plan_at([stage(1, "ур. 1", chain)], 100, graph)
+
+    assert plan["upcoming"] == []
+    assert plan["unreachable"] == chain[123:]
+    assert len(plan["completed"]) == 123

@@ -1,5 +1,6 @@
 import pytest
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtCore import QObject, pyqtSignal
+from PyQt5.QtWidgets import QApplication, QWidget
 
 from actpilot.level_plans import pob_passive_plan
 from actpilot.tree_model import base_tree, view_overlay
@@ -65,3 +66,77 @@ def test_canvas_cluster_overlay_round_trip(qapp):
     canvas.set_cluster_overlay({})
     assert "65696" not in canvas.positions and "49080" not in canvas.positions
     assert canvas.edges == edges
+
+
+def ordinary_route(size):
+    nodes = base_tree().nodes
+    route, seen = [WITCH_START], {WITCH_START}
+    for node_id in route:
+        for other in sorted(base_tree().graph[node_id]):
+            data = nodes[other]
+            if (
+                other not in seen and other.isdigit() and not data.get("ascendancyName")
+                and not data.get("isMastery") and data.get("classStartIndex") is None
+            ):
+                seen.add(other)
+                route.append(other)
+        if len(route) > size:
+            return route[:size + 1]
+    return route
+
+
+def route_build(size, bandit):
+    return {
+        "format": "pob1", "class": "Witch", "ascendancy": "Necromancer", "gem_sets": [],
+        "source_code": f'<PathOfBuilding><Build bandit="{bandit}"/></PathOfBuilding>',
+        "trees": [{"level": 1, "title": "ур. 1", "nodes": [int(node) for node in ordinary_route(size)]}],
+    }
+
+
+@pytest.mark.parametrize("bandit, points", [("None", 24), ("Alira", 23)])
+def test_bandit_point_follows_pob_choice(bandit, points):
+    plan = pob_passive_plan(route_build(30, bandit), 20)
+
+    assert len(plan["completed"]) == points + 1
+
+
+class Content(QObject):
+    active_step_changed = pyqtSignal()
+
+    def get_active_step_info(self):
+        return "Act 10", 0, ""
+
+
+class StubOverlay(QWidget):
+    def __init__(self, profile):
+        super().__init__()
+        self.settings = {"poe1_client_path": "missing-Client.txt"}
+        self.content = Content()
+        self.profile_data = {"active_profile_id": "p", "profiles": [profile]}
+
+    def active_profile(self):
+        return self.profile_data["profiles"][0]
+
+    def save_profiles(self):
+        pass
+
+    def switch_profile(self, _):
+        pass
+
+    def create_profile(self, _):
+        pass
+
+    def _refresh_mini_tree(self):
+        pass
+
+
+def test_dialog_reports_unused_nodes_instead_of_next(qapp):
+    from actpilot.build_dialog import CharacterRebindBuildDialog
+
+    profile = {
+        "id": "p", "name": "Ведьма", "game": "poe1", "level": 100, "campaign": {},
+        "build": route_build(140, "Alira"),
+    }
+    dialog = CharacterRebindBuildDialog(StubOverlay(profile))
+
+    assert dialog.tree_stage_label.text() == "Уровень персонажа 100 · не использовано нод: 18 — не хватает очков"

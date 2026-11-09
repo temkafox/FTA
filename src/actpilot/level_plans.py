@@ -7,7 +7,7 @@ import re
 import xml.etree.ElementTree as ET
 from functools import lru_cache
 
-from actpilot.builds import clamp_level, decode_pob_xml
+from actpilot.builds import LEVEL_MAX, clamp_level, decode_pob_xml
 from actpilot.data_cache import game_data
 from actpilot.progression import connected_addition_order
 from actpilot.tree_model import build_tree
@@ -285,8 +285,8 @@ QUEST_REWARDS = (
 )
 
 
-def pob_kills_all_bandits(build):
-    source = (build or {}).get("source_code", "")
+@lru_cache(maxsize=16)
+def _source_kills_all_bandits(source):
     if not source:
         return True
     try:
@@ -295,6 +295,10 @@ def pob_kills_all_bandits(build):
     except (ValueError, ET.ParseError, AttributeError):
         return True
     return value in {"none", "eramir", "killall", "kill all"}
+
+
+def pob_kills_all_bandits(build):
+    return _source_kills_all_bandits((build or {}).get("source_code", ""))
 
 
 def passive_point_events(kill_all_bandits=True, max_level=140):
@@ -538,11 +542,15 @@ def quest_aware_passive_plan(stages, level, graph, kill_all_bandits=True):
             "title": current["stage"].get("title", ""),
             "refund": list(current["refund"]),
         }
+    # Ноды, на которые очков не хватит и к последнему уровню, — не «следующие», а неиспользованные
+    unreachable = [node for node in upcoming if node_events[node]["level"] > LEVEL_MAX]
+    upcoming = [node for node in upcoming if node_events[node]["level"] <= LEVEL_MAX]
     return {
         "target": stage,
         "planned": planned,
         "completed": completed,
         "upcoming": upcoming,
+        "unreachable": unreachable,
         "node_levels": {node: event["level"] for node, event in node_events.items()},
         "node_markers": {node: event["marker"] for node, event in node_events.items()},
         "node_sources": {node: event["source"] for node, event in node_events.items()},
@@ -780,7 +788,7 @@ def ordinary_nearest_plan(stages, level, graph, positions, node_data):
     )
 
 
-def mastery_separated_plan(stages, level, graph, positions, node_data):
+def mastery_separated_plan(stages, level, graph, positions, node_data, kill_all_bandits=False):
     def ordinary(node):
         data = node_data.get(str(node), {})
         return str(node) in positions and not data.get("ascendancyName") and not data.get("isMastery")
@@ -815,11 +823,14 @@ def mastery_separated_plan(stages, level, graph, positions, node_data):
         filtered_stages.append(filtered)
         previous = ordered
     return quest_aware_passive_plan(
-        filtered_stages, level, graph, kill_all_bandits=False,
+        filtered_stages, level, graph, kill_all_bandits=kill_all_bandits,
     )
 
 
 def pob_passive_plan(build, level):
     stages = (build or {}).get("trees", [])
     tree = build_tree(stages)
-    return mastery_separated_plan(stages, level, tree.graph, tree.points, tree.nodes)
+    return mastery_separated_plan(
+        stages, level, tree.graph, tree.points, tree.nodes,
+        kill_all_bandits=pob_kills_all_bandits(build),
+    )
