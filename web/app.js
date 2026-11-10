@@ -267,6 +267,7 @@ function setLevel(value) {
   $('#lvlNum').textContent = state.level;
   save();
   tree.invalidate();
+  if (state.tab === 'gems') renderGemLinks();
 }
 
 /* ───────────── дерево ───────────── */
@@ -783,6 +784,109 @@ async function ensureGemsData() {
   gemsData.ready = true;
 }
 
+/* ── связки на текущем уровне: перенос gems/data.links_at_level ── */
+
+const gemLevels = { ready: false, data: null };
+
+async function ensureGemLevels() {
+  if (gemLevels.ready) return;
+  const response = await fetch('data/gem_levels.json');
+  gemLevels.data = await response.json();
+  gemLevels.ready = true;
+}
+
+/* максимальный уровень камня, который можно держать на этом уровне персонажа */
+function effectiveGemLevel(name, characterLevel, importedLevel) {
+  const key = (name || '').trim().toLowerCase();
+  const table = gemLevels.data ? gemLevels.data[key] : null;
+  const cap = Number(importedLevel);
+  if (!table) return Number.isFinite(cap) && cap > 0 ? cap : null;
+  const limit = Math.min(Number.isFinite(cap) && cap > 0 ? cap : 20, table.length);
+  let best = null;
+  for (let index = 0; index < limit; index += 1) {
+    const requirement = table[index];
+    if (requirement !== null && requirement !== undefined && requirement <= characterLevel) best = index + 1;
+  }
+  return best;
+}
+
+function gemRequirement(name) {
+  const table = gemLevels.data ? gemLevels.data[(name || '').trim().toLowerCase()] : null;
+  return table && table.length ? table[0] : null;
+}
+
+function linksAtLevel(links, characterLevel) {
+  const result = [];
+  for (const link of links || []) {
+    const gems = [];
+    for (const gem of link.gems || []) {
+      const known = Boolean(gemLevels.data && gemLevels.data[(gem.name || '').trim().toLowerCase()]);
+      const level = effectiveGemLevel(gem.name, characterLevel, gem.level);
+      if (known && level === null) continue;
+      gems.push({ ...gem, level: level === null ? gem.level : String(level) });
+    }
+    if (gems.length) result.push({ label: link.label, gems });
+  }
+  return result;
+}
+
+function gemSetFor(level) {
+  const sets = (build && build.gemSets ? build.gemSets : []).slice().sort((a, b) => a.level - b.level);
+  if (!sets.length) return null;
+  let current = sets[0];
+  for (const set of sets) if (set.level <= level) current = set;
+  return current;
+}
+
+async function renderGemLinks() {
+  const host = $('#gemsLinks');
+  if (!host) return;
+  if (!build || !build.gemSets || !build.gemSets.length) {
+    host.innerHTML = '';
+    return;
+  }
+  try {
+    await ensureGemLevels();
+  } catch (error) {
+    host.innerHTML = '<p class="gems-empty">Не удалось загрузить уровни камней.</p>';
+    return;
+  }
+  const set = gemSetFor(state.level);
+  const links = linksAtLevel(set.links, state.level);
+  const locked = [];
+  for (const link of set.links || []) {
+    for (const gem of link.gems || []) {
+      const key = (gem.name || '').trim().toLowerCase();
+      if (!gemLevels.data || !gemLevels.data[key]) continue;
+      if (effectiveGemLevel(gem.name, state.level, gem.level) === null) {
+        locked.push({ name: gem.name, requirement: gemRequirement(gem.name) });
+      }
+    }
+  }
+
+  const parts = [
+    `<div class="links-head"><span>Связки на ур. ${state.level}</span>`
+    + `<span class="links-note">${escapeHtml(set.title || '')}</span></div>`,
+  ];
+  if (!links.length) {
+    parts.push('<p class="gems-empty">Из связок на этом уровне пока ничего не собрать.</p>');
+  }
+  for (const link of links) {
+    const gems = link.gems.map((gem) => {
+      const label = gemLabel(gemKey(gem.name, gem.support), gem.name);
+      return `<span class="gem-pill${gem.support ? ' sup' : ''}">${escapeHtml(label)}`
+        + `<b>${escapeHtml(gem.level || '—')}</b></span>`;
+    }).join('');
+    parts.push(`<div class="link-row">${gems}</div>`);
+  }
+  if (locked.length) {
+    const names = locked.map((item) => `${escapeHtml(gemLabel(gemKey(item.name, false), item.name))}`
+      + ` (с ур. ${item.requirement ?? '?'})`).join(', ');
+    parts.push(`<p class="links-locked">Не влезает на этом уровне: ${names}</p>`);
+  }
+  host.innerHTML = parts.join('');
+}
+
 function normalizedClass(value) {
   const wanted = (value || '').trim().toLowerCase();
   const found = (gemsData.data?.classes || []).find(name => name.toLowerCase() === wanted);
@@ -909,6 +1013,7 @@ function refreshGems() {
 }
 
 async function renderGems() {
+  renderGemLinks();
   const host = $('#gemsList');
   const counter = $('#gemsCount');
   try {

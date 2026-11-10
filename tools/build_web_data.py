@@ -16,6 +16,7 @@ STEPS_FILE = SRC / "steps.json"
 EXTRAS_FILE = SRC / "data" / "poe1" / "campaign_extras.json"
 TREE_FILE = SRC / "data" / "poe1" / "skilltree.json"
 GEMS_FILE = SRC / "data" / "poe1" / "gem_acquisition.json"
+GEM_LEVELS_FILE = SRC / "data" / "poe1" / "gem_levels.json"
 
 ACT_LABELS = [f"Акт {index}" for index in range(1, 11)]
 
@@ -134,11 +135,33 @@ def gems_payload() -> dict:
     }
 
 
+def gem_levels_payload() -> dict:
+    """Требуемый уровень персонажа для каждого уровня камня: {имя: [ур.1 … ур.N]}.
+
+    Нужен, чтобы резать связки по текущему уровню персонажа так же, как десктоп
+    (`gems/data.effective_gem_level`). Хвост None срезается.
+    """
+    raw = json.loads(GEM_LEVELS_FILE.read_text(encoding="utf-8"))
+    out = {}
+    for name, record in raw.items():
+        requirements = record.get("requirements") or {}
+        levels = []
+        for gem_level in range(1, 41):
+            value = requirements.get(str(gem_level))
+            levels.append(int(value) if value is not None else None)
+        while levels and levels[-1] is None:
+            levels.pop()
+        if levels:
+            out[name] = levels
+    return out
+
+
 def main() -> int:
     WEB_DATA.mkdir(parents=True, exist_ok=True)
     steps = steps_payload()
     tree = tree_payload()
     gems = gems_payload()
+    gem_levels = gem_levels_payload()
 
     (WEB_DATA / "steps.json").write_text(
         json.dumps(steps, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"
@@ -149,15 +172,20 @@ def main() -> int:
     (WEB_DATA / "gems.json").write_text(
         json.dumps(gems, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"
     )
+    (WEB_DATA / "gem_levels.json").write_text(
+        json.dumps(gem_levels, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"
+    )
 
     steps_size = (WEB_DATA / "steps.json").stat().st_size
     tree_size = (WEB_DATA / "tree.json").stat().st_size
     gems_size = (WEB_DATA / "gems.json").stat().st_size
+    levels_size = (WEB_DATA / "gem_levels.json").stat().st_size
     print(f"steps.json: {steps_size / 1024:.0f} KB, {len(steps['acts'])} актов, "
           f"{sum(len(act['steps']) for act in steps['acts'])} шагов")
     print(f"tree.json: {tree_size / 1024:.0f} KB, {len(tree['nodes'])} нод, {len(tree['groups'])} групп")
     print(f"gems.json: {gems_size / 1024:.0f} KB, {len(gems['quests'])} квестов, "
           f"{len(gems['known'])} ключей камней")
+    print(f"gem_levels.json: {levels_size / 1024:.0f} KB, {len(gem_levels)} камней")
     return 0
 
 
