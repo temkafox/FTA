@@ -203,14 +203,12 @@ function updateNextButton() {
 }
 
 function toggleStep(id) {
-  const now = Date.now();
   if (state.done[id]) {
     delete state.done[id];
     delete state.splits[id];
   } else {
-    if (!state.started) state.started = now;
-    state.done[id] = 1;
-    state.splits[id] = elapsed();
+    if (!state.started) state.started = Date.now();
+    markUpTo(id, elapsed());
   }
   const act = acts[state.act];
   if (act && actDone(act)) {
@@ -222,6 +220,21 @@ function toggleStep(id) {
   renderSteps();
   renderProgress();
   updateNextButton();
+}
+
+/* отметка шага = «всё до него пройдено»: дотягиваем предшествующие шаги и акты.
+   Отсечка пишется только для отмеченного шага — у автоматических времени нет. */
+function markUpTo(id, split) {
+  for (const act of acts) {
+    for (const step of act.steps) {
+      if (!state.done[step.id]) state.done[step.id] = 1;
+      if (step.id === id) {
+        state.splits[step.id] = split;
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 /* ───────────── уровень ───────────── */
