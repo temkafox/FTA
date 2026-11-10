@@ -204,10 +204,10 @@ function updateNextButton() {
 
 function toggleStep(id) {
   if (state.done[id]) {
-    unmarkUpTo(id);
+    clearFrom(id);
   } else {
     if (!state.started) state.started = Date.now();
-    markUpTo(id, elapsed());
+    setProgressTo(id);
   }
   const act = acts[state.act];
   if (act && actDone(act)) {
@@ -221,31 +221,43 @@ function toggleStep(id) {
   updateNextButton();
 }
 
-/* отметка шага = «всё до него пройдено»: дотягиваем предшествующие шаги и акты.
-   Отсечка пишется только для отмеченного шага — у автоматических времени нет. */
-function markUpTo(id, split) {
+/* Прогресс — непрерывный курсор: всё до шага включительно пройдено, всё после — нет.
+   Поэтому отметка любого шага подтягивает префикс и стирает хвост, а снятие
+   галочки откатывает прогресс к предыдущему шагу. */
+function setProgressTo(id) {
+  const split = elapsed();
+  let seen = false;
   for (const act of acts) {
     for (const step of act.steps) {
-      if (!state.done[step.id]) state.done[step.id] = 1;
       if (step.id === id) {
-        state.splits[step.id] = split;
-        return true;
+        seen = true;
+        if (!state.done[step.id]) {
+          state.done[step.id] = 1;
+          state.splits[step.id] = split;
+        }
+        continue;
+      }
+      if (!seen) {
+        if (!state.done[step.id]) state.done[step.id] = 1;
+      } else if (state.done[step.id]) {
+        delete state.done[step.id];
+        delete state.splits[step.id];
       }
     }
   }
-  return false;
 }
 
-/* снятие галочки симметрично: стираем шаг и всё, что отмечено до него */
-function unmarkUpTo(id) {
+function clearFrom(id) {
+  let seen = false;
   for (const act of acts) {
     for (const step of act.steps) {
-      delete state.done[step.id];
-      delete state.splits[step.id];
-      if (step.id === id) return true;
+      if (step.id === id) seen = true;
+      if (seen) {
+        delete state.done[step.id];
+        delete state.splits[step.id];
+      }
     }
   }
-  return false;
 }
 
 /* ───────────── уровень ───────────── */
