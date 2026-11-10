@@ -67,9 +67,13 @@ function timerPaused() {
   return Boolean(state.pausedAt);
 }
 
-function togglePause() {
-  if (!state.started) return;
-  if (state.pausedAt) {
+function toggleTimer() {
+  if (!state.started) {
+    /* ручной старт: таймер можно запустить до первой отметки шага */
+    state.started = Date.now();
+    state.pausedAt = null;
+    state.pausedTotal = 0;
+  } else if (state.pausedAt) {
     state.pausedTotal = (state.pausedTotal || 0) + (Date.now() - state.pausedAt);
     state.pausedAt = null;
   } else {
@@ -80,12 +84,15 @@ function togglePause() {
 }
 
 function renderTimer() {
+  const started = Boolean(state.started);
   const paused = timerPaused();
+  const button = $('#pauseBtn');
   $('#timer').textContent = fmt(elapsed());
   $('#timer').classList.toggle('paused', paused);
-  $('#pauseBtn').textContent = paused ? '▶' : '❚❚';
-  $('#pauseBtn').classList.toggle('active', paused);
-  $('#pauseBtn').disabled = !state.started;
+  button.textContent = !started || paused ? '▶' : '❚❚';
+  button.classList.toggle('active', paused);
+  button.classList.toggle('start', !started);
+  button.setAttribute('aria-label', !started ? 'Запустить таймер' : paused ? 'Продолжить' : 'Пауза');
 }
 
 function fmt(sec) {
@@ -1453,7 +1460,7 @@ function bind() {
     $('#menuModal').hidden = true;
   });
 
-  $('#pauseBtn').addEventListener('click', togglePause);
+  $('#pauseBtn').addEventListener('click', toggleTimer);
 
   $('#pobBtn').addEventListener('click', () => {
     $('#pobInput').value = state.build || '';
