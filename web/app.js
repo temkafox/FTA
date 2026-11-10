@@ -928,7 +928,10 @@ function bind() {
     btn.addEventListener('click', () => setTab(btn.dataset.tab));
   });
 
-  $('#menuBtn').addEventListener('click', () => { $('#menuModal').hidden = false; });
+  $('#menuBtn').addEventListener('click', () => {
+    $('#menuModal').hidden = false;
+    showBuildStamp();
+  });
   $('#menuClose').addEventListener('click', () => { $('#menuModal').hidden = true; });
   $('#resetProgress').addEventListener('click', () => {
     if (!confirm('Сбросить отметки всех актов?')) return;
@@ -1087,6 +1090,26 @@ function escapeHtml(text) {
   return String(text).replace(/[&<>"']/g, (ch) => (
     { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]
   ));
+}
+
+/* какая версия app.js реально работает в этом окне — чтобы не спорить с кэшем */
+async function showBuildStamp() {
+  const line = $('#buildLine');
+  line.textContent = 'сборка: …';
+  try {
+    const response = await fetch('app.js', { method: 'HEAD', cache: 'no-store' });
+    const stamp = response.headers.get('last-modified');
+    const size = response.headers.get('content-length');
+    if (!stamp) {
+      line.textContent = 'сборка: без заголовков (кэш?)';
+      return;
+    }
+    const when = new Date(stamp);
+    const date = when.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+    line.textContent = `сборка: ${date} · ${size ? Math.round(Number(size) / 1024) + ' КБ' : '—'}`;
+  } catch (e) {
+    line.textContent = 'сборка: нет связи с сервером';
+  }
 }
 
 function renderAll() {
