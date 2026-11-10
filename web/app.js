@@ -342,6 +342,7 @@ const tree = {
   view: { k: 1, x: 0, y: 0 },
   plan: { taken: new Set(), next: new Set() },
   ascPlan: { taken: new Set(), next: new Set(), points: 0, total: 0, labs: 0 },
+  cluster: { points: new Map(), edges: [], ids: new Set() },
   mode: 'main',        // 'main' | 'asc'
   mainIds: [],
   mainIdSet: new Set(),
@@ -352,8 +353,16 @@ const tree = {
 
   async load() {
     if (this.ready) return;
-    const response = await fetch('data/tree.json');
-    this.data = await response.json();
+    const [treeResponse, clusterResponse] = await Promise.all([
+      fetch('data/tree.json'),
+      fetch('data/cluster_jewels.json').catch(() => null),
+    ]);
+    this.data = await treeResponse.json();
+    try {
+      this.clusterTemplates = clusterResponse ? await clusterResponse.json() : null;
+    } catch (error) {
+      this.clusterTemplates = null;
+    }
     this.project();
     this.ready = true;
     this.resize();
@@ -417,6 +426,138 @@ const tree = {
     return [...plan.taken, ...plan.next];
   },
 
+  /* кольца кластерных самоцветов: порт cluster_jewels.cluster_overlay.
+     PoB пишет ноды кластера синтетическими id: биты 0-3 — слот в шаблоне,
+     4-5 — размер, старшие — номер гнезда. */
+  clusters() {
+    const data = this.data;
+    const templates = this.clusterTemplates;
+    const empty = { points: new Map(), edges: [], ids: new Set() };
+    if (!templates || !data.sockets) return empty;
+
+    const specIds = new Set();
+    for (const spec of this.specs()) for (const id of spec.nodes) specIds.add(id);
+
+    const pools = new Map();
+    for (const id of specIds) {
+      const value = Number(id);
+      if (!Number.isFinite(value) || value < 0x10000) continue;
+      const base = value & ~0x3F;
+      const size = (value >> 4) & 3;
+      const key = `${base}:${size}`;
+      if (!pools.has(key)) pools.set(key, { members: {} });
+      pools.get(key).members[value & 0xF] = id;
+    }
+    if (!pools.size) return empty;
+
+    const counts = data.per_orbit;
+    const radii = data.orbit_radii;
+    const out = { points: new Map(), edges: [], ids: new Set() };
+    const ORBIT_TABLE = {
+      '12:16': [0, 1, 3, 4, 5, 7, 8, 9, 11, 12, 13, 15],
+      '6:16': [0, 3, 5, 8, 11, 13],
+    };
+
+    const templateToOrbit = (index, total, slots) => {
+      if (total === slots) return index;
+      const table = ORBIT_TABLE[`${total}:${slots}`];
+      return table ? table[index] : Math.floor((index * slots) / total);
+    };
+
+    const ringSlot = (proxyId, size, templateIndex, slots) => {
+      const offsets = (templates.orbit_offsets || {})[String(proxyId)];
+      const offset = offsets ? offsets[String(size)] : undefined;
+      if (offset === undefined) return null;
+      const total = templates.sizes[String(size)].total;
+      return templateToOrbit((Number(templateIndex) + offset) % total, total, slots);
+    };
+
+    const place = (group, orbit, orbitIndex) => {
+      const center = data.proxy_groups[String(group)];
+      if (!center) return null;
+      const radius = radii[orbit] || 0;
+      const count = counts[orbit] || 1;
+      const angle = orbitAngle(orbitIndex, count);
+      return [center[0] + radius * Math.sin(angle), center[1] - radius * Math.cos(angle)];
+    };
+
+    const build = (socketId, base, socketSize) => {
+      let size = null;
+      for (let candidate = socketSize; candidate >= 0; candidate -= 1) {
+        if (pools.has(`${base}:${candidate}`)) { size = candidate; break; }
+      }
+      if (size === null) return;
+      const socket = data.sockets[socketId];
+      if (!socket) return;
+      const proxy = data.proxies[socket.p];
+      if (!proxy) return;
+      const orbit = size + 1;
+      const slots = counts[orbit];
+      if (!slots || orbit >= radii.length) return;
+      if (ringSlot(socket.p, size, 0, slots) === null) return;
+
+      const template = templates.sizes[String(size)];
+      const total = template.total;
+      const pool = pools.get(`${base}:${size}`);
+      pools.delete(`${base}:${size}`);
+      const members = pool.members;
+      const nested = {};
+
+      /* JEWEL_ORDER: вложенные гнёзда разложены как 0, 2, 1 */
+      (template.sockets || []).forEach((templateIndex, position) => {
+        const jewelIndex = [0, 2, 1][position];
+        const nestedId = (data.nested[String(proxy.g)] || {})[String(jewelIndex)];
+        if (nestedId && specIds.has(nestedId) && members[templateIndex] === undefined) {
+          members[templateIndex] = nestedId;
+          nested[nestedId] = jewelIndex;
+        }
+      });
+
+      for (const [templateIndex, nodeId] of Object.entries(members)) {
+        let point = this.points.get(nodeId);
+        if (!point) {
+          const slot = ringSlot(socket.p, size, templateIndex, slots);
+          if (slot === null) continue;
+          point = place(proxy.g, orbit, slot);
+          if (!point) continue;
+          out.ids.add(nodeId);
+        }
+        out.points.set(nodeId, point);
+      }
+
+      const indexes = Object.keys(members).map(Number).sort((a, b) => a - b);
+      const ring = [];
+      for (let index = 0; index + 1 < indexes.length; index += 1) {
+        ring.push([indexes[index], indexes[index + 1]]);
+      }
+      if (size > 0 && indexes.length > 2) {
+        ring.push([indexes[indexes.length - 1], indexes[0]]);
+        const gaps = ring.map(([a, b]) => (b - a + total) % total);
+        const widest = Math.max(...gaps);
+        if (gaps.filter((gap) => gap === widest).length === 1) ring.splice(gaps.indexOf(widest), 1);
+      }
+      for (const [a, b] of ring) {
+        const first = members[a];
+        const second = members[b];
+        if (first && second && out.points.has(first) && out.points.has(second)) out.edges.push([first, second]);
+      }
+      if (members[0] && this.points.has(socketId)) {
+        out.points.set(socketId, this.points.get(socketId));
+        out.edges.push([members[0], socketId]);
+      }
+
+      for (const [nestedId, jewelIndex] of Object.entries(nested)) {
+        const nestedSize = (data.sockets[nestedId] || {}).s ?? 0;
+        build(nestedId, base + (nestedSize === 1 ? (jewelIndex << 9) : 0), nestedSize);
+      }
+    };
+
+    for (const [id, socket] of Object.entries(data.sockets)) {
+      if (socket.s === 2 && !socket.par) build(id, 0x10000 + (socket.i << 6), 2);
+    }
+    return out;
+  },
+
   /* билд: один спек — режем по бюджету очков, несколько — берём ближайший по уровню */
   planFor(level) {
     const specs = this.specs();
@@ -470,6 +611,7 @@ const tree = {
     this.syncAscendancy();
     this.plan = this.planFor(state.level);
     this.ascPlan = this.ascPlanFor(state.level);
+    this.cluster = this.mode === 'asc' ? { points: new Map(), edges: [], ids: new Set() } : this.clusters();
     this.updateLabels();
     this.draw();
   },
@@ -700,6 +842,37 @@ const tree = {
         ctx.stroke();
       }
     }
+
+    /* кластерные самоцветы: кольца вокруг гнёзд */
+    if (this.cluster.points.size) {
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = 'rgba(55,232,103,.4)';
+      for (const [a, b] of this.cluster.edges) {
+        const pa = this.points.get(a) || this.cluster.points.get(a);
+        const pb = this.points.get(b) || this.cluster.points.get(b);
+        if (!pa || !pb) continue;
+        const x1 = pa[0] * k + tx;
+        const y1 = pa[1] * k + ty;
+        const x2 = pb[0] * k + tx;
+        const y2 = pb[1] * k + ty;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+      }
+      for (const point of this.cluster.points.values()) {
+        const sx = point[0] * k + tx;
+        const sy = point[1] * k + ty;
+        if (sx < -pad || sx > this.width + pad || sy < -pad || sy > this.height + pad) continue;
+        ctx.beginPath();
+        ctx.arc(sx, sy, 5.4, 0, Math.PI * 2);
+        ctx.fillStyle = '#37e867';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(10,25,15,.92)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+    }
   },
 
   nodeAt(clientX, clientY) {
@@ -711,6 +884,14 @@ const tree = {
     for (const id of this.currentIds()) {
       const point = this.points.get(id);
       if (!point) continue;
+      const [sx, sy] = this.toScreen(point[0], point[1]);
+      const dist = Math.hypot(sx - px, sy - py);
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = id;
+      }
+    }
+    for (const [id, point] of this.cluster.points) {
       const [sx, sy] = this.toScreen(point[0], point[1]);
       const dist = Math.hypot(sx - px, sy - py);
       if (dist < bestDist) {
@@ -1401,14 +1582,22 @@ function setupGestures() {
 }
 
 function showNode(id) {
-  const node = tree.data.nodes[id];
-  if (!node) return;
-  $('#nodeName').textContent = node.n || (node.k === 3 ? 'Мастери' : `Нода ${id}`);
+  const known = tree.data.nodes[id];
+  const isCluster = !known && tree.cluster.points.has(id);
+  if (!known && !isCluster) return;
+  if (isCluster) {
+    $('#nodeName').textContent = 'Пассив кластерного самоцвета';
+    $('#nodeStats').innerHTML = '<p class="node-status">взято</p>'
+      + '<p>Свойства задаёт сам самоцвет: в экспорте PoB есть только номер ноды.</p>';
+    $('#nodeSheet').hidden = false;
+    return;
+  }
+  $('#nodeName').textContent = known.n || (known.k === 3 ? 'Мастери' : `Нода ${id}`);
   const lines = [];
   const plan = tree.mode === 'asc' ? tree.ascPlan : tree.plan;
   const status = plan.taken.has(id) ? 'взято' : plan.next.has(id) ? 'следующая' : 'не взято';
   lines.push(`<p class="node-status">${status}</p>`);
-  for (const stat of node.s || []) lines.push(`<p>${escapeHtml(stat)}</p>`);
+  for (const stat of known.s || []) lines.push(`<p>${escapeHtml(stat)}</p>`);
   if (tree.mode === 'asc') {
     lines.push('<p class="node-hint">Ассенданси: 2 очка за лабиринт (ур. 33, 55, 68, 75).</p>');
   }

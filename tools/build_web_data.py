@@ -17,6 +17,7 @@ EXTRAS_FILE = SRC / "data" / "poe1" / "campaign_extras.json"
 TREE_FILE = SRC / "data" / "poe1" / "skilltree.json"
 GEMS_FILE = SRC / "data" / "poe1" / "gem_acquisition.json"
 GEM_LEVELS_FILE = SRC / "data" / "poe1" / "gem_levels.json"
+CLUSTER_FILE = SRC / "data" / "poe1" / "cluster_jewels.json"
 
 ACT_LABELS = [f"Акт {index}" for index in range(1, 11)]
 
@@ -93,6 +94,38 @@ def tree_payload() -> dict:
         for item in data.get("classes", [])
     ]
 
+    # кластерные самоцветы: гнёзда, прокси-ноды и координаты прокси-групп
+    sockets = {}
+    proxies = {}
+    proxy_groups = {}
+    nested = {}
+    for node_id, node in data.get("nodes", {}).items():
+        jewel = node.get("expansionJewel")
+        if not jewel:
+            continue
+        sockets[str(node_id)] = {
+            "p": str(jewel.get("proxy")),
+            "s": int(jewel.get("size", 0)),
+            "i": int(jewel.get("index", 0)),
+            **({"par": str(jewel.get("parent"))} if jewel.get("parent") else {}),
+        }
+    for node_id, node in data.get("nodes", {}).items():
+        if not node.get("isProxy"):
+            continue
+        proxies[str(node_id)] = {
+            "g": node.get("group"),
+            "o": node.get("orbit", 0),
+            "i": node.get("orbitIndex", 0),
+        }
+    for key, group in groups_raw.items():
+        if not group.get("isProxy"):
+            continue
+        proxy_groups[str(key)] = [round(float(group.get("x", 0)), 2), round(float(group.get("y", 0)), 2)]
+        for other in group.get("nodes", []):
+            jewel = data["nodes"].get(str(other), {}).get("expansionJewel")
+            if jewel and "index" in jewel:
+                nested.setdefault(str(key), {})[str(jewel["index"])] = str(other)
+
     return {
         "min_x": data.get("min_x"),
         "max_x": data.get("max_x"),
@@ -103,6 +136,10 @@ def tree_payload() -> dict:
         "groups": groups,
         "nodes": nodes,
         "classes": classes,
+        "sockets": sockets,
+        "proxies": proxies,
+        "proxy_groups": proxy_groups,
+        "nested": nested,
     }
 
 
@@ -174,6 +211,10 @@ def main() -> int:
     )
     (WEB_DATA / "gem_levels.json").write_text(
         json.dumps(gem_levels, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"
+    )
+    clusters = json.loads(CLUSTER_FILE.read_text(encoding="utf-8"))
+    (WEB_DATA / "cluster_jewels.json").write_text(
+        json.dumps(clusters, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"
     )
 
     steps_size = (WEB_DATA / "steps.json").stat().st_size
