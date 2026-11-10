@@ -273,6 +273,9 @@ function setLevel(value) {
 
 const QUEST_LEVELS = [5, 10, 19, 20, 27, 32, 38, 44, 46, 48, 50, 52, 54, 56, 58, 60, 61, 62, 64, 65, 67, 68, 68];
 
+/* уровни лабиринтов: по 2 очка ассенданси за каждый */
+const LAB_LEVELS = [33, 55, 68, 75];
+
 const ORBIT_DEGREES = {
   16: [0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330],
   40: Array.from({ length: 36 }, (_, i) => i * 10).concat([45, 135, 225, 315]).sort((a, b) => a - b),
@@ -292,10 +295,16 @@ const tree = {
   ready: false,
   data: null,
   points: new Map(),   // id -> [x, y]
-  edges: [],           // [a, b]
   view: { k: 1, x: 0, y: 0 },
   plan: { taken: new Set(), next: new Set() },
-  loadedCode: null,
+  ascPlan: { taken: new Set(), next: new Set(), points: 0, total: 0, labs: 0 },
+  mode: 'main',        // 'main' | 'asc'
+  mainIds: [],
+  mainIdSet: new Set(),
+  ascIds: new Map(),   // ассенданси -> [id]
+  edgesByMode: new Map(),
+  ascendancy: null,
+  focusedCode: null,
 
   async load() {
     if (this.ready) return;
@@ -310,9 +319,9 @@ const tree = {
 
   project() {
     const { groups, nodes, orbit_radii: radii, per_orbit: counts } = this.data;
+    const mainIds = [];
+    const ascIds = new Map();
     for (const [id, node] of Object.entries(nodes)) {
-      /* ассенданси живёт на отдельном экране — в общем полотне только мешает */
-      if (node.asc) continue;
       const group = groups[String(node.g)];
       if (!group) continue;
       const orbit = node.o || 0;
@@ -320,18 +329,48 @@ const tree = {
       const count = orbit < counts.length ? counts[orbit] : 1;
       const angle = orbitAngle(node.i || 0, count);
       this.points.set(id, [group[0] + radius * Math.sin(angle), group[1] - radius * Math.cos(angle)]);
+      if (node.asc) {
+        if (!ascIds.has(node.asc)) ascIds.set(node.asc, []);
+        ascIds.get(node.asc).push(id);
+      } else {
+        mainIds.push(id);
+      }
     }
+    this.mainIds = mainIds;
+    this.mainIdSet = new Set(mainIds);
+    this.ascIds = ascIds;
+    this.edgesByMode = new Map([['main', this.edgesFor(mainIds)]]);
+    for (const [name, ids] of ascIds) this.edgesByMode.set(name, this.edgesFor(ids));
+  },
+
+  edgesFor(ids) {
+    const members = new Set(ids);
+    const edges = [];
     const seen = new Set();
-    for (const [id, node] of Object.entries(nodes)) {
-      if (!this.points.has(id)) continue;
-      for (const other of node.out || []) {
-        if (!this.points.has(other) || other === id) continue;
+    for (const id of ids) {
+      for (const other of this.data.nodes[id].out || []) {
+        if (!members.has(other) || other === id) continue;
         const key = id < other ? `${id}|${other}` : `${other}|${id}`;
         if (seen.has(key)) continue;
         seen.add(key);
-        this.edges.push([id, other]);
+        edges.push([id, other]);
       }
     }
+    return edges;
+  },
+
+  currentIds() {
+    if (this.mode === 'asc' && this.ascendancy) return this.ascIds.get(this.ascendancy) || [];
+    return this.mainIds;
+  },
+
+  currentEdges() {
+    return this.edgesByMode.get(this.mode === 'asc' && this.ascendancy ? this.ascendancy : 'main') || [];
+  },
+
+  planNodes() {
+    const plan = this.mode === 'asc' ? this.ascPlan : this.plan;
+    return [...plan.taken, ...plan.next];
   },
 
   /* билд: один спек — режем по бюджету очков, несколько — берём ближайший по уровню */
@@ -361,7 +400,7 @@ const tree = {
       taken = new Set(nodes.slice(0, budget));
       upcoming = nodes.slice(budget, budget + 10);
     }
-    const visible = (id) => this.points.has(id);
+    const visible = (id) => this.mainIdSet.has(id);
     return {
       taken: new Set([...taken].filter(visible)),
       next: new Set(upcoming.filter(visible)),
@@ -376,12 +415,65 @@ const tree = {
   },
 
   applyPlan() {
+    this.syncAscendancy();
     this.plan = this.planFor(state.level);
-    const count = this.plan.taken.size;
-    if (!build) $('#treeCount').textContent = 'билд не загружен';
-    else if (this.plan.stage) $('#treeCount').textContent = `${count} нод · этап ур. ${this.plan.stage.level}`;
-    else $('#treeCount').textContent = `${count} из ${this.plan.budget} очков · ур. ${state.level}`;
+    this.ascPlan = this.ascPlanFor(state.level);
+    this.updateLabels();
     this.draw();
+  },
+
+  syncAscendancy() {
+    this.ascendancy = build && this.ascIds.has(build.ascendancy) ? build.ascendancy : null;
+    if (!this.ascendancy) this.mode = 'main';
+  },
+
+  /* 2 очка ассенданси за лабиринт: 33 / 55 / 68 / 75 уровни */
+  ascPlanFor(level) {
+    const empty = { taken: new Set(), next: new Set(), points: 0, total: 0, labs: 0 };
+    const name = this.ascendancy;
+    if (!name) return empty;
+    const members = new Set(this.ascIds.get(name) || []);
+    const order = [];
+    for (const spec of this.specs()) {
+      for (const id of spec.nodes) {
+        if (members.has(id) && !order.includes(id)) order.push(id);
+      }
+    }
+    if (!order.length) return empty;
+    const labs = LAB_LEVELS.filter(value => value <= level).length;
+    const points = Math.min(2 * labs, order.length);
+    return {
+      taken: new Set(order.slice(0, points)),
+      next: new Set(order.slice(points, points + 2)),
+      points,
+      total: order.length,
+      labs,
+    };
+  },
+
+  updateLabels() {
+    const button = $('#ascBtn');
+    button.hidden = !(build && this.ascendancy);
+    button.textContent = this.mode === 'asc' ? 'К дереву' : 'Ассенданси';
+    button.classList.toggle('active', this.mode === 'asc');
+    if (!build) {
+      $('#treeCount').textContent = 'билд не загружен';
+      return;
+    }
+    if (this.mode === 'asc') {
+      $('#treeCount').textContent = `${this.ascPlan.taken.size} из ${this.ascPlan.total} · лаб ${this.ascPlan.labs}`;
+      return;
+    }
+    const count = this.plan.taken.size;
+    if (this.plan.stage) $('#treeCount').textContent = `${count} нод · этап ур. ${this.plan.stage.level}`;
+    else $('#treeCount').textContent = `${count} из ${this.plan.budget} очков · ур. ${state.level}`;
+  },
+
+  toggleMode() {
+    if (!this.ascendancy) return;
+    this.mode = this.mode === 'asc' ? 'main' : 'asc';
+    this.applyPlan();
+    this.focus();
   },
 
   invalidate() {
@@ -404,9 +496,23 @@ const tree = {
 
   fit() {
     if (!this.ready || !this.points.size) return;
-    const { min_x: minX, max_x: maxX, min_y: minY, max_y: maxY } = this.data;
-    const worldW = maxX - minX;
-    const worldH = maxY - minY;
+    const points = this.currentIds().map(id => this.points.get(id)).filter(Boolean);
+    let minX;
+    let maxX;
+    let minY;
+    let maxY;
+    if (points.length) {
+      const xs = points.map(point => point[0]);
+      const ys = points.map(point => point[1]);
+      minX = Math.min(...xs);
+      maxX = Math.max(...xs);
+      minY = Math.min(...ys);
+      maxY = Math.max(...ys);
+    } else {
+      ({ min_x: minX, max_x: maxX, min_y: minY, max_y: maxY } = this.data);
+    }
+    const worldW = Math.max(1, maxX - minX);
+    const worldH = Math.max(1, maxY - minY);
     const k = Math.min(this.width / worldW, this.height / worldH) * 0.94;
     this.view = {
       k,
@@ -419,7 +525,10 @@ const tree = {
   /* вписать в экран именно план билда: всё дерево на телефоне нечитаемо */
   focus() {
     if (!this.ready || !this.points.size) return;
-    const points = [...this.plan.taken, ...this.plan.next]
+    const asc = this.mode === 'asc';
+    /* на экране ассенданси вписываем весь граф класса, а не только взятое */
+    const source = asc ? this.currentIds() : this.planNodes();
+    const points = source
       .map(id => this.points.get(id))
       .filter(Boolean);
     if (points.length < 2) return this.fit();
@@ -427,9 +536,10 @@ const tree = {
     const ys = points.map(point => point[1]);
     const minX = Math.min(...xs), maxX = Math.max(...xs);
     const minY = Math.min(...ys), maxY = Math.max(...ys);
-    const spanX = Math.max(1400, maxX - minX);
-    const spanY = Math.max(1400, maxY - minY);
-    const k = Math.min(0.3, Math.min(this.width / spanX, this.height / spanY) * 0.86);
+    /* экран ассенданси — компактный граф, ему нужен зум крупнее */
+    const spanX = Math.max(asc ? 420 : 1400, maxX - minX);
+    const spanY = Math.max(asc ? 420 : 1400, maxY - minY);
+    const k = Math.min(asc ? 1.2 : 0.3, Math.min(this.width / spanX, this.height / spanY) * (asc ? 0.72 : 0.86));
     this.view = {
       k,
       x: this.width / 2 - ((minX + maxX) / 2) * k,
@@ -459,13 +569,23 @@ const tree = {
       return;
     }
 
-    const taken = this.plan.taken;
-    const next = this.plan.next;
+    const plan = this.mode === 'asc' ? this.ascPlan : this.plan;
+    const taken = plan.taken;
+    const next = plan.next;
+    const ids = this.currentIds();
     const pad = 40;
+
+    if (this.mode === 'asc' && this.ascendancy) {
+      ctx.fillStyle = 'rgba(224,185,111,.85)';
+      ctx.font = '13px -apple-system, "Segoe UI", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${this.ascendancy} · ${this.ascPlan.taken.size} из ${this.ascPlan.total}`, this.width / 2, 26);
+      ctx.textAlign = 'left';
+    }
 
     /* рёбра */
     ctx.lineWidth = 1;
-    for (const [a, b] of this.edges) {
+    for (const [a, b] of this.currentEdges()) {
       const pa = this.points.get(a);
       const pb = this.points.get(b);
       if (!pa || !pb) continue;
@@ -482,10 +602,13 @@ const tree = {
     }
 
     /* ноды */
-    const radius = { 0: 3.2, 1: 6.4, 2: 7.6, 3: 5.4, 4: 6.2, 5: 5.4 };
-    for (const [id, node] of Object.entries(this.data.nodes)) {
+    const radius = this.mode === 'asc'
+      ? { 0: 5.5, 1: 12.5, 2: 14, 3: 9, 4: 10, 5: 9 }
+      : { 0: 3.2, 1: 6.4, 2: 7.6, 3: 5.4, 4: 6.2, 5: 5.4 };
+    for (const id of ids) {
+      const node = this.data.nodes[id];
       const point = this.points.get(id);
-      if (!point) continue;
+      if (!node || !point) continue;
       const sx = point[0] * k + tx;
       const sy = point[1] * k + ty;
       if (sx < -pad || sx > this.width + pad || sy < -pad || sy > this.height + pad) continue;
@@ -520,7 +643,9 @@ const tree = {
     const py = clientY - rect.top;
     let best = null;
     let bestDist = 18;
-    for (const [id, point] of this.points) {
+    for (const id of this.currentIds()) {
+      const point = this.points.get(id);
+      if (!point) continue;
       const [sx, sy] = this.toScreen(point[0], point[1]);
       const dist = Math.hypot(sx - px, sy - py);
       if (dist < bestDist) {
@@ -1013,6 +1138,7 @@ function bind() {
   });
 
   $('#fitBtn').addEventListener('click', () => (build ? tree.focus() : tree.fit()));
+  $('#ascBtn').addEventListener('click', () => tree.toggleMode());
 
   $('#nodeClose').addEventListener('click', () => { $('#nodeSheet').hidden = true; });
 
@@ -1102,9 +1228,13 @@ function showNode(id) {
   if (!node) return;
   $('#nodeName').textContent = node.n || (node.k === 3 ? 'Мастери' : `Нода ${id}`);
   const lines = [];
-  const status = tree.plan.taken.has(id) ? 'взято' : tree.plan.next.has(id) ? 'следующая' : 'не взято';
+  const plan = tree.mode === 'asc' ? tree.ascPlan : tree.plan;
+  const status = plan.taken.has(id) ? 'взято' : plan.next.has(id) ? 'следующая' : 'не взято';
   lines.push(`<p class="node-status">${status}</p>`);
   for (const stat of node.s || []) lines.push(`<p>${escapeHtml(stat)}</p>`);
+  if (tree.mode === 'asc') {
+    lines.push('<p class="node-hint">Ассенданси: 2 очка за лабиринт (ур. 33, 55, 68, 75).</p>');
+  }
   $('#nodeStats').innerHTML = lines.join('');
   $('#nodeSheet').hidden = false;
 }

@@ -444,6 +444,16 @@ canvas {
   color: var(--gold);
 }
 
+.chip.active {
+  background: var(--gold-dim);
+  border-color: rgba(224, 185, 111, .5);
+  color: var(--gold);
+}
+
+.tree-bar .chip { flex: 0 0 auto; padding: 0 12px; font-size: 13px; }
+.tree-bar .tree-count { text-align: right; }
+.tree-bar .icon-btn { flex: 0 0 auto; }
+
 /* ─────────── низ ─────────── */
 .next-wrap {
   padding: 8px 12px 6px;
@@ -579,3 +589,5 @@ textarea {
 .row-btn:last-child { border-bottom: 0; color: var(--text-2); }
 
 .build-line { margin: 10px 0 0; font-size: 12px; color: var(--text-3); }
+
+.node-hint { margin-top: 10px; font-size: 12px; color: var(--text-3); }
