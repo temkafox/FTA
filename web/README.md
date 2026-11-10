@@ -43,3 +43,9 @@ py -3 tools/build_web_data.py
 ```
 
 Запускать после правок `src/actpilot/steps.json` или `src/actpilot/data/poe1/skilltree.json`.
+
+## Публикация на GitHub Pages
+
+`.github/workflows/pages.yml` публикует только эту папку: один раз включи
+Settings → Pages → Source: GitHub Actions, дальше каждый коммит в `web/`
+уезжает на `https://temkafox.github.io/FTA/`. `serve.py` нужен только локально.
