@@ -204,8 +204,7 @@ function updateNextButton() {
 
 function toggleStep(id) {
   if (state.done[id]) {
-    delete state.done[id];
-    delete state.splits[id];
+    unmarkUpTo(id);
   } else {
     if (!state.started) state.started = Date.now();
     markUpTo(id, elapsed());
@@ -232,6 +231,18 @@ function markUpTo(id, split) {
         state.splits[step.id] = split;
         return true;
       }
+    }
+  }
+  return false;
+}
+
+/* снятие галочки симметрично: стираем шаг и всё, что отмечено до него */
+function unmarkUpTo(id) {
+  for (const act of acts) {
+    for (const step of act.steps) {
+      delete state.done[step.id];
+      delete state.splits[step.id];
+      if (step.id === id) return true;
     }
   }
   return false;
