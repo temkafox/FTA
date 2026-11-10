@@ -13,6 +13,8 @@ const defaults = () => ({
   done: {},       // id шага -> 1
   splits: {},     // id шага -> секунды на момент отметки
   started: null,  // мс начала таймера
+  pausedAt: null, // мс, когда таймер встал на паузу
+  pausedTotal: 0, // сколько мс таймер простоял на паузе
   build: null,    // исходный код PoB
   tab: 'route',
   openExtras: {}, // акт -> раскрыта ли секция «Дополнительно»
@@ -56,7 +58,34 @@ function actDone(act) {
 }
 
 function elapsed() {
-  return state.started ? Math.max(0, Math.round((Date.now() - state.started) / 1000)) : 0;
+  if (!state.started) return 0;
+  const now = state.pausedAt || Date.now();
+  return Math.max(0, Math.round((now - state.started - (state.pausedTotal || 0)) / 1000));
+}
+
+function timerPaused() {
+  return Boolean(state.pausedAt);
+}
+
+function togglePause() {
+  if (!state.started) return;
+  if (state.pausedAt) {
+    state.pausedTotal = (state.pausedTotal || 0) + (Date.now() - state.pausedAt);
+    state.pausedAt = null;
+  } else {
+    state.pausedAt = Date.now();
+  }
+  save();
+  renderTimer();
+}
+
+function renderTimer() {
+  const paused = timerPaused();
+  $('#timer').textContent = fmt(elapsed());
+  $('#timer').classList.toggle('paused', paused);
+  $('#pauseBtn').textContent = paused ? '▶' : '❚❚';
+  $('#pauseBtn').classList.toggle('active', paused);
+  $('#pauseBtn').disabled = !state.started;
 }
 
 function fmt(sec) {
@@ -95,10 +124,23 @@ function renderProgress() {
   updateNextButton();
 }
 
+/* шапка акта: название и «пройдено / всего» */
+function renderActHead(current) {
+  const head = $('#actHead');
+  if (!current) {
+    head.innerHTML = '';
+    return;
+  }
+  const passed = current.steps.filter((step) => state.done[step.id]).length;
+  head.innerHTML = `<span class="act-head-name">${escapeHtml(current.name)}</span>`
+    + `<span class="act-head-count">${passed} / ${current.steps.length}</span>`;
+}
+
 function renderSteps() {
   const act = acts[state.act];
   const host = $('#steps');
   host.innerHTML = '';
+  renderActHead(act);
   if (!act) return;
   let markedNext = false;
   act.steps.forEach((step, index) => {
@@ -219,6 +261,7 @@ function toggleStep(id) {
   renderSteps();
   renderProgress();
   updateNextButton();
+  renderTimer();
 }
 
 /* Прогресс — непрерывный курсор: всё до шага включительно пройдено, всё после — нет.
@@ -1191,16 +1234,24 @@ function bind() {
     state.done = {};
     state.splits = {};
     state.started = null;
+    state.pausedAt = null;
+    state.pausedTotal = 0;
     state.act = 0;
     save();
     renderAll();
+    renderTimer();
     $('#menuModal').hidden = true;
   });
   $('#resetTimer').addEventListener('click', () => {
     state.started = Object.keys(state.done).length ? Date.now() : null;
+    state.pausedAt = null;
+    state.pausedTotal = 0;
     save();
+    renderTimer();
     $('#menuModal').hidden = true;
   });
+
+  $('#pauseBtn').addEventListener('click', togglePause);
 
   $('#pobBtn').addEventListener('click', () => {
     $('#pobInput').value = state.build || '';
@@ -1399,9 +1450,9 @@ async function boot() {
   setTab(state.tab === 'tree' ? 'tree' : 'route');
 
   setInterval(() => {
-    $('#timer').textContent = fmt(elapsed());
+    if (!timerPaused()) renderTimer();
   }, 1000);
-  $('#timer').textContent = fmt(elapsed());
+  renderTimer();
 }
 
 boot();
