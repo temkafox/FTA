@@ -420,7 +420,7 @@ const tree = {
   /* билд: один спек — режем по бюджету очков, несколько — берём ближайший по уровню */
   planFor(level) {
     const specs = this.specs();
-    if (!specs.length) return { taken: new Set(), next: new Set() };
+    if (!specs.length) return { taken: new Set(), next: new Set(), refund: [] };
     const budget = passiveBudget(level);
     let taken;
     let upcoming;
@@ -445,9 +445,17 @@ const tree = {
       upcoming = nodes.slice(budget, budget + 10);
     }
     const visible = (id) => this.mainIdSet.has(id);
+    /* респек: ноды прошлого этапа, которых нет в текущем — их надо снять */
+    let refund = [];
+    if (stage) {
+      const index = specs.indexOf(stage);
+      const previous = specs[index - 1];
+      if (previous) refund = previous.nodes.filter((id) => !taken.has(id) && visible(id));
+    }
     return {
       taken: new Set([...taken].filter(visible)),
       next: new Set(upcoming.filter(visible)),
+      refund,
       budget,
       stage,
     };
@@ -509,8 +517,13 @@ const tree = {
       return;
     }
     const count = this.plan.taken.size;
-    if (this.plan.stage) $('#treeCount').textContent = `${count} нод · этап ур. ${this.plan.stage.level}`;
+    const refund = (this.plan.refund || []).length;
+    if (this.plan.stage) {
+      $('#treeCount').textContent = `${count} нод · этап ур. ${this.plan.stage.level}${refund ? ` · снять ${refund}` : ''}`;
+    }
     else $('#treeCount').textContent = `${count} из ${this.plan.budget} очков · ур. ${state.level}`;
+    const legend = $('#legendRefund');
+    if (legend) legend.hidden = !refund;
   },
 
   toggleMode() {
@@ -616,6 +629,7 @@ const tree = {
     const plan = this.mode === 'asc' ? this.ascPlan : this.plan;
     const taken = plan.taken;
     const next = plan.next;
+    const refund = new Set(this.mode === 'asc' ? [] : (plan.refund || []));
     const ids = this.currentIds();
     const pad = 40;
 
@@ -678,6 +692,13 @@ const tree = {
         ctx.lineWidth = 1;
       }
       ctx.stroke();
+      if (refund.has(id)) {
+        ctx.beginPath();
+        ctx.arc(sx, sy, r + 3.5, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(255,92,92,.9)';
+        ctx.lineWidth = 1.8;
+        ctx.stroke();
+      }
     }
   },
 

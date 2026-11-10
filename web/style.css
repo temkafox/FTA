@@ -516,6 +516,7 @@ canvas {
 .dot.taken { background: var(--green); }
 .dot.next { background: var(--gold); box-shadow: 0 0 6px var(--gold); }
 .dot.dim { background: #4a4a55; }
+.dot.refund { background: transparent; border: 1.6px solid #ff5c5c; box-sizing: border-box; }
 
 .chip {
   height: 34px;
